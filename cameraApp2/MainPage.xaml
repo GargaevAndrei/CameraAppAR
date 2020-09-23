@@ -1,0 +1,65 @@
+﻿<Page
+    x:Class="cameraApp2.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:cameraApp2"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
+
+        <!-- <Image Source="C:\temp\CameraPhoto.jpg" />  -->
+
+        <canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>
+
+        <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
+
+        <Image x:Name="imageElement" Margin="18,24,104,18" />
+        <Image x:Name="imageElementNote" Margin="671,189,147,27" />
+
+        <!-- <canvas:CanvasControl Width="500" Height="300" x:Name="canv"
+            Draw="CanvasControl_Draw" CreateResources="CanvasControl_CreateResources" ClearColor="LightGray"/>-->
+
+
+
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button x:Name="SwitchCam" Click="SwitchCam_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Switch" RenderTransformOrigin="1,1"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="MakePhoto" Click="MakePhoto_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Camera"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="StartRecord" Click="StartRecord_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Video"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="StopRecord" Click="StopRecord_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Stop" RenderTransformOrigin="1,1"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="GetFrame" Click="GetFrame_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Flag" RenderTransformOrigin="1,1"/>
+                </Viewbox>
+            </Button>
+            
+        </StackPanel>
+    </Grid>
+</Page>
