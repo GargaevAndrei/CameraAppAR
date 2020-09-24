@@ -33,6 +33,9 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.Storage.Pickers;
+using Windows.Media.Core;
+using Windows.Media.Playback;
+using Microsoft.Graphics.Canvas.Text;
 
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
@@ -311,12 +314,18 @@ namespace cameraApp2
                 using (var ds = offscreen.CreateDrawingSession())
                 {
                     ds.DrawImage(image, 0, 0);
-                    ds.DrawText("Hello augmented reality", 15, 400, Colors.Aqua);
-                    ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 15, 430, Colors.Aquamarine);
-                    Rect rect = new Rect(10, 400, 240, 200);
-                    //System.Drawing.Brush brush = new Brush();
-                    //ds.DrawRectangle(rect, Windows.UI.Color.FromArgb(255, 250, 128, 128));
-                    ds.DrawRectangle(rect, Colors.BurlyWood);
+                    ds.DrawText("Hello augmented reality", 15, 400, Colors.Aqua, new CanvasTextFormat
+                    {
+                        FontSize = 24,
+                        FontWeight = Windows.UI.Text.FontWeights.Bold
+                    });
+                    ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 15, 430, Colors.Aquamarine, new CanvasTextFormat
+                    {
+                        FontSize = 20,
+                        FontWeight = Windows.UI.Text.FontWeights.Bold
+                    });
+                    Rect rect = new Rect(10, 400, 300, 200);                    
+                    ds.DrawRectangle(rect, Colors.Chartreuse);
                 }
 
                 var bytePixel = offscreen.GetPixelBytes();
@@ -407,7 +416,48 @@ namespace cameraApp2
             { Debug.WriteLine("Err2 " + ex.ToString()); }
         }
 
+        /*private void InitializeMediaStreamSource()
+        {
+            // create VideoEncodingProperties 
+            VideoEncodingProperties videoProps = VideoEncodingProperties.CreateH264();
 
+            // create VideoStreamDescriptor 
+            VideoStreamDescriptor videoDescriptor = new VideoStreamDescriptor(videoProps);
+
+            // create MediaStreamSource 
+            var MSS = new Windows.Media.Core.MediaStreamSource(videoDescriptor);
+
+            // hooking up the MediaStreamSource event handlers 
+            MSS.Starting += MSS_Starting;
+            MSS.SampleRequested += MSS_SampleRequested;
+            MSS.Closed += MSS_Closed;
+
+            // hook up our MediaPlayer with the MediaStreamSource 
+            MediaPlayer.SetStreamSource(MSS);
+        }
+
+        private void MSS_SampleRequested(MediaStreamSource source, MediaStreamSourceSampleRequestedEventArgs args)
+        {
+            // Get Direct3DSurface from WinRT screen capture API 
+            IDirect3DSurface surface = GetSurfaceFromScreenCapture();
+            TimeSpan timestamp = GetCurrentTime();
+
+            // Create a media stream sample 
+            MediaStreamSample sample = MediaStreamSample.CreateFromDirect3D11Surface(surface, timestamp);
+            sample.OnProcessed += MSS_SampleProcessed;
+
+            // Complete the sample request 
+            args.Request.Sample = sample;
+        }
+
+        private void MSS_SampleProcessed(MediaStreamSample sample)
+        {
+            // Get the surface from the processed sample so that it can be reused 
+            IDirect3DSurface surface = sample.Direct3D11Surface;
+
+            // Allow the surface to be reused in the next call to GetSurfaceFromScreenCapture() 
+            // (Implementation details not shown) 
+        }*/
 
     }
 }
