@@ -36,6 +36,7 @@ using Windows.Storage.Pickers;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Microsoft.Graphics.Canvas.Text;
+using Windows.Media.Editing;
 
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
@@ -57,6 +58,11 @@ namespace cameraApp2
         private LowLagMediaRecording _mediaRecording;
 
         private MediaFrameReader mediaFrameReader;
+        StorageFile fileVideo;
+        private SoftwareBitmap backBuffer;
+        private bool taskRunning = false;
+        CanvasBitmap canvasBitmap;
+        MediaComposition mediaComposition;
 
         public MainPage()
         {
@@ -85,7 +91,7 @@ namespace cameraApp2
 
                 DeviceInformation cameraDevice;
                 cameraDevice = cameraDeviceList[0];
-                mediaCapture = new MediaCapture();
+                mediaCapture = new MediaCapture();                
 
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraDevice.Id };
 
@@ -105,6 +111,10 @@ namespace cameraApp2
                     await StartPreviewAsync();
                 }
 
+
+                var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
+                fileVideo = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+                mediaComposition = new MediaComposition();
             }
 
         }
@@ -192,11 +202,20 @@ namespace cameraApp2
             await _mediaRecording.StartAsync();
 
         }
-      
+
+        
+
+        private async Task RecordAsync()
+        {
+            Debug.WriteLine("StartRecord");
+            await mediaComposition.RenderToFileAsync(fileVideo, MediaTrimmingPreference.Fast, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
+        }
+
 
         private async void StopRecord_Click(object sender, RoutedEventArgs e)
         {
-            await _mediaRecording.FinishAsync();
+            //await _mediaRecording.FinishAsync();
+            await RecordAsync();
         }
 
         private async void GetFrame_Click(object sender, RoutedEventArgs e)
@@ -272,12 +291,11 @@ namespace cameraApp2
 
         }
 
-        private SoftwareBitmap backBuffer;
-        private WriteableBitmap writeableBitmap;
 
-        private bool taskRunning = false;
-        private bool taskRunningNote = false;
-       // IRandomAccessStream streamNote;
+
+        
+        //private MediaComposition mediaComposition = new MediaComposition();
+
         private async void ColorFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
         {
             var mediaFrameReference = sender.TryAcquireLatestFrame();
@@ -310,6 +328,8 @@ namespace cameraApp2
                 CanvasBitmap image = CanvasBitmap.CreateFromSoftwareBitmap(device, softwareBitmap);
                 
 
+
+
                 var offscreen = new CanvasRenderTarget(device, (float)image.Bounds.Width, (float)image.Bounds.Height, 96);
                 using (var ds = offscreen.CreateDrawingSession())
                 {
@@ -326,11 +346,22 @@ namespace cameraApp2
                     });
                     Rect rect = new Rect(10, 400, 300, 200);                    
                     ds.DrawRectangle(rect, Colors.Chartreuse);
+
                 }
+                             
+
+                MediaClip mediaClip = MediaClip.CreateFromSurface(offscreen, TimeSpan.FromMilliseconds(80));
+               // mediaComposition = new MediaComposition();
+                mediaComposition.Clips.Add(mediaClip);
+                
+
 
                 var bytePixel = offscreen.GetPixelBytes();
                 IBuffer buffrPixel = bytePixel.AsBuffer();
                 softwareBitmap.CopyFromBuffer(buffrPixel);
+
+                // MediaClip <- IDirectSurfase(CreateFromSurgase) <- IBuffer 
+
                 //----------------                
 
 
@@ -361,6 +392,16 @@ namespace cameraApp2
             }
 
             //+++++++++++++++++++++++++++++++
+
+            // These files could be picked from a location that we won't have access to later
+
+            //var storageItemAccessList = Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList;
+            //storageItemAccessList.Add(softwareBitmap);
+
+            //var clip = await MediaClip.CreateFromSurface;
+            //composition.Clips.Add(clip);
+
+
             //Debug.WriteLine("StartRecord");
 
             //var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
@@ -375,9 +416,7 @@ namespace cameraApp2
             
         }
         
-
-
-        CanvasBitmap canvasBitmap;
+        
         private void canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
             args.DrawingSession.DrawImage(canvasBitmap);
