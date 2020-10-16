@@ -59,7 +59,42 @@
                     <SymbolIcon Symbol="Flag" RenderTransformOrigin="1,1"/>
                 </Viewbox>
             </Button>
-            
+
         </StackPanel>
+
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button x:Name="inReportRead" Click="inReportRead_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Read"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="runMeasure" Click="runMeasure_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Accept"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="_stopMeasure" Click="stopMeasure_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Account"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="_getDistanse" Click="getDistanse_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Go"/>
+                </Viewbox>
+            </Button>
+        </StackPanel>
+
+
+        <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="151,259,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="296" Width="315"/>
+
     </Grid>
 </Page>

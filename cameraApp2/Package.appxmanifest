@@ -51,5 +51,6 @@
     <uap:Capability Name="videosLibrary"/>
     <DeviceCapability Name="microphone"/>
     <DeviceCapability Name="webcam"/>
+	<DeviceCapability Name="humanInterfaceDevice"/>
   </Capabilities>
 </Package>

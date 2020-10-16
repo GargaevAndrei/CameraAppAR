@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
-using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
@@ -16,27 +10,16 @@ using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System.Display;
-using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Imaging;
-
-using Windows.UI.Xaml.Navigation;
-
-using System.Numerics;
-using System.Drawing;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Windows.Storage.Pickers;
-using Windows.Media.Core;
-using Windows.Media.Playback;
-using Microsoft.Graphics.Canvas.Text;
-using Windows.Media.Editing;
+using Windows.Media.Effects;
+using Windows.Media;
+using Windows.Devices.HumanInterfaceDevice;
+using System.Linq;
+using Windows.UI.Core;
+using Windows.Security.Cryptography;
+
 
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
@@ -48,25 +31,225 @@ namespace cameraApp2
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private MediaCapture mediaCapture;
-        private MediaCapture mediaCaptureNote;
+
+        private MediaCapture mediaCapture;        
         bool isInitialized = false;
         private readonly DisplayRequest displayRequest = new DisplayRequest();
         private StorageFolder storageFolder = null;
+        LowLagMediaRecording _mediaRecording;
 
-        private InMemoryRandomAccessStream videoStream = new InMemoryRandomAccessStream();
-        private LowLagMediaRecording _mediaRecording;
 
-        private MediaFrameReader mediaFrameReader;
-        StorageFile fileVideo;
-        private SoftwareBitmap backBuffer;
-        private bool taskRunning = false;
-        CanvasBitmap canvasBitmap;
-        MediaComposition mediaComposition;
+        //private MediaFrameReader mediaFrameReader;
+        //StorageFile fileVideo;
+        //private SoftwareBitmap backBuffer;
+        //private bool taskRunning = false;
+        //CanvasBitmap canvasBitmap;
+        //MediaComposition mediaComposition;
+        //private MediaCapture mediaCaptureNote;
 
         public MainPage()
         {
+
             this.InitializeComponent();
+            EnumerateHidDevices();
+        }
+
+        HidDevice device;
+        int count = 0;
+
+        private async void EnumerateHidDevices()
+        {
+            // Microsoft Input Configuration Device.
+            ushort vendorId  = 0x0483;      // 0x045E;
+            ushort productId = 0x5750;      // 0x07CD;
+            ushort usagePage = 0xff00;      // 0x000D;
+            ushort usageId   = 0x0001;
+
+            // Create the selector.
+            string selector = HidDevice.GetDeviceSelector(usagePage, usageId, vendorId, productId);
+
+            // Enumerate devices using the selector.
+            var devices = await DeviceInformation.FindAllAsync(selector);
+
+            if (devices.Any())
+            {
+                // At this point the device is available to communicate with
+                // So we can send/receive HID reports from it or 
+                // query it for control descriptions.
+                textBoxInfo.Text = "HID devices found: " + devices.Count;
+
+                // Open the target HID device.
+                device = await HidDevice.FromIdAsync(devices.ElementAt(0).Id, FileAccessMode.ReadWrite);
+
+                readHid();
+
+            }
+            else
+            {
+                // There were no HID devices that met the selector criteria.
+                textBoxInfo.Text = "HID device not found";
+            }
+        }
+
+        private async void sendOutReport(DataWriter dataWriter)
+        {
+            HidOutputReport outReport = device.CreateOutputReport(0x00);
+            outReport.Data = dataWriter.DetachBuffer();
+
+            // Send the output report asynchronously
+            device.SendOutputReportAsync(outReport);
+
+            device.InputReportReceived += async (sender, args) =>
+            {
+                HidInputReport inputReport = args.Report;
+                IBuffer buffer = inputReport.Data;
+              
+                byte[] ByteArray;
+                CryptographicBuffer.CopyToByteArray(buffer, out ByteArray);
+
+                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                {
+                    //textBoxInfo.Text += "\nCount = " + count.ToString() + "\nHID Input Report: " + inputReport.ToString() +
+                    //"\nTotal number of bytes received: " + buffer.Length.ToString() +
+                    //"\n Data = " + CryptographicBuffer.EncodeToHexString(buffer);
+
+                    count++;
+
+                    if(ByteArray[5] == 0x1c)
+                    {
+                        byte[] bytes = new byte[4];
+
+                        bytes[0] = (byte)(ByteArray[6]);
+                        bytes[1] = (byte)(ByteArray[7]);
+                        bytes[2] = (byte)(ByteArray[8]);
+                        bytes[3] = (byte)(ByteArray[9]);
+                        //Array.Reverse(bytes);
+                        double value = BitConverter.ToSingle(bytes, 0);
+
+                        textBoxInfo.Text += "\n Lenght = " + value.ToString();
+                    }
+
+
+                }));
+            };
+        }
+        private async void readHid()
+        {
+            if (device != null)
+            {
+                // construct a HID output report to send to the device
+                
+
+                /// Initialize the data buffer and fill it in
+                byte[] bufferTx = new byte[65];
+                bufferTx[0] = 0x00;
+                bufferTx[1] = 0xaa;
+                bufferTx[2] = 0xbb;
+                bufferTx[3] = 0x00;
+                bufferTx[4] = 0x06;
+                bufferTx[5] = 13;
+
+                DataWriter dataWriter = new DataWriter();
+                dataWriter.WriteBytes(bufferTx);
+
+                sendOutReport(dataWriter);
+
+            }
+        }
+
+        private async void startMeasure()
+        {
+            if (device != null)
+            {
+
+                // construct a HID output report to send to the device
+                HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+                /// Initialize the data buffer and fill it in
+                byte[] bufferTx = new byte[65];
+                bufferTx[0] = 0x00;
+                bufferTx[1] = 0xaa;
+                bufferTx[2] = 0xbb;
+                bufferTx[3] = 0x00;
+                bufferTx[4] = 0x06;
+                bufferTx[5] = 23;
+
+                DataWriter dataWriter = new DataWriter();
+                dataWriter.WriteBytes(bufferTx);
+
+                sendOutReport(dataWriter);
+
+            }
+        }
+
+        private async void stopMeasure()
+        {
+            if (device != null)
+            {
+
+                // construct a HID output report to send to the device
+                HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+                /// Initialize the data buffer and fill it in
+                byte[] bufferTx = new byte[65];
+                bufferTx[0] = 0x00;
+                bufferTx[1] = 0xaa;
+                bufferTx[2] = 0xbb;
+                bufferTx[3] = 0x00;
+                bufferTx[4] = 0x06;
+                bufferTx[5] = 33;
+
+                DataWriter dataWriter = new DataWriter();
+                dataWriter.WriteBytes(bufferTx);
+
+                sendOutReport(dataWriter);
+
+            }
+        }
+
+        private async void getDistance()
+        {
+            if (device != null)
+            {
+
+                // construct a HID output report to send to the device
+                HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+                /// Initialize the data buffer and fill it in
+                byte[] bufferTx = new byte[65];
+                bufferTx[0] = 0x00;
+                bufferTx[1] = 0xaa;
+                bufferTx[2] = 0xbb;
+                bufferTx[3] = 0x00;
+                bufferTx[4] = 0x06;
+                bufferTx[5] = 28;
+
+                DataWriter dataWriter = new DataWriter();
+                dataWriter.WriteBytes(bufferTx);
+
+                sendOutReport(dataWriter);
+
+            }
+        }
+
+        private void inReportRead_Click(object sender, RoutedEventArgs e)
+        {
+            readHid();
+        }
+
+        private void runMeasure_Click(object sender, RoutedEventArgs e)
+        {
+            startMeasure();
+        }
+
+        private void stopMeasure_Click(object sender, RoutedEventArgs e)
+        {
+            stopMeasure();
+        }
+
+        private void getDistanse_Click(object sender, RoutedEventArgs e)
+        {
+            getDistance();
         }
 
         private static async Task<DeviceInformationCollection> FindCameraDeviceAsync()
@@ -91,7 +274,10 @@ namespace cameraApp2
 
                 DeviceInformation cameraDevice;
                 cameraDevice = cameraDeviceList[0];
-                mediaCapture = new MediaCapture();                
+                mediaCapture = new MediaCapture(); 
+                
+
+
 
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraDevice.Id };
 
@@ -99,11 +285,14 @@ namespace cameraApp2
                 {
                     await mediaCapture.InitializeAsync(settings);
                     isInitialized = true;
+
                 }
                 catch (UnauthorizedAccessException)
                 {
                     Debug.WriteLine("camera denided");
                 }
+
+
 
 
                 if (isInitialized)
@@ -112,9 +301,9 @@ namespace cameraApp2
                 }
 
 
-                var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
+                /*var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
                 fileVideo = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
-                mediaComposition = new MediaComposition();
+                mediaComposition = new MediaComposition();*/
             }
 
         }
@@ -123,6 +312,17 @@ namespace cameraApp2
         {
             displayRequest.RequestActive();
             PreviewControl.Source = mediaCapture;
+
+
+            //------------ add video effect -----------------
+            var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+
+            IMediaExtension videoEffect =
+               await mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+
+            videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
+            //-----------------------------------------------
+
             await mediaCapture.StartPreviewAsync();
         }
 
@@ -184,43 +384,48 @@ namespace cameraApp2
 
         }
 
-
-        private async void StartRecord_Click(object sender, RoutedEventArgs e)
-        {
-            await StartRecordAsync();
-
-        }
-
-
         private async Task StartRecordAsync()
         {
             Debug.WriteLine("StartRecord");
 
             var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
-            _mediaRecording = await mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Vga), file);
-            await _mediaRecording.StartAsync();
-
+            try
+            {
+                _mediaRecording = await mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
+                await _mediaRecording.StartAsync();
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("err3 = " + e.ToString());
+            }
         }
+
+
+        private async void StartRecord_Click(object sender, RoutedEventArgs e)
+        {
+            await StartRecordAsync();
+
+        }        
 
         
 
         private async Task RecordAsync()
         {
             Debug.WriteLine("StartRecord");
-            await mediaComposition.RenderToFileAsync(fileVideo, MediaTrimmingPreference.Fast, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
+            //await mediaComposition.RenderToFileAsync(fileVideo, MediaTrimmingPreference.Fast, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
         }
 
 
         private async void StopRecord_Click(object sender, RoutedEventArgs e)
         {
-            //await _mediaRecording.FinishAsync();
-            await RecordAsync();
+           await _mediaRecording.FinishAsync();
+             //await RecordAsync();
         }
 
         private async void GetFrame_Click(object sender, RoutedEventArgs e)
         {
-
+/*
             var frameSourceGroups = await MediaFrameSourceGroup.FindAllAsync();
 
             MediaFrameSourceGroup selectedGroup = null;
@@ -288,9 +493,9 @@ namespace cameraApp2
             mediaFrameReader = await mediaCapture.CreateFrameReaderAsync(colorFrameSourse, MediaEncodingSubtypes.Argb32);
             mediaFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
             await mediaFrameReader.StartAsync();
-
+ */
         }
-
+       
 
 
         
@@ -298,7 +503,7 @@ namespace cameraApp2
 
         private async void ColorFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
         {
-            var mediaFrameReference = sender.TryAcquireLatestFrame();
+           /* var mediaFrameReference = sender.TryAcquireLatestFrame();
             var videoMediaFrame = mediaFrameReference?.VideoMediaFrame;
             var softwareBitmap = videoMediaFrame?.SoftwareBitmap;
 
@@ -314,13 +519,13 @@ namespace cameraApp2
 
 
                 //!!!!!! Here i can create writableBitmap from sotfwareBitmap and softwareBitmap from writableBitmap                
-                /* await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                {
-                    writeableBitmap = new WriteableBitmap((int)softwareBitmap.PixelWidth, (int)softwareBitmap.PixelHeight);
-                    softwareBitmap.CopyToBuffer(writeableBitmap.PixelBuffer);                   
-                    //softwareBitmap.CopyFromBuffer(writeableBitmap.PixelBuffer);
-                });
-                */
+                // await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                //{
+                //    writeableBitmap = new WriteableBitmap((int)softwareBitmap.PixelWidth, (int)softwareBitmap.PixelHeight);
+                //    softwareBitmap.CopyToBuffer(writeableBitmap.PixelBuffer);                   
+                //    //softwareBitmap.CopyFromBuffer(writeableBitmap.PixelBuffer);
+                //});
+                //
 
 
                 var device = CanvasDevice.GetSharedDevice();
@@ -402,43 +607,38 @@ namespace cameraApp2
             //composition.Clips.Add(clip);
 
 
-            //Debug.WriteLine("StartRecord");
-
-            //var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
-            //StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
-            //_mediaRecording = await mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Vga), file);
-            //await _mediaRecording.StartAsync();
+            //Debug.WriteLine("StartRecord");           
 
             //+++++++++++++++++++++++++++++++
 
             if (mediaFrameReference != null)
                 mediaFrameReference.Dispose();
-            
+         */   
         }
         
         
         private void canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            args.DrawingSession.DrawImage(canvasBitmap);
+           /* args.DrawingSession.DrawImage(canvasBitmap);
             args.DrawingSession.DrawText("hello test", 100, 100, Colors.Aqua);
             args.DrawingSession.DrawText("hello test", 100, 120, Colors.Brown);
-            
+           */ 
         }        
 
         private void canvas_CreateResources(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
         {
-            try
+            /*try
             {
                 args.TrackAsyncAction(CreateResourceAsync(sender).AsAsyncAction());
             }
             catch (Exception ex)
             { Debug.WriteLine("Err1 " + ex.ToString()); }
-
+            */
         }
 
         async Task CreateResourceAsync(CanvasControl sender)
         {
-            try 
+           /* try 
             {                
                 var photoFile = await KnownFolders.PicturesLibrary.CreateFileAsync("CameraPhoto.jpg", CreationCollisionOption.OpenIfExists);
 
@@ -453,50 +653,9 @@ namespace cameraApp2
             }
             catch(Exception ex)
             { Debug.WriteLine("Err2 " + ex.ToString()); }
+           */
         }
 
-        /*private void InitializeMediaStreamSource()
-        {
-            // create VideoEncodingProperties 
-            VideoEncodingProperties videoProps = VideoEncodingProperties.CreateH264();
-
-            // create VideoStreamDescriptor 
-            VideoStreamDescriptor videoDescriptor = new VideoStreamDescriptor(videoProps);
-
-            // create MediaStreamSource 
-            var MSS = new Windows.Media.Core.MediaStreamSource(videoDescriptor);
-
-            // hooking up the MediaStreamSource event handlers 
-            MSS.Starting += MSS_Starting;
-            MSS.SampleRequested += MSS_SampleRequested;
-            MSS.Closed += MSS_Closed;
-
-            // hook up our MediaPlayer with the MediaStreamSource 
-            MediaPlayer.SetStreamSource(MSS);
-        }
-
-        private void MSS_SampleRequested(MediaStreamSource source, MediaStreamSourceSampleRequestedEventArgs args)
-        {
-            // Get Direct3DSurface from WinRT screen capture API 
-            IDirect3DSurface surface = GetSurfaceFromScreenCapture();
-            TimeSpan timestamp = GetCurrentTime();
-
-            // Create a media stream sample 
-            MediaStreamSample sample = MediaStreamSample.CreateFromDirect3D11Surface(surface, timestamp);
-            sample.OnProcessed += MSS_SampleProcessed;
-
-            // Complete the sample request 
-            args.Request.Sample = sample;
-        }
-
-        private void MSS_SampleProcessed(MediaStreamSample sample)
-        {
-            // Get the surface from the processed sample so that it can be reused 
-            IDirect3DSurface surface = sample.Direct3D11Surface;
-
-            // Allow the surface to be reused in the next call to GetSurfaceFromScreenCapture() 
-            // (Implementation details not shown) 
-        }*/
-
+       
     }
 }
