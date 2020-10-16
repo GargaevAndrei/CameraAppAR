@@ -94,7 +94,7 @@
         </StackPanel>
 
 
-        <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="151,259,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="296" Width="315"/>
+        <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="230,833,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="67" Width="315"/>
 
     </Grid>
 </Page>

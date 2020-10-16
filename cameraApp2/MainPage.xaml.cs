@@ -19,6 +19,8 @@ using Windows.Devices.HumanInterfaceDevice;
 using System.Linq;
 using Windows.UI.Core;
 using Windows.Security.Cryptography;
+using VideoEffectComponent;
+using System.IO.Ports;
 
 
 
@@ -26,6 +28,8 @@ using Windows.Security.Cryptography;
 
 namespace cameraApp2
 {
+    
+
     /// <summary>
     /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
     /// </summary>
@@ -37,7 +41,12 @@ namespace cameraApp2
         private readonly DisplayRequest displayRequest = new DisplayRequest();
         private StorageFolder storageFolder = null;
         LowLagMediaRecording _mediaRecording;
-
+        string Lenght;
+        DispatcherTimer dispatcherTimer;
+        SerialPort serialPortEndo;
+        double Xf;
+        double Yf;
+        double Zf;
 
         //private MediaFrameReader mediaFrameReader;
         //StorageFile fileVideo;
@@ -52,6 +61,50 @@ namespace cameraApp2
 
             this.InitializeComponent();
             EnumerateHidDevices();
+
+            dispatcherTimer = new DispatcherTimer();
+            dispatcherTimer.Tick += dispatcherTimer_Tick;
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+
+            serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
+            
+            if(serialPortEndo != null)
+            {
+                serialPortEndo.Open();
+                serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+            }
+        }
+
+        private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            var serialPort = (SerialPort)sender;
+            byte[] data = new byte[8];
+            serialPort.Read(data, 0, 8);
+
+            short Xaccel = (short)  (  (  (  (short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
+            short Yaccel = (short)  (  (  (  (short)(data[3]) << 2 | (short)(data[2]) >> 6)) << 6);
+            short Zaccel = (short)  (  (  (  (short)(data[5]) << 2 | (short)(data[4]) >> 6)) << 6);
+
+            double Xf1 = (double)Xaccel / 4096;
+            double Yf1 = (double)Yaccel / 4096;
+            double Zf1 = (double)Zaccel / 4096;
+
+            double k = 0.2;
+
+            //Xf = Xf1 * k - (1 - k) * Xf;
+            //Yf = Yf1 * k - (1 - k) * Yf;
+            //Zf = Zf1 * k - (1 - k) * Zf;
+
+            Xf = Xf1;
+            Yf = Yf1;
+            Zf = Zf1;
+
+        }
+
+        private void dispatcherTimer_Tick(object sender, object e)
+        {
+            getDistance();
+            serialPortEndo.Write("BAAZ");
         }
 
         HidDevice device;
@@ -126,13 +179,17 @@ namespace cameraApp2
                         //Array.Reverse(bytes);
                         double value = BitConverter.ToSingle(bytes, 0);
 
-                        textBoxInfo.Text += "\n Lenght = " + value.ToString();
+                        //textBoxInfo.Text += "\n Lenght = " + value.ToString();
+                        tempValue.lenght = "\n Lenght = " + value.ToString();
+                        tempValue.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                         
                     }
 
 
                 }));
             };
         }
+        
         private async void readHid()
         {
             if (device != null)
@@ -249,7 +306,8 @@ namespace cameraApp2
 
         private void getDistanse_Click(object sender, RoutedEventArgs e)
         {
-            getDistance();
+            //getDistance();
+            dispatcherTimer.Start();
         }
 
         private static async Task<DeviceInformationCollection> FindCameraDeviceAsync()
@@ -321,6 +379,7 @@ namespace cameraApp2
                await mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
             videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
+            videoEffect.SetProperties(new PropertySet() { { "LenghtValue",  Lenght} });
             //-----------------------------------------------
 
             await mediaCapture.StartPreviewAsync();
