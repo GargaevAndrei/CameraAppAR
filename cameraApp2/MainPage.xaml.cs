@@ -54,6 +54,7 @@ namespace CameraCOT
         private bool _isPreviewing;
         private bool _isActivePage;
         private bool _isSuspending;
+        private bool _isRecording;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
         private bool _isUIActive;
@@ -77,11 +78,11 @@ namespace CameraCOT
             this.InitializeComponent();
             EnumerateHidDevices();
 
-            dispatcherTimer = new DispatcherTimer();
+            /*dispatcherTimer = new DispatcherTimer();
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
 
-            /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
+            serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
             
             if(serialPortEndo != null)
             {
@@ -440,16 +441,20 @@ namespace CameraCOT
 
 
             //------------ add video effect -----------------
-           /* var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+            if(_cntCamera != 2)
+            { 
+                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
-            IMediaExtension videoEffect =
-               await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+                IMediaExtension videoEffect =
+                   await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
-            videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
-            videoEffect.SetProperties(new PropertySet() { { "LenghtValue",  Lenght} });*/
+                videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
+                videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
+            }
             //-----------------------------------------------
 
             await _mediaCapture.StartPreviewAsync();
+            _isPreviewing = true;
         }
 
 
@@ -546,7 +551,7 @@ namespace CameraCOT
         }
 
 
-        private async void MakePhoto_Click(object sender, RoutedEventArgs e)
+        private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
             await MakePhotoAsync();
         }
@@ -599,7 +604,55 @@ namespace CameraCOT
 
         }
 
-        private async Task StartRecordAsync()
+       
+
+               
+
+
+        private async void mainCamera_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("SwitchCamera on main");
+            _isUIActive = false;
+            _cntCamera = 0;
+            await CleanupCameraAsync();
+            await SetUpBasedOnStateAsync();
+        }
+
+        private async void endoCamera_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("SwitchCamera on endo");
+            _isUIActive = false;
+            _cntCamera = 1;
+            await CleanupCameraAsync();
+            await SetUpBasedOnStateAsync();
+        }
+
+        private async void termoCamera_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("SwitchCamera on termo");
+            _isUIActive = false;
+            _cntCamera = 2;
+            await CleanupCameraAsync();
+            await SetUpBasedOnStateAsync();
+
+        }
+
+        private async void VideoButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isRecording)
+            {
+                await StartRecordingAsync(); 
+            }
+            else
+            {
+                await StopRecordingAsync();
+            }
+
+            // After starting or stopping video recording, update the UI to reflect the MediaCapture state
+            UpdateCaptureControls();
+        }
+
+        private async Task StartRecordingAsync()
         {
             Debug.WriteLine("StartRecord");
 
@@ -609,29 +662,44 @@ namespace CameraCOT
             {
                 _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
                 await _mediaRecording.StartAsync();
+                _isRecording = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine("err3 = " + e.ToString());
             }
         }
 
-
-        private async void StartRecord_Click(object sender, RoutedEventArgs e)
+        private async Task StopRecordingAsync()
         {
-            await StartRecordAsync();
+            Debug.WriteLine("Stopping recording...");
 
-        }        
-               
+            _isRecording = false;
+            await _mediaCapture.StopRecordAsync();
 
-
-        private async void StopRecord_Click(object sender, RoutedEventArgs e)
-        {
-           await _mediaRecording.FinishAsync();
-             //await RecordAsync();
+            Debug.WriteLine("Stopped recording!");
         }
-       
-        
-       
+
+        private void UpdateCaptureControls()
+        {
+            // The buttons should only be enabled if the preview started sucessfully
+            PhotoButton.IsEnabled = _isPreviewing;
+            VideoButton.IsEnabled = _isPreviewing;
+
+            // Update recording button to show "Stop" icon instead of red "Record" icon
+            StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
+            StopRecordingIcon.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+
+            // If the camera doesn't support simultaneosly taking pictures and recording video, disable the photo button on record
+            if (_isInitialized && !_mediaCapture.MediaCaptureSettings.ConcurrentRecordAndPhotoSupported)
+            {
+                PhotoButton.IsEnabled = !_isRecording;
+
+                // Make the button invisible if it's disabled, so it's obvious it cannot be interacted with
+                PhotoButton.Opacity = PhotoButton.IsEnabled ? 1 : 0;
+            }
+        }
+
+
     }
 }

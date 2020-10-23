@@ -31,6 +31,8 @@
                     <Setter Property="Margin" Value="10,40"/>
                     <Setter Property="MinWidth" Value="80"/>
                     <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
@@ -39,21 +41,25 @@
                     <SymbolIcon Symbol="Switch" RenderTransformOrigin="1,1"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="MakePhoto" Click="MakePhoto_Click">
+            <Button x:Name="PhotoButton" Click="PhotoButton_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Camera"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="StartRecord" Click="StartRecord_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
+            <Button x:Name="VideoButton" Click="VideoButton_Click">
+                <Grid>
+                    <Ellipse x:Name="StartRecordingIcon" Fill="Red" Width="20" Height="20"/>
+                    <Rectangle x:Name="StopRecordingIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
+                </Grid>
+                <!--<Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Video"/>
-                </Viewbox>
+                </Viewbox> -->
             </Button>
-            <Button x:Name="StopRecord" Click="StopRecord_Click">
+            <!--<Button x:Name="StopRecord" Click="StopRecord_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Stop" RenderTransformOrigin="1,1"/>
                 </Viewbox>
-            </Button>
+            </Button> -->
             
 
         </StackPanel>
@@ -64,6 +70,8 @@
                     <Setter Property="Margin" Value="10,40"/>
                     <Setter Property="MinWidth" Value="80"/>
                     <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
@@ -89,6 +97,35 @@
             </Button>
         </StackPanel>
 
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Center">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+            
+            <Button x:Name="mainCamera" Click="mainCamera_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Accept"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="endoCamera" Click="endoCamera_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Accept"/>
+                </Viewbox>
+            </Button>
+            <Button x:Name="termoCamera" Click="termoCamera_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Accept"/>
+                </Viewbox>
+            </Button>
+            
+        </StackPanel>
 
         <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="230,833,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="67" Width="315"/>
 
