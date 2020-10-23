@@ -21,12 +21,14 @@ using Windows.UI.Core;
 using Windows.Security.Cryptography;
 using VideoEffectComponent;
 using System.IO.Ports;
+using Windows.ApplicationModel;
+using Windows.UI.Xaml.Navigation;
 
 
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
 
-namespace cameraApp2
+namespace CameraCOT
 {
     
 
@@ -36,7 +38,7 @@ namespace cameraApp2
     public sealed partial class MainPage : Page
     {
 
-        private MediaCapture mediaCapture;        
+        private MediaCapture _mediaCapture;        
         bool isInitialized = false;
         private readonly DisplayRequest displayRequest = new DisplayRequest();
         private StorageFolder storageFolder = null;
@@ -47,6 +49,19 @@ namespace cameraApp2
         double Xf;
         double Yf;
         double Zf;
+
+        private bool _isInitialized;
+        private bool _isPreviewing;
+        private bool _isActivePage;
+        private bool _isSuspending;
+        private readonly DisplayRequest _displayRequest = new DisplayRequest();
+        private Task _setupTask = Task.CompletedTask;
+        private bool _isUIActive;
+        private int _cntCamera;
+        private bool _changeCamera;
+        private bool _isSwitched;
+        private StorageFolder _captureFolder = null;
+
 
         //private MediaFrameReader mediaFrameReader;
         //StorageFile fileVideo;
@@ -66,13 +81,13 @@ namespace cameraApp2
             dispatcherTimer.Tick += dispatcherTimer_Tick;
             dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
 
-            serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
+            /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
             
             if(serialPortEndo != null)
             {
                 serialPortEndo.Open();
                 serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
-            }
+            }*/
         }
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -180,7 +195,7 @@ namespace cameraApp2
                         double value = BitConverter.ToSingle(bytes, 0);
 
                         //textBoxInfo.Text += "\n Lenght = " + value.ToString();
-                        tempValue.lenght = "\n Lenght = " + value.ToString();
+                        tempValue.lenght = "\n Lenght = " + value.ToString("0.000");
                         tempValue.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
                          
                     }
@@ -316,79 +331,220 @@ namespace cameraApp2
             return allVideoDevices;
         }
 
-        private async Task initializeCameraAsync()
-        {
-            Debug.WriteLine("initializeCametaAsync");
 
-            if (mediaCapture == null)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            Application.Current.Suspending += Application_Suspending;
+            Application.Current.Resuming += Application_Resuming;
+            Window.Current.VisibilityChanged += Window_VisibilityChanged;
+
+            _isActivePage = true;
+
+            await SetUpBasedOnStateAsync();
+        }
+
+        private void Application_Resuming(object sender, object e)
+        {
+            _isSuspending = false;
+
+            var task = Dispatcher.RunAsync(CoreDispatcherPriority.High, async () =>
+            {
+                await SetUpBasedOnStateAsync();
+            });
+        }
+
+        private void Application_Suspending(object sender, SuspendingEventArgs e)
+        {
+            _isSuspending = true;
+
+            var defferal = e.SuspendingOperation.GetDeferral();
+            var task = Dispatcher.RunAsync(CoreDispatcherPriority.High, async () =>
+            {
+                await SetUpBasedOnStateAsync();
+                defferal.Complete();
+            });
+        }
+
+        protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            Application.Current.Suspending -= Application_Suspending;
+            Application.Current.Resuming -= Application_Resuming;
+            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
+
+            _isActivePage = false;
+
+            await SetUpBasedOnStateAsync();
+        }
+
+        private async void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
+        {
+            await SetUpBasedOnStateAsync();
+        }
+
+
+
+        private async Task InitializeCameraAsync()
+        {
+            Debug.WriteLine("InitializeCameraAsync");
+
+            if (_mediaCapture == null)
             {
                 var cameraDeviceList = await FindCameraDeviceAsync();
 
                 if (cameraDeviceList.Count == 0)
                 {
-                    Debug.WriteLine("No camera device found");
+                    Debug.WriteLine("No camera device found!");
                     return;
                 }
 
-                DeviceInformation cameraDevice;
-                cameraDevice = cameraDeviceList[0];
-                mediaCapture = new MediaCapture(); 
-                
+                //var cameraDevice = cameraDeviceList.FirstOrDefault();
 
+                if (_changeCamera)
+                {
+                    _changeCamera = false;
+                    _cntCamera++;
+                }
 
+                if (cameraDeviceList.Count < (_cntCamera + 1))
+                    _cntCamera = 0;
+
+                var cameraDevice = cameraDeviceList[_cntCamera];
+
+                _mediaCapture = new MediaCapture();
+                _mediaCapture.Failed += MediaCaptureFiled;
 
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraDevice.Id };
 
                 try
                 {
-                    await mediaCapture.InitializeAsync(settings);
-                    isInitialized = true;
-
+                    await _mediaCapture.InitializeAsync(settings);
+                    _isInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    Debug.WriteLine("camera denided");
+                    Debug.WriteLine("The app was denied access to the camera");
                 }
 
-
-
-
-                if (isInitialized)
+                if (_isInitialized)
                 {
                     await StartPreviewAsync();
                 }
 
-
-                /*var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
-                fileVideo = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
-                mediaComposition = new MediaComposition();*/
             }
-
         }
 
         private async Task StartPreviewAsync()
         {
             displayRequest.RequestActive();
-            PreviewControl.Source = mediaCapture;
+            PreviewControl.Source = _mediaCapture;
 
 
             //------------ add video effect -----------------
-            var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+           /* var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
             IMediaExtension videoEffect =
-               await mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+               await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
             videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
-            videoEffect.SetProperties(new PropertySet() { { "LenghtValue",  Lenght} });
+            videoEffect.SetProperties(new PropertySet() { { "LenghtValue",  Lenght} });*/
             //-----------------------------------------------
 
-            await mediaCapture.StartPreviewAsync();
+            await _mediaCapture.StartPreviewAsync();
         }
+
+
+        private async Task StopPreviewAsync()
+        {
+            _isPreviewing = false;
+            await _mediaCapture.StopPreviewAsync();
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                PreviewControl.Source = null;
+                _displayRequest.RequestRelease();
+            });
+        }
+
 
         private async void SwitchCam_Click(object sender, RoutedEventArgs e)
         {
-            await initializeCameraAsync();
+            Debug.WriteLine("SwitchCameraClick");
+            _isUIActive = false;
+            _changeCamera = true;
+
+            await CleanupCameraAsync();
+            await SetUpBasedOnStateAsync();
+
         }
+
+        private async Task CleanupCameraAsync()
+        {
+            Debug.WriteLine("CleanupCameraAsync");
+
+            if (_isInitialized)
+            {
+                if (_isPreviewing)
+                {
+                    await StopPreviewAsync();
+                }
+
+                _isInitialized = false;
+            }
+
+            if (_mediaCapture != null)
+            {
+                _mediaCapture.Failed -= MediaCaptureFiled;
+                _mediaCapture.Dispose();
+                _mediaCapture = null;
+            }
+        }
+
+        private async void MediaCaptureFiled(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
+        {
+            Debug.WriteLine("MediaCapture_Failed: (0x{0:X}) {1}", errorEventArgs.Code, errorEventArgs.Message);
+
+            await CleanupCameraAsync();
+        }
+
+
+        private async Task SetUpBasedOnStateAsync()
+        {
+            while (!_setupTask.IsCompleted)
+            {
+                await _setupTask;
+            }
+
+            bool wantUIActive = _isActivePage && Window.Current.Visible && !_isSuspending;
+
+            if (_isUIActive != wantUIActive)
+            {
+                _isUIActive = wantUIActive;
+
+                Func<Task> setupAsync = async () =>
+                {
+                    if (wantUIActive)
+                    {
+                        await SetupUiAsync();
+                        await InitializeCameraAsync();
+                    }
+                    else
+                    {
+                        await CleanupCameraAsync();
+                    }
+                };
+                _setupTask = setupAsync();
+            }
+
+            await _setupTask;
+        }
+
+
+        private async Task SetupUiAsync()
+        {
+            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            _captureFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+        }
+
 
         private async void MakePhoto_Click(object sender, RoutedEventArgs e)
         {
@@ -402,7 +558,7 @@ namespace cameraApp2
             storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
 
             var stream = new InMemoryRandomAccessStream();
-            await mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
+            await _mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
 
             try
             {
@@ -451,7 +607,7 @@ namespace cameraApp2
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
-                _mediaRecording = await mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
+                _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
                 await _mediaRecording.StartAsync();
             }
             catch(Exception e)
@@ -466,14 +622,7 @@ namespace cameraApp2
             await StartRecordAsync();
 
         }        
-
-        
-
-        private async Task RecordAsync()
-        {
-            Debug.WriteLine("StartRecord");
-            //await mediaComposition.RenderToFileAsync(fileVideo, MediaTrimmingPreference.Fast, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
-        }
+               
 
 
         private async void StopRecord_Click(object sender, RoutedEventArgs e)
@@ -481,240 +630,8 @@ namespace cameraApp2
            await _mediaRecording.FinishAsync();
              //await RecordAsync();
         }
-
-        private async void GetFrame_Click(object sender, RoutedEventArgs e)
-        {
-/*
-            var frameSourceGroups = await MediaFrameSourceGroup.FindAllAsync();
-
-            MediaFrameSourceGroup selectedGroup = null;
-            MediaFrameSourceInfo colorSourceInfo = null;
-
-            foreach (var sourceGroup in frameSourceGroups)
-            {
-                foreach (var sourceInfo in sourceGroup.SourceInfos)
-                {
-                    if (sourceInfo.MediaStreamType == MediaStreamType.VideoRecord && sourceInfo.SourceKind == MediaFrameSourceKind.Color)
-                    {
-                        colorSourceInfo = sourceInfo;
-                        break;
-                    }
-                }
-                if (colorSourceInfo != null)
-                {
-                    selectedGroup = sourceGroup;
-                    break;
-                }
-            }
-
-            if (selectedGroup == null)
-            {
-                return;
-            }
-
-            mediaCapture = new MediaCapture();
-
-            var settings = new MediaCaptureInitializationSettings()
-            {
-                SourceGroup = selectedGroup,
-                SharingMode = MediaCaptureSharingMode.ExclusiveControl,
-                MemoryPreference = MediaCaptureMemoryPreference.Cpu,
-                StreamingCaptureMode = StreamingCaptureMode.Video
-            };
-            try
-            {
-                await mediaCapture.InitializeAsync(settings);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("MediaCapture initialization failed: " + ex.Message);
-                return;
-            }
-
-
-            var colorFrameSourse = mediaCapture.FrameSources[colorSourceInfo.Id];
-            var preferredFormat = colorFrameSourse.SupportedFormats.Where(format =>
-            {
-                return format.VideoFormat.Width >= 1080;               //&& format.Subtype == MediaEncodingSubtypes.Argb32
-            }).FirstOrDefault();
-            if (preferredFormat == null)
-            {
-                Debug.WriteLine("designed format not supported");
-                return;
-            }
-
-            await colorFrameSourse.SetFormatAsync(preferredFormat);
-
-            imageElement.Source = new SoftwareBitmapSource();
-            imageElementNote.Source = new SoftwareBitmapSource();
-
-           
-            mediaFrameReader = await mediaCapture.CreateFrameReaderAsync(colorFrameSourse, MediaEncodingSubtypes.Argb32);
-            mediaFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
-            await mediaFrameReader.StartAsync();
- */
-        }
        
-
-
         
-        //private MediaComposition mediaComposition = new MediaComposition();
-
-        private async void ColorFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
-        {
-           /* var mediaFrameReference = sender.TryAcquireLatestFrame();
-            var videoMediaFrame = mediaFrameReference?.VideoMediaFrame;
-            var softwareBitmap = videoMediaFrame?.SoftwareBitmap;
-
-            if(softwareBitmap != null)
-            {
-                if (softwareBitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 || softwareBitmap.BitmapAlphaMode != BitmapAlphaMode.Premultiplied)
-                {
-                    softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-                }
-
-
-                //------------*******************----------------
-
-
-                //!!!!!! Here i can create writableBitmap from sotfwareBitmap and softwareBitmap from writableBitmap                
-                // await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                //{
-                //    writeableBitmap = new WriteableBitmap((int)softwareBitmap.PixelWidth, (int)softwareBitmap.PixelHeight);
-                //    softwareBitmap.CopyToBuffer(writeableBitmap.PixelBuffer);                   
-                //    //softwareBitmap.CopyFromBuffer(writeableBitmap.PixelBuffer);
-                //});
-                //
-
-
-                var device = CanvasDevice.GetSharedDevice();
-                //var image = default(CanvasBitmap);
-                CanvasBitmap image = CanvasBitmap.CreateFromSoftwareBitmap(device, softwareBitmap);
-                
-
-
-
-                var offscreen = new CanvasRenderTarget(device, (float)image.Bounds.Width, (float)image.Bounds.Height, 96);
-                using (var ds = offscreen.CreateDrawingSession())
-                {
-                    ds.DrawImage(image, 0, 0);
-                    ds.DrawText("Hello augmented reality", 15, 400, Colors.Aqua, new CanvasTextFormat
-                    {
-                        FontSize = 24,
-                        FontWeight = Windows.UI.Text.FontWeights.Bold
-                    });
-                    ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 15, 430, Colors.Aquamarine, new CanvasTextFormat
-                    {
-                        FontSize = 20,
-                        FontWeight = Windows.UI.Text.FontWeights.Bold
-                    });
-                    Rect rect = new Rect(10, 400, 300, 200);                    
-                    ds.DrawRectangle(rect, Colors.Chartreuse);
-
-                }
-                             
-
-                MediaClip mediaClip = MediaClip.CreateFromSurface(offscreen, TimeSpan.FromMilliseconds(80));
-               // mediaComposition = new MediaComposition();
-                mediaComposition.Clips.Add(mediaClip);
-                
-
-
-                var bytePixel = offscreen.GetPixelBytes();
-                IBuffer buffrPixel = bytePixel.AsBuffer();
-                softwareBitmap.CopyFromBuffer(buffrPixel);
-
-                // MediaClip <- IDirectSurfase(CreateFromSurgase) <- IBuffer 
-
-                //----------------                
-
-
-                softwareBitmap = Interlocked.Exchange(ref backBuffer, softwareBitmap);
-                softwareBitmap?.Dispose();
-
-                var task = imageElement.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High,
-                    async () =>
-                    {
-                        if (taskRunning)
-                        {
-                            return;
-                        }
-                        taskRunning = true;
-
-                        SoftwareBitmap latestBitmap;
-                        while((latestBitmap = Interlocked.Exchange(ref backBuffer, null)) != null)
-                        {
-                            var imageSource  = (SoftwareBitmapSource)imageElement.Source;
-                            await imageSource.SetBitmapAsync(latestBitmap);                            
-                        }
-
-                        taskRunning = false;
-
-                    });
-
-                
-            }
-
-            //+++++++++++++++++++++++++++++++
-
-            // These files could be picked from a location that we won't have access to later
-
-            //var storageItemAccessList = Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList;
-            //storageItemAccessList.Add(softwareBitmap);
-
-            //var clip = await MediaClip.CreateFromSurface;
-            //composition.Clips.Add(clip);
-
-
-            //Debug.WriteLine("StartRecord");           
-
-            //+++++++++++++++++++++++++++++++
-
-            if (mediaFrameReference != null)
-                mediaFrameReference.Dispose();
-         */   
-        }
-        
-        
-        private void canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
-        {
-           /* args.DrawingSession.DrawImage(canvasBitmap);
-            args.DrawingSession.DrawText("hello test", 100, 100, Colors.Aqua);
-            args.DrawingSession.DrawText("hello test", 100, 120, Colors.Brown);
-           */ 
-        }        
-
-        private void canvas_CreateResources(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
-        {
-            /*try
-            {
-                args.TrackAsyncAction(CreateResourceAsync(sender).AsAsyncAction());
-            }
-            catch (Exception ex)
-            { Debug.WriteLine("Err1 " + ex.ToString()); }
-            */
-        }
-
-        async Task CreateResourceAsync(CanvasControl sender)
-        {
-           /* try 
-            {                
-                var photoFile = await KnownFolders.PicturesLibrary.CreateFileAsync("CameraPhoto.jpg", CreationCollisionOption.OpenIfExists);
-
-                if(photoFile != null)
-                {
-                    using(var stream = await photoFile.OpenAsync(FileAccessMode.ReadWrite))
-                    {
-                        canvasBitmap = await CanvasBitmap.LoadAsync(sender, stream);
-                    }
-                }
-
-            }
-            catch(Exception ex)
-            { Debug.WriteLine("Err2 " + ex.ToString()); }
-           */
-        }
-
        
     }
 }

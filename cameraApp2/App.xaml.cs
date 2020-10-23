@@ -15,7 +15,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-namespace cameraApp2
+namespace CameraCOT
 {
     /// <summary>
     /// Обеспечивает зависящее от конкретного приложения поведение, дополняющее класс Application по умолчанию.

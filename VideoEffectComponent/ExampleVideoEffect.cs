@@ -198,30 +198,30 @@ namespace VideoEffectComponent
                 };
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
-                ds.DrawText("Augmented reality", 100, 400, Colors.Aqua, new CanvasTextFormat
+                ds.DrawText("Augmented reality", 200, 800, Colors.Aqua, new CanvasTextFormat
                 {
-                    FontSize = 24,
+                    FontSize = 44,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
-                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 100, 430, Colors.Aquamarine, new CanvasTextFormat
+                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 200, 860, Colors.Aquamarine, new CanvasTextFormat
                 {
-                    FontSize = 20,
-                    FontWeight = Windows.UI.Text.FontWeights.Bold
-                });
-
-                ds.DrawText(tempValue.lenght, 100, 460, Colors.Aquamarine, new CanvasTextFormat
-                {
-                    FontSize = 20,
+                    FontSize = 44,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
 
-                ds.DrawText(tempValue.coordinate, 100, 490, Colors.Aquamarine, new CanvasTextFormat
+                /*ds.DrawText(tempValue.lenght, 200, 920, Colors.Aquamarine, new CanvasTextFormat
                 {
-                    FontSize = 20,
+                    FontSize = 44,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
 
-                Rect rect = new Rect(95, 400, 300, 200);
+                ds.DrawText(tempValue.coordinate, 200, 980, Colors.Aquamarine, new CanvasTextFormat
+                {
+                    FontSize = 44,
+                    FontWeight = Windows.UI.Text.FontWeights.Bold
+                });*/
+
+                Rect rect = new Rect(190, 700, 600, 600);
                 ds.DrawRectangle(rect, Colors.Chartreuse);
 
             }
