@@ -31,11 +31,13 @@ unsafe interface IMemoryBufferByteAccess
 
 namespace VideoEffectComponent
 {
-    public struct tempValue
+    public struct videoEffectSettings
     {
         public static string lenght;
         public static string coordinate;
-        
+        public static int X;
+        public static int Y;
+        public static int FontSize;
     }
     public sealed class ExampleVideoEffect : IBasicVideoEffect
     {
@@ -198,18 +200,18 @@ namespace VideoEffectComponent
                 };
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
-                ds.DrawText("Augmented reality", 200, 800, Colors.Aqua, new CanvasTextFormat
+                ds.DrawText("Augmented reality", videoEffectSettings.X, videoEffectSettings.Y, Colors.Aqua, new CanvasTextFormat
                 {
-                    FontSize = 44,
+                    FontSize = videoEffectSettings.FontSize,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
-                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), 200, 860, Colors.Aquamarine, new CanvasTextFormat
+                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 6, Colors.Aquamarine, new CanvasTextFormat
                 {
-                    FontSize = 44,
+                    FontSize = videoEffectSettings.FontSize,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
 
-                /*ds.DrawText(tempValue.lenght, 200, 920, Colors.Aquamarine, new CanvasTextFormat
+                /*ds.DrawText(videoEffectSettings.lenght, 200, 920, Colors.Aquamarine, new CanvasTextFormat
                 {
                     FontSize = 44,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
@@ -221,8 +223,8 @@ namespace VideoEffectComponent
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });*/
 
-                Rect rect = new Rect(190, 700, 600, 600);
-                ds.DrawRectangle(rect, Colors.Chartreuse);
+               // Rect rect = new Rect(190, 700, 600, 600);
+               // ds.DrawRectangle(rect, Colors.Chartreuse);
 
             }
         }

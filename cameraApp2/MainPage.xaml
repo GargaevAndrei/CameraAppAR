@@ -36,6 +36,11 @@
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
+            <Button x:Name="getScenario" Click="getScenario_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Add"/>
+                </Viewbox>
+            </Button>
             <Button x:Name="SwitchCam" Click="SwitchCam_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Switch" RenderTransformOrigin="1,1"/>
@@ -108,18 +113,18 @@
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
-            
-            <Button x:Name="mainCamera" Click="mainCamera_Click">
+
+            <Button x:Name="mainCameraButton" Click="mainCameraButton_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Accept"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="endoCamera" Click="endoCamera_Click">
+            <Button x:Name="endoCameraButton" Click="endoCameraButton_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Accept"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="termoCamera" Click="termoCamera_Click">
+            <Button x:Name="termoCameraButton" Click="termoCameraButton_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Accept"/>
                 </Viewbox>
@@ -128,6 +133,7 @@
         </StackPanel>
 
         <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="230,833,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="67" Width="315"/>
+        <Frame x:Name="ScenarioFrame" Margin="270,500,166,0"/>
 
     </Grid>
 </Page>

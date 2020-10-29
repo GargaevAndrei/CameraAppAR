@@ -23,6 +23,10 @@ using VideoEffectComponent;
 using System.IO.Ports;
 using Windows.ApplicationModel;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media;
+using System.Collections.Generic;
+using CameraCOT;
+
 
 
 
@@ -37,6 +41,12 @@ namespace CameraCOT
     /// </summary>
     public sealed partial class MainPage : Page
     {
+
+        //List<Scenario> scenarios = new List<Scenario>
+        //{
+        //    new Scenario() { Title="Change cameras settings", ClassType=typeof(MyUserControl2)}
+        //};
+            
 
         private MediaCapture _mediaCapture;        
         bool isInitialized = false;
@@ -58,11 +68,47 @@ namespace CameraCOT
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
         private bool _isUIActive;
-        private int _cntCamera;
+        public int _cntCamera;  //was private
         private bool _changeCamera;
         private bool _isSwitched;
         private StorageFolder _captureFolder = null;
+       
 
+        enum camera 
+        {
+            mainCamera, 
+            endoCamera, 
+            termoCamera, 
+            doubleCamera
+        }
+
+        public struct CameraSettings
+        {
+            int width;
+            int height;
+            int x;
+            int y;
+            int fontSize;
+
+            public void setCameraSettings(int _width, int _height, int _x, int _y, int _fontSize)
+            {
+                this.width = _width;
+                this.height = _height;
+                this.x = _x;
+                this.y = _y;
+                this.fontSize = _fontSize;
+            }
+
+            public int Width {  get { return width; }   set { width = value; }  }
+            public int Height { get { return height; }  set { height = value; } }
+            public int X { get { return x; } set { x = value; } }
+            public int Y { get { return y; } set { y = value; } }
+
+            public int FontSize { get { return fontSize; } set { fontSize = value; } }
+
+        }
+
+        public static CameraSettings[] cameraSettings;
 
         //private MediaFrameReader mediaFrameReader;
         //StorageFile fileVideo;
@@ -74,6 +120,14 @@ namespace CameraCOT
 
         public MainPage()
         {
+
+            cameraSettings = new CameraSettings[4];
+            cameraSettings[(int)camera.mainCamera].setCameraSettings(800, 600, 200, 800, 44);
+            cameraSettings[(int)camera.endoCamera].setCameraSettings(800, 600, 100, 100, 12);
+            cameraSettings[(int)camera.termoCamera].setCameraSettings(800, 600, 10, 10, 8);
+            cameraSettings[(int)camera.doubleCamera].setCameraSettings(800, 600, 100, 400, 12);
+
+
 
             this.InitializeComponent();
             EnumerateHidDevices();
@@ -89,6 +143,9 @@ namespace CameraCOT
                 serialPortEndo.Open();
                 serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
             }*/
+
+            UpdateCaptureControls();
+            
         }
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -196,8 +253,8 @@ namespace CameraCOT
                         double value = BitConverter.ToSingle(bytes, 0);
 
                         //textBoxInfo.Text += "\n Lenght = " + value.ToString();
-                        tempValue.lenght = "\n Lenght = " + value.ToString("0.000");
-                        tempValue.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                        videoEffectSettings.lenght = "\n Lenght = " + value.ToString("0.000");
+                        videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
                          
                     }
 
@@ -439,17 +496,20 @@ namespace CameraCOT
             displayRequest.RequestActive();
             PreviewControl.Source = _mediaCapture;
 
+           // var encodingProperties = StreamResolution.EncodingProperties;
+           // await _previewer.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, encodingProperties);
+
 
             //------------ add video effect -----------------
-            if(_cntCamera != 2)
+            if (_cntCamera != (int)camera.termoCamera)
             { 
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
                 IMediaExtension videoEffect =
                    await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
-                videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
-                videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
+                //videoEffect.SetProperties(new PropertySet() { { "FadeValue", 0.1 } });
+                //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
             }
             //-----------------------------------------------
 
@@ -460,13 +520,13 @@ namespace CameraCOT
 
         private async Task StopPreviewAsync()
         {
-            _isPreviewing = false;
             await _mediaCapture.StopPreviewAsync();
-
+            _isPreviewing = false;
+            
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 PreviewControl.Source = null;
-                _displayRequest.RequestRelease();
+                //_displayRequest.RequestRelease();
             });
         }
 
@@ -604,30 +664,32 @@ namespace CameraCOT
 
         }
 
-       
+                    
 
-               
-
-
-        private async void mainCamera_Click(object sender, RoutedEventArgs e)
+        private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
             Debug.WriteLine("SwitchCamera on main");
             _isUIActive = false;
             _cntCamera = 0;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
+            //mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.BlueViolet);
+
+            UpdateCaptureControls();
         }
 
-        private async void endoCamera_Click(object sender, RoutedEventArgs e)
+        private async void endoCameraButton_Click(object sender, RoutedEventArgs e)
         {
             Debug.WriteLine("SwitchCamera on endo");
             _isUIActive = false;
             _cntCamera = 1;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
+
+            UpdateCaptureControls();
         }
 
-        private async void termoCamera_Click(object sender, RoutedEventArgs e)
+        private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
         {
             Debug.WriteLine("SwitchCamera on termo");
             _isUIActive = false;
@@ -635,6 +697,7 @@ namespace CameraCOT
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
 
+            UpdateCaptureControls();
         }
 
         private async void VideoButton_Click(object sender, RoutedEventArgs e)
@@ -698,8 +761,58 @@ namespace CameraCOT
                 // Make the button invisible if it's disabled, so it's obvious it cannot be interacted with
                 PhotoButton.Opacity = PhotoButton.IsEnabled ? 1 : 0;
             }
+
+
+            switch(_cntCamera)
+            {
+                case 0: 
+                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Thistle);
+                    endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Transparent);
+                    break;
+                case 1:
+                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Transparent);
+                    endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Thistle);
+                    break;
+                case 2:
+                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+                    endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+                    break;
+            }
+
+
+            videoEffectSettings.X = cameraSettings[_cntCamera].X;
+            videoEffectSettings.Y = cameraSettings[_cntCamera].Y;
+            videoEffectSettings.FontSize = cameraSettings[_cntCamera].FontSize;
+
+
         }
 
+        private void getScenario_Click(object sender, RoutedEventArgs e)
+        {
+            // Clear the status block when navigating scenarios.
+            //NotifyUser(String.Empty, NotifyType.StatusMessage);
 
+            //ListBox scenarioListBox = sender as ListBox;
+
+            //Scenario s = scenarios[0];
+            //if (s != null)
+            //{
+            //    ScenarioFrame.Navigate(s.ClassType);
+            //    //if (Window.Current.Bounds.Width < 640)
+            //    //{
+            //    //    Splitter.IsPaneOpen = false;
+            //    //}
+            //}
+
+            this.Frame.Navigate(typeof(SettingsPage));
+
+        }
     }
+
+    public class Scenario
+    {
+        public string Title { get; set; }
+        public Type ClassType { get; set; }
+    }
+
 }
