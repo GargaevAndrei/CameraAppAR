@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media.Capture;
+using Windows.Media.MediaProperties;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -16,19 +19,55 @@ using Windows.UI.Xaml.Navigation;
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace CameraCOT
-{
+{    
+
     /// <summary>
     /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
     /// </summary>
     public sealed partial class SettingsPage : Page
     {
+
+        MediaCapture mediaCaptureTemp;
+
         public SettingsPage()
         {
             this.InitializeComponent();
+
+           foreach (var camera in MainPage.cameraDeviceList)
+           {
+                ComboBoxItem comboBoxItem1 = new ComboBoxItem();
+                comboBoxItem1.Content = camera.Name;
+                comboBoxItem1.Tag = camera.Id;
+                MainCamera.Items.Add(comboBoxItem1);
+   
+
+                ComboBoxItem comboBoxItem2 = new ComboBoxItem();
+                comboBoxItem2.Content = camera.Name;
+                comboBoxItem2.Tag = camera.Id;                
+                TermoCamera.Items.Add(comboBoxItem2);
+
+                ComboBoxItem comboBoxItem3 = new ComboBoxItem();
+                comboBoxItem3.Content = camera.Name;
+                comboBoxItem3.Tag = camera.Id;
+                EndoCamera.Items.Add(comboBoxItem3);
+
+           }
+
         }
 
-        private void MainCameraList_Changed(object sender, SelectionChangedEventArgs e)
+        private async void MainCameraList_Changed(object sender, SelectionChangedEventArgs e)
         {
+
+            var cameraDevice = (ComboBoxItem) EndoCamera.SelectedItem;
+            var settings = new MediaCaptureInitializationSettings { VideoDeviceId = (string)cameraDevice.Tag };
+            IReadOnlyList<MediaCaptureVideoProfile> profiles = MediaCapture.FindAllVideoProfiles((string)cameraDevice.Tag);            
+
+            mediaCaptureTemp = new MediaCapture();
+            await mediaCaptureTemp.InitializeAsync(settings);
+            var videoProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview);
+
+
+
 
         }
 
@@ -67,9 +106,25 @@ namespace CameraCOT
 
         }
 
-        private void EndoCameraList_Changed(object sender, SelectionChangedEventArgs e)
+        private async void EndoCameraList_Changed(object sender, SelectionChangedEventArgs e)
         {
+            var cameraDevice = (ComboBoxItem)EndoCamera.SelectedItem;
+            var settings = new MediaCaptureInitializationSettings { VideoDeviceId = (string)cameraDevice.Tag };
 
+            mediaCaptureTemp = new MediaCapture();
+            await mediaCaptureTemp.InitializeAsync(settings);
+
+            IEnumerable<StreamResolution> allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+            // Order them by resolution then frame rate
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                EndoVideoSettings.Items.Add(comboBoxItem);
+            }
         }
 
         private void EndoPreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
@@ -92,4 +147,109 @@ namespace CameraCOT
             this.Frame.Navigate(typeof(MainPage));
         }
     }
+
+
+    class StreamResolution
+    {
+        private IMediaEncodingProperties _properties;
+
+        public StreamResolution(IMediaEncodingProperties properties)
+        {
+            if (properties == null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
+            // Only handle ImageEncodingProperties and VideoEncodingProperties, which are the two types that GetAvailableMediaStreamProperties can return
+            if (!(properties is ImageEncodingProperties) && !(properties is VideoEncodingProperties))
+            {
+                throw new ArgumentException("Argument is of the wrong type. Required: " + typeof(ImageEncodingProperties).Name
+                    + " or " + typeof(VideoEncodingProperties).Name + ".", nameof(properties));
+            }
+
+            // Store the actual instance of the IMediaEncodingProperties for setting them later
+            _properties = properties;
+        }
+
+        public uint Width
+        {
+            get
+            {
+                if (_properties is ImageEncodingProperties)
+                {
+                    return (_properties as ImageEncodingProperties).Width;
+                }
+                else if (_properties is VideoEncodingProperties)
+                {
+                    return (_properties as VideoEncodingProperties).Width;
+                }
+
+                return 0;
+            }
+        }
+
+        public uint Height
+        {
+            get
+            {
+                if (_properties is ImageEncodingProperties)
+                {
+                    return (_properties as ImageEncodingProperties).Height;
+                }
+                else if (_properties is VideoEncodingProperties)
+                {
+                    return (_properties as VideoEncodingProperties).Height;
+                }
+
+                return 0;
+            }
+        }
+
+        public uint FrameRate
+        {
+            get
+            {
+                if (_properties is VideoEncodingProperties)
+                {
+                    if ((_properties as VideoEncodingProperties).FrameRate.Denominator != 0)
+                    {
+                        return (_properties as VideoEncodingProperties).FrameRate.Numerator / (_properties as VideoEncodingProperties).FrameRate.Denominator;
+                    }
+                }
+
+                return 0;
+            }
+        }
+
+        public double AspectRatio
+        {
+            get { return Math.Round((Height != 0) ? (Width / (double)Height) : double.NaN, 2); }
+        }
+
+        public IMediaEncodingProperties EncodingProperties
+        {
+            get { return _properties; }
+        }
+
+        /// <summary>
+        /// Output properties to a readable format for UI purposes
+        /// eg. 1920x1080 [1.78] 30fps MPEG
+        /// </summary>
+        /// <returns>Readable string</returns>
+        public string GetFriendlyName(bool showFrameRate = true)
+        {
+            if (_properties is ImageEncodingProperties ||
+                !showFrameRate)
+            {
+                return Width + "x" + Height + " [" + AspectRatio + "] " + _properties.Subtype;
+            }
+            else if (_properties is VideoEncodingProperties)
+            {
+                return Width + "x" + Height + " [" + AspectRatio + "] " + FrameRate + "FPS " + _properties.Subtype;
+            }
+
+            return String.Empty;
+        }
+    }
+
 }

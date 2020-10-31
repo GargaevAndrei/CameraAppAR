@@ -36,7 +36,7 @@
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
-            <Button x:Name="getScenario" Click="getScenario_Click">
+            <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Add"/>
                 </Viewbox>

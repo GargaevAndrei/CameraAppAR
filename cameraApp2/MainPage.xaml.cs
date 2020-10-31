@@ -383,7 +383,7 @@ namespace CameraCOT
             dispatcherTimer.Start();
         }
 
-        private static async Task<DeviceInformationCollection> FindCameraDeviceAsync()
+        public static async Task<DeviceInformationCollection> FindCameraDeviceAsync()
         {
             var allVideoDevices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
             return allVideoDevices;
@@ -440,14 +440,14 @@ namespace CameraCOT
         }
 
 
-
+        public static DeviceInformationCollection cameraDeviceList;
         private async Task InitializeCameraAsync()
         {
             Debug.WriteLine("InitializeCameraAsync");
 
             if (_mediaCapture == null)
             {
-                var cameraDeviceList = await FindCameraDeviceAsync();
+                cameraDeviceList = await FindCameraDeviceAsync();
 
                 if (cameraDeviceList.Count == 0)
                 {
@@ -787,32 +787,13 @@ namespace CameraCOT
 
         }
 
-        private void getScenario_Click(object sender, RoutedEventArgs e)
-        {
-            // Clear the status block when navigating scenarios.
-            //NotifyUser(String.Empty, NotifyType.StatusMessage);
-
-            //ListBox scenarioListBox = sender as ListBox;
-
-            //Scenario s = scenarios[0];
-            //if (s != null)
-            //{
-            //    ScenarioFrame.Navigate(s.ClassType);
-            //    //if (Window.Current.Bounds.Width < 640)
-            //    //{
-            //    //    Splitter.IsPaneOpen = false;
-            //    //}
-            //}
+        private void getScenarioSettings_Click(object sender, RoutedEventArgs e)
+        {            
 
             this.Frame.Navigate(typeof(SettingsPage));
 
         }
     }
 
-    public class Scenario
-    {
-        public string Title { get; set; }
-        public Type ClassType { get; set; }
-    }
 
 }
