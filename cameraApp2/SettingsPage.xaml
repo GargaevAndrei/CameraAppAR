@@ -14,7 +14,7 @@
             <ComboBox Name="MainPreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="MainPreviewSettings_Changed" Width="auto"/>
             <ComboBox Name="MainPhotoSettings" PlaceholderText="Photo Settings"     SelectionChanged="MainPhotoSettings_Changed" Width="auto"/>
             <ComboBox Name="MainVideoSettings" PlaceholderText="Video Settings"     SelectionChanged="MainVideoSettings_Changed" Width="auto"/>
-            
+
         </StackPanel>
 
         <StackPanel  Orientation="Horizontal" Height="176" VerticalAlignment="Top" Margin="0,100,0,0"  >
@@ -41,6 +41,16 @@
                 <SymbolIcon Symbol="Add"/>
             </Viewbox>
         </Button>
-        
+        <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="0,550,0,0" VerticalAlignment="Top">
+            <Viewbox MaxHeight="40" MaxWidth="40">
+                <SymbolIcon Symbol="Save"/>
+            </Viewbox>
+        </Button>
+        <Button x:Name="readSettings" Click="readSettings_Click" Margin="0,625,0,0" VerticalAlignment="Top">
+            <Viewbox MaxHeight="40" MaxWidth="40">
+                <SymbolIcon Symbol="Read"/>
+            </Viewbox>
+        </Button>
+
     </Grid>
 </Page>

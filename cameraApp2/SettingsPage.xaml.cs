@@ -1,13 +1,17 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Data.Json;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -146,6 +150,126 @@ namespace CameraCOT
         {
             this.Frame.Navigate(typeof(MainPage));
         }
+
+        private async void saveSettings_Click(object sender, RoutedEventArgs e)
+        {
+            JsonCamerasSettings jsonCamerasSettings = new JsonCamerasSettings();
+
+            var cameraDevice = (ComboBoxItem)EndoCamera.SelectedItem;            
+            jsonCamerasSettings.Name = (string)cameraDevice.Content;
+
+            cameraDevice = (ComboBoxItem)EndoVideoSettings.SelectedItem;
+            jsonCamerasSettings.Id = (string)cameraDevice.Content; ;
+            jsonCamerasSettings.Phone = "852";
+
+            // serialize JSON to a string
+            string json = JsonConvert.SerializeObject(jsonCamerasSettings);
+
+            // write string to a file
+            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync("cameraConfig.json");
+            await FileIO.WriteTextAsync(file, json);
+
+        }
+
+        private async void readSettings_Click(object sender, RoutedEventArgs e)
+        {
+            JsonCamerasSettings jsonCamerasSettings = new JsonCamerasSettings();
+
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            // получаем файл
+            StorageFile helloFile = await localFolder.GetFileAsync("cameraConfig.json");
+            string text = await FileIO.ReadTextAsync(helloFile);
+            jsonCamerasSettings = JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
+        }
+    }
+
+
+    class JsonCamerasSettings
+    {
+        private string id;
+        private string phone;
+        private string name;
+
+        public JsonCamerasSettings()
+        {
+            Id = "";
+            Phone = null;
+            Name = "";
+
+        }
+
+        //public JsonCamerasSettings(string jsonString) : this()
+        //{
+        //    JsonObject jsonObject = JsonObject.Parse(jsonString);
+        //    Id = jsonObject.GetNamedString(idKey, "");
+
+        //    IJsonValue phoneJsonValue = jsonObject.GetNamedValue(phoneKey);
+        //    if (phoneJsonValue.ValueType == JsonValueType.Null)
+        //    {
+        //        Phone = null;
+        //    }
+        //    else
+        //    {
+        //        Phone = phoneJsonValue.GetString();
+        //    }
+
+        //    Name = jsonObject.GetNamedString(nameKey, "");
+        //    Timezone = jsonObject.GetNamedNumber(timezoneKey, 0);
+        //    Verified = jsonObject.GetNamedBoolean(verifiedKey, false);
+
+        //    foreach (IJsonValue jsonValue in jsonObject.GetNamedArray(educationKey, new JsonArray()))
+        //    {
+        //        if (jsonValue.ValueType == JsonValueType.Object)
+        //        {
+        //            Education.Add(new School(jsonValue.GetObject()));
+        //        }
+        //    }
+        //}
+
+        public string Id
+        {
+            get
+            {
+                return id;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException("value");
+                }
+                id = value;
+            }
+        }
+
+        public string Phone
+        {
+            get
+            {
+                return phone;
+            }
+            set
+            {
+                phone = value;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException("value");
+                }
+                name = value;
+            }
+        }
+
     }
 
 
