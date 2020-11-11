@@ -1,29 +1,19 @@
-﻿using Microsoft.Win32;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Data.Json;
-using Windows.Devices.Enumeration;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace CameraCOT
-{    
+{
 
     /// <summary>
     /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
@@ -37,17 +27,17 @@ namespace CameraCOT
         {
             this.InitializeComponent();
 
-           foreach (var camera in MainPage.cameraDeviceList)
-           {
+            foreach (var camera in MainPage.cameraDeviceList)
+            {
                 ComboBoxItem comboBoxItem1 = new ComboBoxItem();
                 comboBoxItem1.Content = camera.Name;
                 comboBoxItem1.Tag = camera.Id;
                 MainCamera.Items.Add(comboBoxItem1);
-   
+
 
                 ComboBoxItem comboBoxItem2 = new ComboBoxItem();
                 comboBoxItem2.Content = camera.Name;
-                comboBoxItem2.Tag = camera.Id;                
+                comboBoxItem2.Tag = camera.Id;
                 TermoCamera.Items.Add(comboBoxItem2);
 
                 ComboBoxItem comboBoxItem3 = new ComboBoxItem();
@@ -55,60 +45,100 @@ namespace CameraCOT
                 comboBoxItem3.Tag = camera.Id;
                 EndoCamera.Items.Add(comboBoxItem3);
 
-           }
+            }
 
         }
 
         private async void MainCameraList_Changed(object sender, SelectionChangedEventArgs e)
         {
-
-            var cameraDevice = (ComboBoxItem) EndoCamera.SelectedItem;
+            var cameraDevice = (ComboBoxItem)MainCamera.SelectedItem;
             var settings = new MediaCaptureInitializationSettings { VideoDeviceId = (string)cameraDevice.Tag };
-            IReadOnlyList<MediaCaptureVideoProfile> profiles = MediaCapture.FindAllVideoProfiles((string)cameraDevice.Tag);            
 
             mediaCaptureTemp = new MediaCapture();
             await mediaCaptureTemp.InitializeAsync(settings);
-            var videoProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview);
 
+            //Find video resolution settings
+            IEnumerable<StreamResolution> allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoRecord).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                MainVideoSettings.Items.Add(comboBoxItem);
+            }
 
+            //Find preview resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
-        }
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                MainPreviewSettings.Items.Add(comboBoxItem);
+            }
 
-        private void MainPreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
+            //Find photo resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.Photo).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                MainPhotoSettings.Items.Add(comboBoxItem);
+            }
+
+        }        
+
+        private async void TermoCameraList_Changed(object sender, SelectionChangedEventArgs e)
         {
+            var cameraDevice = (ComboBoxItem)TermoCamera.SelectedItem;
+            var settings = new MediaCaptureInitializationSettings { VideoDeviceId = (string)cameraDevice.Tag };
 
-        }
+            mediaCaptureTemp = new MediaCapture();
+            await mediaCaptureTemp.InitializeAsync(settings);
 
-        private void MainPhotoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
+            //Find video resolution settings
+            IEnumerable<StreamResolution> allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoRecord).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
-        }
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                TermoVideoSettings.Items.Add(comboBoxItem);
+            }
 
-        private void MainVideoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
+            //Find preview resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
-        }
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                TermoPreviewSettings.Items.Add(comboBoxItem);
+            }
 
-        private void TermoCameraList_Changed(object sender, SelectionChangedEventArgs e)
-        {
+            //Find photo resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.Photo).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
-        }
-
-        private void TermoPreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void TermoPhotoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void TermoVideoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                TermoPhotoSettings.Items.Add(comboBoxItem);
+            }
+        }      
 
         private async void EndoCameraList_Changed(object sender, SelectionChangedEventArgs e)
         {
@@ -118,8 +148,8 @@ namespace CameraCOT
             mediaCaptureTemp = new MediaCapture();
             await mediaCaptureTemp.InitializeAsync(settings);
 
-            IEnumerable<StreamResolution> allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
-            // Order them by resolution then frame rate
+            //Find video resolution settings
+            IEnumerable<StreamResolution> allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoRecord).Select(x => new StreamResolution(x));            
             allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
 
             foreach (var property in allStreamProperties)
@@ -129,6 +159,31 @@ namespace CameraCOT
                 comboBoxItem.Tag = property;
                 EndoVideoSettings.Items.Add(comboBoxItem);
             }
+
+            //Find preview resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                EndoPreviewSettings.Items.Add(comboBoxItem);
+            }
+
+            //Find photo resolution settings
+            allStreamProperties = mediaCaptureTemp.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.Photo).Select(x => new StreamResolution(x));
+            allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+            foreach (var property in allStreamProperties)
+            {
+                ComboBoxItem comboBoxItem = new ComboBoxItem();
+                comboBoxItem.Content = property.GetFriendlyName(true);
+                comboBoxItem.Tag = property;
+                EndoPhotoSettings.Items.Add(comboBoxItem);
+            }
+
         }
 
         private void EndoPreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
@@ -146,128 +201,156 @@ namespace CameraCOT
 
         }
 
-        private void getMain_Click(object sender, RoutedEventArgs e)
+        private void getMainPage_Click(object sender, RoutedEventArgs e)
         {
-            this.Frame.Navigate(typeof(MainPage));
+            Frame.Navigate(typeof(MainPage));
         }
 
+        //JsonCamerasSettings jsonCamerasSettings;
         private async void saveSettings_Click(object sender, RoutedEventArgs e)
         {
             JsonCamerasSettings jsonCamerasSettings = new JsonCamerasSettings();
 
-            var cameraDevice = (ComboBoxItem)EndoCamera.SelectedItem;            
-            jsonCamerasSettings.Name = (string)cameraDevice.Content;
+            var tempSelectedItem                   =  (ComboBoxItem)MainCamera.SelectedItem;            
+            jsonCamerasSettings.MainCameraName     =  (string)tempSelectedItem.Content;
+            jsonCamerasSettings.MainCameraId       =  (string)tempSelectedItem.Tag;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)MainVideoSettings.SelectedItem;
+            jsonCamerasSettings.MainCameraVideo    =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)MainPhotoSettings.SelectedItem;
+            jsonCamerasSettings.MainCameraPhoto    =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)MainPreviewSettings.SelectedItem;
+            jsonCamerasSettings.MainCameraPreview  =  (string)tempSelectedItem.Content;
+                                                   
+                                                   
+            tempSelectedItem                       =  (ComboBoxItem)EndoCamera.SelectedItem;            
+            jsonCamerasSettings.EndoCameraName     =  (string)tempSelectedItem.Content;
+            jsonCamerasSettings.EndoCameraId       =  (string)tempSelectedItem.Tag;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)EndoVideoSettings.SelectedItem;
+            jsonCamerasSettings.EndoCameraVideo    =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)EndoPhotoSettings.SelectedItem;
+            jsonCamerasSettings.EndoCameraPhoto    =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)EndoPreviewSettings.SelectedItem;
+            jsonCamerasSettings.EndoCameraPreview  =  (string)tempSelectedItem.Content;
+                                                   
+                                                   
+            tempSelectedItem                       =  (ComboBoxItem)TermoCamera.SelectedItem;            
+            jsonCamerasSettings.TermoCameraName    =  (string)tempSelectedItem.Content;
+            jsonCamerasSettings.TermoCameraId      =  (string)tempSelectedItem.Tag;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)TermoVideoSettings.SelectedItem;
+            jsonCamerasSettings.TermoCameraVideo   =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)TermoPhotoSettings.SelectedItem;
+            jsonCamerasSettings.TermoCameraPhoto   =  (string)tempSelectedItem.Content;
+                                                     
+            tempSelectedItem                       =  (ComboBoxItem)TermoPreviewSettings.SelectedItem;
+            jsonCamerasSettings.TermoCameraPreview =  (string)tempSelectedItem.Content;
 
-            cameraDevice = (ComboBoxItem)EndoVideoSettings.SelectedItem;
-            jsonCamerasSettings.Id = (string)cameraDevice.Content; ;
-            jsonCamerasSettings.Phone = "852";
+
 
             // serialize JSON to a string
             string json = JsonConvert.SerializeObject(jsonCamerasSettings);
 
             // write string to a file
-            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync("cameraConfig.json");
+            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync("cameraConfig4.json");
             await FileIO.WriteTextAsync(file, json);
+
+
+
+            //var selectedItem = (ComboBoxItem)EndoVideoSettings.SelectedItem;
+            //var encodingProperties = (selectedItem.Tag as StreamResolution).EncodingProperties;
+            //jsonCamerasSettings.MediaEncodingProperties = (IMediaEncodingProperties)encodingProperties;
+
 
         }
 
+
+        //JsonCamerasSettings jsonCamerasSettings;
+
         private async void readSettings_Click(object sender, RoutedEventArgs e)
         {
-            JsonCamerasSettings jsonCamerasSettings = new JsonCamerasSettings();
+            //JsonCamerasSettings jsonCamerasSettings = await JsonCamerasSettings.readFileSettings();
 
-            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            // jsonCamerasSettings.readSettings();
+
+            //StorageFolder localFolder = ApplicationData.Current.LocalFolder;
             // получаем файл
-            StorageFile helloFile = await localFolder.GetFileAsync("cameraConfig.json");
-            string text = await FileIO.ReadTextAsync(helloFile);
-            jsonCamerasSettings = JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
+            //StorageFile configFile = await localFolder.GetFileAsync("cameraConfig2.json");
+            //string text = await FileIO.ReadTextAsync(configFile);
+            //string text = await jsonCamerasSettings.readFileSettings();
+
+            //jsonCamerasSettings = JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
+
+            
+
+            //EndoCameraName.SelectedValue = jsonCamerasSettings.MainCameraName;
+            //ComboBoxItem comboBoxItem = new ComboBoxItem();
+            //comboBoxItem.Content = jsonCamerasSettings.MainCameraName;
+            //comboBoxItem.Tag = jsonCamerasSettings.MainCameraName;
+            //EndoCameraName.Tag = jsonCamerasSettings.MainCameraName;
+
         }
     }
 
 
     class JsonCamerasSettings
-    {
-        private string id;
-        private string phone;
-        private string name;
+    {    
+
+        public string MainCameraName     { get; set; }
+        public string MainCameraId       { get; set; }
+        public string MainCameraPreview  { get; set; }
+        public string MainCameraPhoto    { get; set; }
+        public string MainCameraVideo    { get; set; }
+
+        public string EndoCameraName     { get; set; }
+        public string EndoCameraId       { get; set; }
+        public string EndoCameraPreview  { get; set; }
+        public string EndoCameraPhoto    { get; set; }
+        public string EndoCameraVideo    { get; set; }
+
+        public string TermoCameraName    { get; set; }
+        public string TermoCameraId      { get; set; }
+        public string TermoCameraPreview { get; set; }
+        public string TermoCameraPhoto   { get; set; }
+        public string TermoCameraVideo   { get; set; }
+
+        public IMediaEncodingProperties MediaEncodingProperties { get; set; }
 
         public JsonCamerasSettings()
-        {
-            Id = "";
-            Phone = null;
-            Name = "";
+        {           
 
         }
 
-        //public JsonCamerasSettings(string jsonString) : this()
-        //{
-        //    JsonObject jsonObject = JsonObject.Parse(jsonString);
-        //    Id = jsonObject.GetNamedString(idKey, "");
-
-        //    IJsonValue phoneJsonValue = jsonObject.GetNamedValue(phoneKey);
-        //    if (phoneJsonValue.ValueType == JsonValueType.Null)
-        //    {
-        //        Phone = null;
-        //    }
-        //    else
-        //    {
-        //        Phone = phoneJsonValue.GetString();
-        //    }
-
-        //    Name = jsonObject.GetNamedString(nameKey, "");
-        //    Timezone = jsonObject.GetNamedNumber(timezoneKey, 0);
-        //    Verified = jsonObject.GetNamedBoolean(verifiedKey, false);
-
-        //    foreach (IJsonValue jsonValue in jsonObject.GetNamedArray(educationKey, new JsonArray()))
-        //    {
-        //        if (jsonValue.ValueType == JsonValueType.Object)
-        //        {
-        //            Education.Add(new School(jsonValue.GetObject()));
-        //        }
-        //    }
-        //}
-
-        public string Id
+        /*public JsonCamerasSettings(string jsonString) : this()
         {
-            get
-            {
-                return id;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException("value");
-                }
-                id = value;
-            }
-        }
+            JsonObject jsonObject = JsonObject.Parse(jsonString);       
 
-        public string Phone
-        {
-            get
-            {
-                return phone;
-            }
-            set
-            {
-                phone = value;
-            }
-        }
+            //StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            //// получаем файл
+           // StorageFile configFile = await localFolder.GetFileAsync("cameraConfig2.json");
+            //string text =  FileIO.ReadTextAsync(configFile);
+            ////this = JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
 
-        public string Name
+            //return text;
+        }*/
+
+
+        public static  async Task<JsonCamerasSettings> readFileSettings() 
         {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException("value");
-                }
-                name = value;
-            }
+
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            // получаем файл
+            StorageFile configFile = await localFolder.GetFileAsync("cameraConfig4.json");
+            string text = await FileIO.ReadTextAsync(configFile);
+            
+
+            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text); ;
         }
 
     }

@@ -2,17 +2,14 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
-using Windows.Foundation.Collections;
 using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
-using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System.Display;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.Media.Effects;
 using Windows.Media;
 using Windows.Devices.HumanInterfaceDevice;
@@ -24,8 +21,7 @@ using System.IO.Ports;
 using Windows.ApplicationModel;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Media;
-using System.Collections.Generic;
-using CameraCOT;
+using Newtonsoft.Json;
 
 
 
@@ -34,20 +30,14 @@ using CameraCOT;
 
 namespace CameraCOT
 {
-    
+
 
     /// <summary>
     /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
     /// </summary>
     public sealed partial class MainPage : Page
     {
-
-        //List<Scenario> scenarios = new List<Scenario>
-        //{
-        //    new Scenario() { Title="Change cameras settings", ClassType=typeof(MyUserControl2)}
-        //};
             
-
         private MediaCapture _mediaCapture;        
         bool isInitialized = false;
         private readonly DisplayRequest displayRequest = new DisplayRequest();
@@ -71,8 +61,8 @@ namespace CameraCOT
         public int _cntCamera;  //was private
         private bool _changeCamera;
         private bool _isSwitched;
-        private StorageFolder _captureFolder = null;
-       
+        private StorageFolder _captureFolder = null;        
+
 
         enum camera 
         {
@@ -82,13 +72,21 @@ namespace CameraCOT
             doubleCamera
         }
 
-        public struct CameraSettings
+        public struct Camera
         {
+            public string Name;
+            public string Id;
             int width;
             int height;
             int x;
             int y;
             int fontSize;
+
+            public void setCameraSettings(string _Name, string _Id)
+            {
+                this.Name = _Name;
+                this.Id = _Id;                
+            }
 
             public void setCameraSettings(int _width, int _height, int _x, int _y, int _fontSize)
             {
@@ -108,7 +106,10 @@ namespace CameraCOT
 
         }
 
-        public static CameraSettings[] cameraSettings;
+        public static Camera[] cameras;
+        JsonCamerasSettings jsonCamerasSettings;
+        int cameraType;// = (int)camera.mainCamera;
+
 
         //private MediaFrameReader mediaFrameReader;
         //StorageFile fileVideo;
@@ -118,16 +119,28 @@ namespace CameraCOT
         //MediaComposition mediaComposition;
         //private MediaCapture mediaCaptureNote;
 
+        private async Task<JsonCamerasSettings> readFileSettings()
+        {
+            JsonCamerasSettings jsonCamerasSettings = await JsonCamerasSettings.readFileSettings();
+            return jsonCamerasSettings;
+        }
+
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        {            
+
+            jsonCamerasSettings = await readFileSettings();
+            var d = jsonCamerasSettings.MainCameraName;
+
+            cameras = new Camera[3];
+            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName,   jsonCamerasSettings.MainCameraId);
+            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName,   jsonCamerasSettings.EndoCameraId);
+            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName, jsonCamerasSettings.TermoCameraId);
+
+            UpdateCaptureControls();
+        }
+
         public MainPage()
         {
-
-            cameraSettings = new CameraSettings[4];
-            cameraSettings[(int)camera.mainCamera].setCameraSettings(800, 600, 200, 800, 44);
-            cameraSettings[(int)camera.endoCamera].setCameraSettings(800, 600, 100, 100, 12);
-            cameraSettings[(int)camera.termoCamera].setCameraSettings(800, 600, 10, 10, 8);
-            cameraSettings[(int)camera.doubleCamera].setCameraSettings(800, 600, 100, 400, 12);
-
-
 
             this.InitializeComponent();
             EnumerateHidDevices();
@@ -144,9 +157,11 @@ namespace CameraCOT
                 serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
             }*/
 
-            UpdateCaptureControls();
+            
             
         }
+
+        
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -441,6 +456,7 @@ namespace CameraCOT
 
 
         public static DeviceInformationCollection cameraDeviceList;
+        
         private async Task InitializeCameraAsync()
         {
             Debug.WriteLine("InitializeCameraAsync");
@@ -457,7 +473,7 @@ namespace CameraCOT
 
                 //var cameraDevice = cameraDeviceList.FirstOrDefault();
 
-                if (_changeCamera)
+                /*if (_changeCamera)
                 {
                     _changeCamera = false;
                     _cntCamera++;
@@ -465,13 +481,27 @@ namespace CameraCOT
 
                 if (cameraDeviceList.Count < (_cntCamera + 1))
                     _cntCamera = 0;
+                */
 
-                var cameraDevice = cameraDeviceList[_cntCamera];
+                //------------ можно закоментировать и обращаться прямо к cameras[cameraType].Id !!!
+                //------------------------ есть подводные камни: идет привязка к конкретному usb !!!
+                string cameraName = cameras[cameraType].Name;
+                string cameraId = "";
+
+                //var cameraDevice = cameraDeviceList[_cntCamera];
+
+                foreach (DeviceInformation camera in cameraDeviceList)
+                {
+                    if (camera.Name == cameraName)
+                        cameraId = camera.Id;
+                }    
+                //-----------------------------------------------------------------------------------
 
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;
 
-                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraDevice.Id };
+                
+                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };           //cameraDevice.Id
 
                 try
                 {
@@ -512,7 +542,10 @@ namespace CameraCOT
                 //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
             }
             //-----------------------------------------------
-
+            //var encodingProperties = (jsonCamerasSettings.MainCameraVideo as StreamResolution).EncodingProperties;
+           // IMediaEncodingProperties mediaEncodingProperties;
+           // mediaEncodingProperties.
+           // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MediaEncodingProperties);
             await _mediaCapture.StartPreviewAsync();
             _isPreviewing = true;
         }
@@ -574,6 +607,7 @@ namespace CameraCOT
 
         private async Task SetUpBasedOnStateAsync()
         {
+
             while (!_setupTask.IsCompleted)
             {
                 await _setupTask;
@@ -663,16 +697,17 @@ namespace CameraCOT
 
 
         }
-
-                    
-
+               
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
             Debug.WriteLine("SwitchCamera on main");
             _isUIActive = false;
-            _cntCamera = 0;
+            //_cntCamera = 0;
+            cameraType = (int)camera.mainCamera;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
+
+           
             //mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.BlueViolet);
 
             UpdateCaptureControls();
@@ -683,6 +718,7 @@ namespace CameraCOT
             Debug.WriteLine("SwitchCamera on endo");
             _isUIActive = false;
             _cntCamera = 1;
+            cameraType = (int)camera.endoCamera;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
 
@@ -694,6 +730,7 @@ namespace CameraCOT
             Debug.WriteLine("SwitchCamera on termo");
             _isUIActive = false;
             _cntCamera = 2;
+            cameraType = (int)camera.termoCamera;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
 
@@ -780,9 +817,9 @@ namespace CameraCOT
             }
 
 
-            videoEffectSettings.X = cameraSettings[_cntCamera].X;
-            videoEffectSettings.Y = cameraSettings[_cntCamera].Y;
-            videoEffectSettings.FontSize = cameraSettings[_cntCamera].FontSize;
+            videoEffectSettings.X = cameras[_cntCamera].X;
+            videoEffectSettings.Y = cameras[_cntCamera].Y;
+            videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
 
 
         }
@@ -793,6 +830,7 @@ namespace CameraCOT
             this.Frame.Navigate(typeof(SettingsPage));
 
         }
+       
     }
 
 

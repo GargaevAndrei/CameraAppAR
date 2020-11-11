@@ -200,16 +200,16 @@ namespace VideoEffectComponent
                 };
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
-                ds.DrawText("Augmented reality", videoEffectSettings.X, videoEffectSettings.Y, Colors.Aqua, new CanvasTextFormat
-                {
-                    FontSize = videoEffectSettings.FontSize,
-                    FontWeight = Windows.UI.Text.FontWeights.Bold
-                });
-                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 6, Colors.Aquamarine, new CanvasTextFormat
-                {
-                    FontSize = videoEffectSettings.FontSize,
-                    FontWeight = Windows.UI.Text.FontWeights.Bold
-                });
+                //ds.DrawText("Augmented reality", videoEffectSettings.X, videoEffectSettings.Y, Colors.Aqua, new CanvasTextFormat
+                //{
+                //    FontSize = videoEffectSettings.FontSize,
+                //    FontWeight = Windows.UI.Text.FontWeights.Bold
+                //});
+                //ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 6, Colors.Aquamarine, new CanvasTextFormat
+                //{
+                //    FontSize = videoEffectSettings.FontSize,
+                //    FontWeight = Windows.UI.Text.FontWeights.Bold
+                //});
 
                 /*ds.DrawText(videoEffectSettings.lenght, 200, 920, Colors.Aquamarine, new CanvasTextFormat
                 {
