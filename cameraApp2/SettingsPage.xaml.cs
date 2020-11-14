@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Data.Json;
@@ -185,35 +186,22 @@ namespace CameraCOT
             }
 
         }
-
-        private void EndoPreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void EndoPhotoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void EndoVideoSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
+       
 
         private void getMainPage_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(MainPage));
         }
 
-        //JsonCamerasSettings jsonCamerasSettings;
+
+  
+        public static string fileJsonName = "cameraConfig1.json";
         private async void saveSettings_Click(object sender, RoutedEventArgs e)
         {
             JsonCamerasSettings jsonCamerasSettings = new JsonCamerasSettings();
 
             var tempSelectedItem                   =  (ComboBoxItem)MainCamera.SelectedItem;            
             jsonCamerasSettings.MainCameraName     =  (string)tempSelectedItem.Content;
-            jsonCamerasSettings.MainCameraId       =  (string)tempSelectedItem.Tag;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)MainVideoSettings.SelectedItem;
             jsonCamerasSettings.MainCameraVideo    =  (string)tempSelectedItem.Content;
@@ -222,12 +210,14 @@ namespace CameraCOT
             jsonCamerasSettings.MainCameraPhoto    =  (string)tempSelectedItem.Content;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)MainPreviewSettings.SelectedItem;
-            jsonCamerasSettings.MainCameraPreview  =  (string)tempSelectedItem.Content;
-                                                   
-                                                   
+            jsonCamerasSettings.MainCameraPreview  = (string)tempSelectedItem.Content;                      //(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
+
+            jsonCamerasSettings.MainEncodingProperties = (VideoEncodingProperties)(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
+
+
+
             tempSelectedItem                       =  (ComboBoxItem)EndoCamera.SelectedItem;            
             jsonCamerasSettings.EndoCameraName     =  (string)tempSelectedItem.Content;
-            jsonCamerasSettings.EndoCameraId       =  (string)tempSelectedItem.Tag;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)EndoVideoSettings.SelectedItem;
             jsonCamerasSettings.EndoCameraVideo    =  (string)tempSelectedItem.Content;
@@ -241,7 +231,6 @@ namespace CameraCOT
                                                    
             tempSelectedItem                       =  (ComboBoxItem)TermoCamera.SelectedItem;            
             jsonCamerasSettings.TermoCameraName    =  (string)tempSelectedItem.Content;
-            jsonCamerasSettings.TermoCameraId      =  (string)tempSelectedItem.Tag;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)TermoVideoSettings.SelectedItem;
             jsonCamerasSettings.TermoCameraVideo   =  (string)tempSelectedItem.Content;
@@ -254,19 +243,19 @@ namespace CameraCOT
 
 
 
-            // serialize JSON to a string
-            string json = JsonConvert.SerializeObject(jsonCamerasSettings);
 
-            // write string to a file
-            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync("cameraConfig4.json");
-            await FileIO.WriteTextAsync(file, json);
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.Converters.Add(new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
+            serializer.NullValueHandling = NullValueHandling.Ignore;
+            serializer.TypeNameHandling = TypeNameHandling.Auto;
+            serializer.Formatting = Formatting.Indented;
 
-
-
-            //var selectedItem = (ComboBoxItem)EndoVideoSettings.SelectedItem;
-            //var encodingProperties = (selectedItem.Tag as StreamResolution).EncodingProperties;
-            //jsonCamerasSettings.MediaEncodingProperties = (IMediaEncodingProperties)encodingProperties;
-
+            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
+            using (StreamWriter sw = new StreamWriter(file.Path))
+            using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
+            {
+                serializer.Serialize(writer, jsonCamerasSettings, typeof(JsonCamerasSettings));
+            }
 
         }
 
@@ -300,27 +289,26 @@ namespace CameraCOT
 
 
     class JsonCamerasSettings
-    {    
+    {
 
+        private VideoEncodingProperties _properties;
         public string MainCameraName     { get; set; }
-        public string MainCameraId       { get; set; }
-        public string MainCameraPreview  { get; set; }
+        public string MainCameraPreview  { get; set; }                //IMediaEncodingProperties
         public string MainCameraPhoto    { get; set; }
         public string MainCameraVideo    { get; set; }
 
+        public VideoEncodingProperties MainEncodingProperties { get { return _properties; } set { _properties = value; } }
+
+
         public string EndoCameraName     { get; set; }
-        public string EndoCameraId       { get; set; }
         public string EndoCameraPreview  { get; set; }
         public string EndoCameraPhoto    { get; set; }
         public string EndoCameraVideo    { get; set; }
 
         public string TermoCameraName    { get; set; }
-        public string TermoCameraId      { get; set; }
         public string TermoCameraPreview { get; set; }
         public string TermoCameraPhoto   { get; set; }
         public string TermoCameraVideo   { get; set; }
-
-        public IMediaEncodingProperties MediaEncodingProperties { get; set; }
 
         public JsonCamerasSettings()
         {           
@@ -346,11 +334,13 @@ namespace CameraCOT
 
             StorageFolder localFolder = ApplicationData.Current.LocalFolder;
             // получаем файл
-            StorageFile configFile = await localFolder.GetFileAsync("cameraConfig4.json");
-            string text = await FileIO.ReadTextAsync(configFile);
-            
+            StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
+            string text = await FileIO.ReadTextAsync(configFile);           
 
-            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text); ;
+            //return JsonConvert.DeserializeObject<JsonCamerasSettings>(text); 
+            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings  {   TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
+                                                                                                                            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,  });
+
         }
 
     }
@@ -436,6 +426,7 @@ namespace CameraCOT
         public IMediaEncodingProperties EncodingProperties
         {
             get { return _properties; }
+            //get; set;
         }
 
         /// <summary>

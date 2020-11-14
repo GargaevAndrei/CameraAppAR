@@ -22,6 +22,7 @@ using Windows.ApplicationModel;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Media;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 
 
@@ -81,11 +82,22 @@ namespace CameraCOT
             int x;
             int y;
             int fontSize;
+            IMediaEncodingProperties _properties;
 
-            public void setCameraSettings(string _Name, string _Id)
+            public void setCameraSettings(string _Name)
             {
                 this.Name = _Name;
-                this.Id = _Id;                
+            }
+
+            public void setCameraSettings(string _Name, IMediaEncodingProperties EncodingProperties)
+            {
+                this.Name = _Name;
+                this._properties = EncodingProperties;                
+            }
+
+            public IMediaEncodingProperties EncodingProperties
+            {
+                get { return _properties; }
             }
 
             public void setCameraSettings(int _width, int _height, int _x, int _y, int _fontSize)
@@ -108,16 +120,9 @@ namespace CameraCOT
 
         public static Camera[] cameras;
         JsonCamerasSettings jsonCamerasSettings;
-        int cameraType;// = (int)camera.mainCamera;
+        int cameraType = (int)camera.mainCamera;                            
 
 
-        //private MediaFrameReader mediaFrameReader;
-        //StorageFile fileVideo;
-        //private SoftwareBitmap backBuffer;
-        //private bool taskRunning = false;
-        //CanvasBitmap canvasBitmap;
-        //MediaComposition mediaComposition;
-        //private MediaCapture mediaCaptureNote;
 
         private async Task<JsonCamerasSettings> readFileSettings()
         {
@@ -126,23 +131,32 @@ namespace CameraCOT
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
-        {            
+        {
+            cameras = new Camera[3];
+
+            //cameras[(int)camera.mainCamera].setCameraSettings(800, 600, 200, 800, 44);
+            //cameras[(int)camera.endoCamera].setCameraSettings(800, 600, 100, 100, 12);
+            //cameras[(int)camera.termoCamera].setCameraSettings(800, 600, 10, 10, 8);
+
 
             jsonCamerasSettings = await readFileSettings();
             var d = jsonCamerasSettings.MainCameraName;
 
-            cameras = new Camera[3];
-            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName,   jsonCamerasSettings.MainCameraId);
-            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName,   jsonCamerasSettings.EndoCameraId);
-            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName, jsonCamerasSettings.TermoCameraId);
+
+            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
+            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
+            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
+
 
             UpdateCaptureControls();
         }
 
         public MainPage()
         {
-
+           
             this.InitializeComponent();
+            
+
             EnumerateHidDevices();
 
             /*dispatcherTimer = new DispatcherTimer();
@@ -469,43 +483,28 @@ namespace CameraCOT
                 {
                     Debug.WriteLine("No camera device found!");
                     return;
-                }
+                }                
 
-                //var cameraDevice = cameraDeviceList.FirstOrDefault();
 
-                /*if (_changeCamera)
-                {
-                    _changeCamera = false;
-                    _cntCamera++;
-                }
-
-                if (cameraDeviceList.Count < (_cntCamera + 1))
-                    _cntCamera = 0;
-                */
-
-                //------------ можно закоментировать и обращаться прямо к cameras[cameraType].Id !!!
-                //------------------------ есть подводные камни: идет привязка к конкретному usb !!!
                 string cameraName = cameras[cameraType].Name;
                 string cameraId = "";
-
-                //var cameraDevice = cameraDeviceList[_cntCamera];
 
                 foreach (DeviceInformation camera in cameraDeviceList)
                 {
                     if (camera.Name == cameraName)
                         cameraId = camera.Id;
                 }    
-                //-----------------------------------------------------------------------------------
 
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;
 
-                
-                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };           //cameraDevice.Id
+               
+
+                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };          
 
                 try
                 {
-                    await _mediaCapture.InitializeAsync(settings);
+                    await _mediaCapture.InitializeAsync(settings);                    
                     _isInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
@@ -515,6 +514,7 @@ namespace CameraCOT
 
                 if (_isInitialized)
                 {
+                   // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
                     await StartPreviewAsync();
                 }
 
@@ -524,10 +524,11 @@ namespace CameraCOT
         private async Task StartPreviewAsync()
         {
             displayRequest.RequestActive();
-            PreviewControl.Source = _mediaCapture;
 
-           // var encodingProperties = StreamResolution.EncodingProperties;
-           // await _previewer.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, encodingProperties);
+            PreviewControl.Source = null;
+
+           
+            PreviewControl.Source = _mediaCapture;           
 
 
             //------------ add video effect -----------------
@@ -542,12 +543,10 @@ namespace CameraCOT
                 //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
             }
             //-----------------------------------------------
-            //var encodingProperties = (jsonCamerasSettings.MainCameraVideo as StreamResolution).EncodingProperties;
-           // IMediaEncodingProperties mediaEncodingProperties;
-           // mediaEncodingProperties.
-           // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MediaEncodingProperties);
+
             await _mediaCapture.StartPreviewAsync();
             _isPreviewing = true;
+           // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
         }
 
 
@@ -705,9 +704,11 @@ namespace CameraCOT
             //_cntCamera = 0;
             cameraType = (int)camera.mainCamera;
             await CleanupCameraAsync();
+           
             await SetUpBasedOnStateAsync();
 
-           
+            
+
             //mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.BlueViolet);
 
             UpdateCaptureControls();
@@ -817,9 +818,9 @@ namespace CameraCOT
             }
 
 
-            videoEffectSettings.X = cameras[_cntCamera].X;
-            videoEffectSettings.Y = cameras[_cntCamera].Y;
-            videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
+            //videoEffectSettings.X = cameras[_cntCamera].X;
+            //videoEffectSettings.Y = cameras[_cntCamera].Y;
+            //videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
 
 
         }
