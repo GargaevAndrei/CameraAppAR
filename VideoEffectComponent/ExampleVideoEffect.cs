@@ -14,6 +14,7 @@ using Microsoft.Graphics.Canvas;
 using Windows.UI;
 using Microsoft.Graphics.Canvas.Text;
 using Windows.Foundation;
+//using CameraCOT;
 
 
 
@@ -38,6 +39,7 @@ namespace VideoEffectComponent
         public static int X;
         public static int Y;
         public static int FontSize;
+        public static bool getLenghtFlag;
     }
     public sealed class ExampleVideoEffect : IBasicVideoEffect
     {
@@ -200,31 +202,32 @@ namespace VideoEffectComponent
                 };
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
-                //ds.DrawText("Augmented reality", videoEffectSettings.X, videoEffectSettings.Y, Colors.Aqua, new CanvasTextFormat
-                //{
-                //    FontSize = videoEffectSettings.FontSize,
-                //    FontWeight = Windows.UI.Text.FontWeights.Bold
-                //});
-                //ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 6, Colors.Aquamarine, new CanvasTextFormat
-                //{
-                //    FontSize = videoEffectSettings.FontSize,
-                //    FontWeight = Windows.UI.Text.FontWeights.Bold
-                //});
 
-                /*ds.DrawText(videoEffectSettings.lenght, 200, 920, Colors.Aquamarine, new CanvasTextFormat
+                if (videoEffectSettings.getLenghtFlag)
                 {
-                    FontSize = 44,
+                    ds.DrawText(videoEffectSettings.lenght, videoEffectSettings.X, videoEffectSettings.Y, Colors.Aquamarine, new CanvasTextFormat
+                    {
+                        FontSize = videoEffectSettings.FontSize,
+                        FontWeight = Windows.UI.Text.FontWeights.Bold
+                    });
+                }
+                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 35, Colors.Aquamarine, new CanvasTextFormat
+                {
+                    FontSize = videoEffectSettings.FontSize,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });
 
+                
+                   
+                /*
                 ds.DrawText(tempValue.coordinate, 200, 980, Colors.Aquamarine, new CanvasTextFormat
                 {
                     FontSize = 44,
                     FontWeight = Windows.UI.Text.FontWeights.Bold
                 });*/
 
-               // Rect rect = new Rect(190, 700, 600, 600);
-               // ds.DrawRectangle(rect, Colors.Chartreuse);
+                // Rect rect = new Rect(190, 700, 600, 600);
+                // ds.DrawRectangle(rect, Colors.Chartreuse);
 
             }
         }

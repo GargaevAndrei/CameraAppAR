@@ -8,9 +8,9 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <StackPanel  Orientation="Horizontal" Margin="0,30,0,0" >
-            <ComboBox Name="MainCamera" PlaceholderText="Camera List"               SelectionChanged="MainCameraList_Changed" Width="auto"/>
+    <Grid x:Name="grid">
+        <StackPanel x:Name="stackPanel1"  Orientation="Horizontal" Margin="0,30,0,0" >
+            <ComboBox x:Name="MainCamera" PlaceholderText="Camera List"               SelectionChanged="MainCameraList_Changed" Width="auto"/>
             <ComboBox Name="MainPreviewSettings" PlaceholderText="Preview Settings" Width="auto"/>
             <ComboBox Name="MainPhotoSettings" PlaceholderText="Photo Settings" Width="auto"/>
             <ComboBox Name="MainVideoSettings" PlaceholderText="Video Settings" Width="auto"/>
@@ -38,7 +38,7 @@
 
         <Button x:Name="getScenario" Click="getMainPage_Click">
             <Viewbox MaxHeight="40" MaxWidth="40">
-                <SymbolIcon Symbol="Add"/>
+                <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
         <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="0,550,0,0" VerticalAlignment="Top">
