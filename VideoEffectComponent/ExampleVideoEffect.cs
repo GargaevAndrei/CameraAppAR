@@ -203,19 +203,19 @@ namespace VideoEffectComponent
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
 
-                if (videoEffectSettings.getLenghtFlag)
+                if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
                 {
-                    ds.DrawText(videoEffectSettings.lenght, videoEffectSettings.X, videoEffectSettings.Y, Colors.Aquamarine, new CanvasTextFormat
+                    ds.DrawText(videoEffectSettings.lenght, videoEffectSettings.X, videoEffectSettings.Y, Colors.PaleTurquoise, new CanvasTextFormat
                     {
                         FontSize = videoEffectSettings.FontSize,
                         FontWeight = Windows.UI.Text.FontWeights.Bold
                     });
                 }
-                ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 35, Colors.Aquamarine, new CanvasTextFormat
-                {
-                    FontSize = videoEffectSettings.FontSize,
-                    FontWeight = Windows.UI.Text.FontWeights.Bold
-                });
+                //ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 50, Colors.PaleTurquoise, new CanvasTextFormat
+                //{
+                //    FontSize = videoEffectSettings.FontSize,
+                //    FontWeight = Windows.UI.Text.FontWeights.Bold
+                //});
 
                 
                    

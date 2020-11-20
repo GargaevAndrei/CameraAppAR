@@ -38,6 +38,10 @@
             </StackPanel.Resources>
 
 
+            <Slider x:Name="flashSlider" Width="80" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600"  />
+
+            <ToggleSwitch x:Name="flashSwitch" Width="80" Height="40"/>
+
             <Button x:Name="buttonFlash" Click="buttonFlash_Click">
                 <Grid>
                     <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/>
@@ -45,11 +49,6 @@
                 </Grid>
             </Button>
 
-            <!-- <Button x:Name="SwitchCam" Click="SwitchCam_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Switch" RenderTransformOrigin="1,1"/>
-                </Viewbox>
-            </Button>-->
             <Button x:Name="PhotoButton" Click="PhotoButton_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Camera"/>
@@ -61,17 +60,7 @@
                     <Rectangle x:Name="StopRecordingIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
                 </Grid>
             </Button>
-
-            <!--<Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Video"/>
-                </Viewbox> -->
-
-            <!--<Button x:Name="StopRecord" Click="StopRecord_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Stop" RenderTransformOrigin="1,1"/>
-                </Viewbox>
-            </Button> -->
-
+            
 
         </StackPanel>
 
@@ -86,15 +75,8 @@
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
-            <!-- <Button x:Name="inReportRead" Click="inReportRead_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Read"/>
-                </Viewbox>
-            </Button>   -->
-
 
             <Button  x:Name="mainCameraButton" Content="MAIN" Click="mainCameraButton_Click" MaxHeight="40" MaxWidth="40" />
-
 
             <Button x:Name="endoCameraButton" Content="ENDO" Click="endoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
@@ -117,30 +99,40 @@
 
             <Button x:Name="runMeasure" Click="runMeasure_Click">
                 <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Scan"/>
+                    <SymbolIcon Symbol="Play"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="_stopMeasure" Click="stopMeasure_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Stop"/>
-                </Viewbox>
-            </Button>
-            <Button x:Name="_getDistanse" Click="getDistanse_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Target"/>
-                </Viewbox>
-            </Button>
+            
+            <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
+            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Visibility="Visible" Height="71"/>
+
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Bottom" HorizontalAlignment="Center">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+
+            
 
         </StackPanel>
 
         <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="186,214,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
-        <Frame x:Name="ScenarioFrame" Margin="264,360,172,140"/>
+        <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="1215,605,35,85" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="1215,605,35,85" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
+
 
     </Grid>
 </Page>

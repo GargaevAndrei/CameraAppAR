@@ -52,25 +52,27 @@ namespace CameraCOT
         private StorageFolder storageFolder = null;
         LowLagMediaRecording _mediaRecording;
         string Lenght;
-        DispatcherTimer dispatcherTimer;
+        double initialLenght = 0;
+        double lenght = 0;
+        DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
         SerialPort serialPortFlash;
         double Xf;
         double Yf;
         double Zf;
         bool _isFlash = true;
+        bool firstDistanceFlag = true;
 
         private bool _isInitialized;
         private bool _isPreviewing;
         private bool _isActivePage;
         private bool _isSuspending;
         private bool _isRecording;
+        private bool _findLenghtZero = false;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
         private bool _isUIActive;
         public int _cntCamera;  //was private
-        private bool _changeCamera;
-        private bool _isSwitched;
         private StorageFolder _captureFolder = null;
 
         public enum NotifyType
@@ -147,20 +149,16 @@ namespace CameraCOT
         {
             cameras = new Camera[3];
 
-            //cameras[(int)camera.mainCamera].setCameraSettings(800, 600, 200, 800, 44);
-            //cameras[(int)camera.endoCamera].setCameraSettings(800, 600, 100, 100, 12);
-            //cameras[(int)camera.termoCamera].setCameraSettings(800, 600, 10, 10, 8);
 
+            jsonCamerasSettings = await readFileSettings();
+            var d = jsonCamerasSettings.MainCameraName;
+            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
+            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
+            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
-            //jsonCamerasSettings = await readFileSettings();
-            //var d = jsonCamerasSettings.MainCameraName;
-            //cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
-            //cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
-            //cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
-
-            cameras[(int)camera.mainCamera].setCameraSettings("USB Camera");  //RecordexUSA
-            cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
-            cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
+            //cameras[(int)camera.mainCamera].setCameraSettings("USB Camera");  //RecordexUSA
+            //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
+            //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
 
             UpdateCaptureControls();
@@ -175,9 +173,9 @@ namespace CameraCOT
 
             EnumerateHidDevices();
 
-            dispatcherTimer = new DispatcherTimer();
-            dispatcherTimer.Tick += dispatcherTimer_Tick;
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+            lenghtMeterTimer = new DispatcherTimer();
+            lenghtMeterTimer.Tick += LenghtMeterTimer_Tick;
+            lenghtMeterTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
 
             flashDelayTimer = new DispatcherTimer();
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
@@ -191,7 +189,7 @@ namespace CameraCOT
                 serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
             }*/
 
-            serialPortFlash = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            serialPortFlash = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
 
             if (serialPortFlash != null)
             {
@@ -274,7 +272,7 @@ namespace CameraCOT
 
         }
 
-        private void dispatcherTimer_Tick(object sender, object e)
+        private void LenghtMeterTimer_Tick(object sender, object e)
         {
             getDistance();
             //serialPortEndo.Write("BAAZ");
@@ -318,7 +316,7 @@ namespace CameraCOT
             }
         }
 
-        private async void sendOutReport(DataWriter dataWriter)
+        private  void sendOutReport(DataWriter dataWriter)
         {
             HidOutputReport outReport = device.CreateOutputReport(0x00);
             outReport.Data = dataWriter.DetachBuffer();
@@ -342,7 +340,7 @@ namespace CameraCOT
 
                     count++;
 
-                    if(ByteArray[5] == 0x1c)
+                    if(ByteArray[5] == 28)    // GET_DISTANCE
                     {
                         byte[] bytes = new byte[4];
 
@@ -350,21 +348,54 @@ namespace CameraCOT
                         bytes[1] = (byte)(ByteArray[7]);
                         bytes[2] = (byte)(ByteArray[8]);
                         bytes[3] = (byte)(ByteArray[9]);
-                        //Array.Reverse(bytes);
+
                         double value = BitConverter.ToSingle(bytes, 0);
 
-                        //textBoxInfo.Text += "\n Lenght = " + value.ToString();
-                        videoEffectSettings.lenght = "\n Lenght = " + value.ToString("0.000");
+                        if (firstDistanceFlag)
+                        {
+                            firstDistanceFlag = false;
+                            initialLenght = value;
+                        }
+                        lenght = value - initialLenght;
+
+                        videoEffectSettings.lenght = "L = " + lenght.ToString("0.0") + " м";
                         videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
-                         
+
+                        
                     }
 
+                    if (ByteArray[5] == 25) //AMP_FIND_SUCCESS
+                    {
+                        lenghtMeterTimer.Start();
+
+                        videoEffectSettings.getLenghtFlag = true;
+
+                        _findLenghtZero = false;
+
+
+                        UpdateCaptureControls();
+                        runMeasure.Visibility = Visibility.Collapsed;
+                        progressRing.Visibility = Visibility.Collapsed;
+                        progressRing.IsActive = false;
+                        textInfo.Visibility = Visibility.Collapsed;
+
+                    }
+                    if (ByteArray[5] == 35) //AMP_FIND_NOT_SUCCESS
+                    {
+                        stopMeasure();
+                        lenghtMeterTimer.Stop();
+                        firstDistanceFlag = false;
+                        _findLenghtZero = false;
+                        UpdateCaptureControls();
+                        textInfo.Visibility = Visibility.Visible;
+                        textInfo.Text = "Калибровка не выполнена";
+                    }
 
                 }));
             };
         }
         
-        private async void readHid()
+        private  void readHid()
         {
             if (device != null)
             {
@@ -388,7 +419,7 @@ namespace CameraCOT
             }
         }
 
-        private async void startMeasure()
+        private  void startMeasure()
         {
             if (device != null)
             {
@@ -413,7 +444,7 @@ namespace CameraCOT
             }
         }
 
-        private async void stopMeasure()
+        private  void stopMeasure()
         {
             if (device != null)
             {
@@ -438,7 +469,7 @@ namespace CameraCOT
             }
         }
 
-        private async void getDistance()
+        private  void getDistance()
         {
             if (device != null)
             {
@@ -470,20 +501,27 @@ namespace CameraCOT
 
         private void runMeasure_Click(object sender, RoutedEventArgs e)
         {
+            firstDistanceFlag = true;
+
+            _findLenghtZero = true;
+            UpdateCaptureControls();
+
             startMeasure();
         }
 
         private void stopMeasure_Click(object sender, RoutedEventArgs e)
         {
             stopMeasure();
-            if (cameraType == (int)camera.endoCamera)
+            firstDistanceFlag = false;
+            //if (cameraType == (int)camera.endoCamera)
                 videoEffectSettings.getLenghtFlag = false;
         }
+
 
         private void getDistanse_Click(object sender, RoutedEventArgs e)
         {
             //getDistance();
-            dispatcherTimer.Start();
+            lenghtMeterTimer.Start();
             if(cameraType == (int)camera.endoCamera)
                 videoEffectSettings.getLenghtFlag = true;          
         }
@@ -574,7 +612,8 @@ namespace CameraCOT
 
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;             
-                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };          
+                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };
+
 
                 try
                 {
@@ -595,7 +634,12 @@ namespace CameraCOT
                 {
                    // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
                     await StartPreviewAsync();
+                    var focusControl = _mediaCapture.VideoDeviceController.FocusControl;
+                    var zoomControl = _mediaCapture.VideoDeviceController.ZoomControl;
+                    //_mediaCapture.VideoDeviceController.
                 }
+
+                //var focusControl = _mediaCapture.VideoDeviceController.FocusControl;
 
             }
         }
@@ -637,18 +681,6 @@ namespace CameraCOT
                 PreviewControl.Source = null;
                 //_displayRequest.RequestRelease();
             });
-        }
-
-
-        private async void SwitchCam_Click(object sender, RoutedEventArgs e)
-        {
-            Debug.WriteLine("SwitchCameraClick");
-            _isUIActive = false;
-            _changeCamera = true;
-
-            await CleanupCameraAsync();
-            await SetUpBasedOnStateAsync();
-
         }
 
         private async Task CleanupCameraAsync()
@@ -733,21 +765,25 @@ namespace CameraCOT
                 await MakePhotoAsync();
         }
 
+
         private void FlashCMD()
         {
             Debug.WriteLine("Send flash");
             textBoxInfo.Text += "Send flash" + Environment.NewLine;
             
             byte[] data = new byte[1];
+            byte[] flashByte = new byte[2];
+            flashByte[0] = (byte)(flashValue & 0x00FF);
+            flashByte[1] = (byte)(flashValue >> 8);
             try
             {
                 data[0] = 0x55;
                 serialPortFlash.Write(data, 0, 1);
                 data[0] = 0x53;
                 serialPortFlash.Write(data, 0, 1);
-                data[0] = 0x02;
+                data[0] = flashByte[1];
                 serialPortFlash.Write(data, 0, 1);
-                data[0] = 0xbb;
+                data[0] = flashByte[0];
                 serialPortFlash.Write(data, 0, 1);
                 data[0] = 0x12;
                 serialPortFlash.Write(data, 0, 1);
@@ -816,9 +852,11 @@ namespace CameraCOT
            
             await SetUpBasedOnStateAsync();
 
-            
+            stopMeasure();
+            firstDistanceFlag = false;
+            _findLenghtZero = false;
+            videoEffectSettings.getLenghtFlag = false;
 
-            //mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.BlueViolet);
 
             UpdateCaptureControls();
         }
@@ -829,8 +867,13 @@ namespace CameraCOT
             _isUIActive = false;
             _cntCamera = 1;
             cameraType = (int)camera.endoCamera;
+
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
+
+            videoEffectSettings.getLenghtFlag = true;
+
+            runMeasure.Visibility = Visibility.Visible;
 
             UpdateCaptureControls();
         }
@@ -843,6 +886,11 @@ namespace CameraCOT
             cameraType = (int)camera.termoCamera;
             await CleanupCameraAsync();
             await SetUpBasedOnStateAsync();
+
+            stopMeasure();
+            firstDistanceFlag = false;
+            _findLenghtZero = false;
+            videoEffectSettings.getLenghtFlag = false;
 
             UpdateCaptureControls();
         }
@@ -898,6 +946,10 @@ namespace CameraCOT
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
+            //_getDistanse.Visibility = Visibility.Collapsed;
+            //_stopMeasure.Visibility = Visibility.Collapsed;
+
+
             // The buttons should only be enabled if the preview started sucessfully
             PhotoButton.IsEnabled = _isPreviewing;
             VideoButton.IsEnabled = _isPreviewing;
@@ -911,6 +963,24 @@ namespace CameraCOT
             NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
             FlashIcon.Visibility = _isFlash ? Visibility.Visible : Visibility.Collapsed;
 
+            // Update lenght meter controls            
+            runMeasure.Visibility = (cameraType == (int)camera.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            
+            if(_findLenghtZero)
+            {
+                progressRing.Visibility = Visibility.Visible;
+                progressRing.IsActive = true;
+                textInfo.Text = "Подождите, идет калибровка";
+                textInfo.Visibility = Visibility.Visible;                
+            }
+            else
+            {
+                progressRing.Visibility = Visibility.Collapsed;
+                progressRing.IsActive = false;
+                textInfo.Visibility = Visibility.Collapsed;
+            }
+
+
             // If the camera doesn't support simultaneosly taking pictures and recording video, disable the photo button on record
             if (_isInitialized && !_mediaCapture.MediaCaptureSettings.ConcurrentRecordAndPhotoSupported)
             {
@@ -921,19 +991,28 @@ namespace CameraCOT
             }
 
 
-            switch(_cntCamera)
+            Windows.UI.Color color;
+            color.A = 51;
+            color.B = 0;
+            color.G = 0;
+            color.R = 0;
+
+            switch (cameraType)
             {
-                case 0: 
-                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Thistle);
-                    endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Transparent);
-                    break;
-                case 1:
-                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Transparent);
-                    endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.Thistle);
-                    break;
-                case 2:
+                case (int)camera.mainCamera: 
                     mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+                    endoCameraButton.Background = new SolidColorBrush(color);
+                    termoCameraButton.Background = new SolidColorBrush(color);
+                    break;
+                case (int)camera.endoCamera:
+                    mainCameraButton.Background = new SolidColorBrush(color);
                     endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+                    termoCameraButton.Background = new SolidColorBrush(color);
+                    break;
+                case (int)camera.termoCamera:
+                    mainCameraButton.Background = new SolidColorBrush(color);
+                    endoCameraButton.Background = new SolidColorBrush(color);
+                    termoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
                     break;
             }
 
@@ -942,9 +1021,9 @@ namespace CameraCOT
             //videoEffectSettings.Y = cameras[_cntCamera].Y;
             //videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
 
-            videoEffectSettings.X = 20;
-            videoEffectSettings.Y = 650;
-            videoEffectSettings.FontSize = 14;
+            videoEffectSettings.X = 750;
+            videoEffectSettings.Y = 600;
+            videoEffectSettings.FontSize = 90;
 
            
 
@@ -961,6 +1040,17 @@ namespace CameraCOT
         {
             _isFlash = !_isFlash;
             UpdateCaptureControls();
+        }
+
+        short flashValue = 600;
+        private void flashSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            Slider slider = sender as Slider;
+            if (slider != null)
+            {
+                flashValue = (short)slider.Value;
+            }
+           
         }
 
         
