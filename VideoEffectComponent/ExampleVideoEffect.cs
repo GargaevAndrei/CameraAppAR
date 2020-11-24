@@ -227,7 +227,7 @@ namespace VideoEffectComponent
                 });*/
 
                 // Rect rect = new Rect(190, 700, 600, 600);
-                // ds.DrawRectangle(rect, Colors.Chartreuse);
+                // ds.DrawRectangle(rect, Colors.Chartreuse); 
 
             }
         }
