@@ -123,52 +123,6 @@ namespace VideoEffectComponent
 
         //}
 
-       /* public unsafe void ProcessFrame(ProcessVideoFrameContext context)
-        {
-            using (BitmapBuffer buffer = context.InputFrame.SoftwareBitmap.LockBuffer(BitmapBufferAccessMode.Read))
-            using (BitmapBuffer targetBuffer = context.OutputFrame.SoftwareBitmap.LockBuffer(BitmapBufferAccessMode.Write))
-            {
-                using (var reference = buffer.CreateReference())
-                using (var targetReference = targetBuffer.CreateReference())
-                {
-                    byte* dataInBytes;
-                    uint capacity;
-                    ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacity);
-
-                    byte* targetDataInBytes;
-                    uint targetCapacity;
-                    ((IMemoryBufferByteAccess)targetReference).GetBuffer(out targetDataInBytes, out targetCapacity);
-
-                    var fadeValue = FadeValue;
-
-                    // Fill-in the BGRA plane
-                    BitmapPlaneDescription bufferLayout = buffer.GetPlaneDescription(0);
-                    for (int i = 0; i < bufferLayout.Height; i++)
-                    {
-                        for (int j = 0; j < bufferLayout.Width; j++)
-                        {
-
-                            byte value = (byte)((float)j / bufferLayout.Width * 255);
-
-                            int bytesPerPixel = 4;
-                            if (encodingProperties.Subtype != "ARGB32")
-                            {
-                                // If you support other encodings, adjust index into the buffer accordingly
-                            }
-
-
-                            int idx = bufferLayout.StartIndex + bufferLayout.Stride * i + bytesPerPixel * j;
-
-                            targetDataInBytes[idx + 0] = (byte)(fadeValue * (float)dataInBytes[idx + 0]);
-                            targetDataInBytes[idx + 1] = (byte)(fadeValue * (float)dataInBytes[idx + 1]);
-                            targetDataInBytes[idx + 2] = (byte)(fadeValue * (float)dataInBytes[idx + 2]);
-                            targetDataInBytes[idx + 3] = dataInBytes[idx + 3];
-                        }
-                    }
-                }
-            }
-        }*/
-
 
 
         public double BlurAmount

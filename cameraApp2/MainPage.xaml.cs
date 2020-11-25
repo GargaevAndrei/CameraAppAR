@@ -384,9 +384,12 @@ namespace CameraCOT
                     {
                         stopMeasure();
                         lenghtMeterTimer.Stop();
+
                         firstDistanceFlag = false;
                         _findLenghtZero = false;
+
                         UpdateCaptureControls();
+
                         textInfo.Visibility = Visibility.Visible;
                         textInfo.Text = "Калибровка не выполнена";
                     }
@@ -634,12 +637,9 @@ namespace CameraCOT
                 {
                    // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
                     await StartPreviewAsync();
-                    var focusControl = _mediaCapture.VideoDeviceController.FocusControl;
-                    var zoomControl = _mediaCapture.VideoDeviceController.ZoomControl;
-                    //_mediaCapture.VideoDeviceController.
-                }
 
-                //var focusControl = _mediaCapture.VideoDeviceController.FocusControl;
+                }
+               
 
             }
         }
@@ -1053,7 +1053,15 @@ namespace CameraCOT
            
         }
 
-        
+        private void minusFlashButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void plusFlashButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 
 

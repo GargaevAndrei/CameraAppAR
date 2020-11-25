@@ -28,46 +28,74 @@
         <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
             <StackPanel.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="10,40"/>
-                    <Setter Property="MinWidth" Value="80"/>
-                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Margin" Value="10,20"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <!--<Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>-->
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 </Style>
             </StackPanel.Resources>
 
+            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"/>
+            <Button x:Name="plusFlashButton" Click="plusFlashButton_Click" Width="40">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE948;" RenderTransformOrigin="0.5,0.5" >
+                    <FontIcon.RenderTransform>
+                        <CompositeTransform ScaleX="1" ScaleY="1"/>
+                    </FontIcon.RenderTransform>
+                </FontIcon>
+            </Button>
+            <Slider x:Name="flashSlider" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600" Height="32" Width="80"  />
+            <Button x:Name="minusFlashButton" Click="minusFlashButton_Click" Width="40">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE949;" RenderTransformOrigin="0.5,0.5" >
+                    <FontIcon.RenderTransform>
+                        <CompositeTransform ScaleX="1" ScaleY="1"/>
+                    </FontIcon.RenderTransform>
+                </FontIcon>
+            </Button>
 
-            <Slider x:Name="flashSlider" Width="80" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600"  />
+            <!--<ToggleSwitch x:Name="flashSwitch" Width="80" Height="40"/>-->
 
-            <ToggleSwitch x:Name="flashSwitch" Width="80" Height="40"/>
-
-            <Button x:Name="buttonFlash" Click="buttonFlash_Click">
+            <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="80" Height="80">
                 <Grid>
-                    <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/>
-                    <Ellipse x:Name="NotFlashIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
+                    <!-- <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/> -->
+                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="NotFlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEC8A;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <!--<Ellipse x:Name="NotFlashIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>-->
                 </Grid>
             </Button>
 
-            <Button x:Name="PhotoButton" Click="PhotoButton_Click">
+            <!--<Button x:Name="voidButton"  Width="1" Height="1" Visibility="Visible" Opacity="0"/>-->
+
+
+            <Button x:Name="PhotoButton" Click="PhotoButton_Click" Width="80" Height="80">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Camera"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="VideoButton" Click="VideoButton_Click">
+            <Button x:Name="VideoButton" Click="VideoButton_Click" Width="80" Height="80">
                 <Grid>
                     <Ellipse x:Name="StartRecordingIcon" Fill="Red" Width="20" Height="20"/>
                     <Rectangle x:Name="StopRecordingIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
                 </Grid>
             </Button>
-            
+
 
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center">
+        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center">
             <StackPanel.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="Margin" Value="10,20"/>
                     <Setter Property="MinWidth" Value="80"/>
                     <Setter Property="MinHeight" Value="80"/>
                     <Setter Property="Foreground" Value="White"/>
@@ -102,7 +130,7 @@
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
             </Button>
-            
+
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
             <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Visibility="Visible" Height="71"/>
 
@@ -120,11 +148,11 @@
                 </Style>
             </StackPanel.Resources>
 
-            
+
 
         </StackPanel>
 
-        <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="186,214,0,0" Text="TextBox" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
+        <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
         <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="1215,605,35,85" >
