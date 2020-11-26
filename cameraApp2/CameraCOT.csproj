@@ -25,7 +25,7 @@
     <AppxBundle>Always</AppxBundle>
     <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <PackageCertificateThumbprint>5953A407B3CF62AA4A9B04092D2CCA8A27BFED7B</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>6E5B5C8E6EF1EA7B096988F0D7B8706B763BB0C1</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <PackageCertificateKeyFile>
     </PackageCertificateKeyFile>

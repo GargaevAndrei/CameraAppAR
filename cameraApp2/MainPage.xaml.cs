@@ -156,7 +156,7 @@ namespace CameraCOT
             cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
             cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
-            //cameras[(int)camera.mainCamera].setCameraSettings("USB Camera");  //RecordexUSA
+            //cameras[(int)camera.mainCamera].setCameraSettings("USB Camera");  //RecordexUSA       //rmoncam 8M  //USB Camera
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
             //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
@@ -189,7 +189,7 @@ namespace CameraCOT
                 serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
             }*/
 
-            serialPortFlash = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One);
+            serialPortFlash = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
 
             if (serialPortFlash != null)
             {
@@ -215,35 +215,7 @@ namespace CameraCOT
             await MakePhotoAsync();
         }
 
-        public void NotifyUser(string strMessage, NotifyType type)
-        {
-            // If called from the UI thread, then update immediately.
-            // Otherwise, schedule a task on the UI thread to perform the update.
-            //if (Dispatcher.HasThreadAccess)
-            //{
-            //    UpdateStatus(strMessage, type);
-            //}
-            //else
-            //{
-            //    var task = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => UpdateStatus(strMessage, type));
-            //}
-        }
-
-        private void UpdateStatus(string strMessage, NotifyType type)
-        {
-            //switch (type)
-            //{
-            //    case NotifyType.StatusMessage:
-            //        StatusBorder.Background = new SolidColorBrush(Windows.UI.Colors.Green);
-            //        break;
-            //    case NotifyType.ErrorMessage:
-            //        StatusBorder.Background = new SolidColorBrush(Windows.UI.Colors.Red);
-            //        break;
-            //}
-
-            //StatusBlock.Text = strMessage;
-
-        }
+        
 
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -536,6 +508,38 @@ namespace CameraCOT
         }
 
 
+
+
+        public void NotifyUser(string strMessage, NotifyType type)
+        {
+            // If called from the UI thread, then update immediately.
+            // Otherwise, schedule a task on the UI thread to perform the update.
+            //if (Dispatcher.HasThreadAccess)
+            //{
+            //    UpdateStatus(strMessage, type);
+            //}
+            //else
+            //{
+            //    var task = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => UpdateStatus(strMessage, type));
+            //}
+        }
+
+        private void UpdateStatus(string strMessage, NotifyType type)
+        {
+            //switch (type)
+            //{
+            //    case NotifyType.StatusMessage:
+            //        StatusBorder.Background = new SolidColorBrush(Windows.UI.Colors.Green);
+            //        break;
+            //    case NotifyType.ErrorMessage:
+            //        StatusBorder.Background = new SolidColorBrush(Windows.UI.Colors.Red);
+            //        break;
+            //}
+
+            //StatusBlock.Text = strMessage;
+
+        }
+
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             //Application.Current.Suspending += Application_Suspending;
@@ -585,6 +589,8 @@ namespace CameraCOT
             await SetUpBasedOnStateAsync();
             UpdateCaptureControls();
         }
+
+
 
 
         public static DeviceInformationCollection cameraDeviceList;
@@ -669,7 +675,6 @@ namespace CameraCOT
             _isPreviewing = true;
            // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
         }
-
 
         private async Task StopPreviewAsync()
         {
@@ -759,6 +764,7 @@ namespace CameraCOT
             if (_isFlash)
             {
                 flashDelayTimer.Start();
+                durationFlashDivider = 1;
                 FlashCMD();
             }
             else
@@ -766,34 +772,8 @@ namespace CameraCOT
         }
 
 
-        private void FlashCMD()
-        {
-            Debug.WriteLine("Send flash");
-            textBoxInfo.Text += "Send flash" + Environment.NewLine;
-            
-            byte[] data = new byte[1];
-            byte[] flashByte = new byte[2];
-            flashByte[0] = (byte)(flashValue & 0x00FF);
-            flashByte[1] = (byte)(flashValue >> 8);
-            try
-            {
-                data[0] = 0x55;
-                serialPortFlash.Write(data, 0, 1);
-                data[0] = 0x53;
-                serialPortFlash.Write(data, 0, 1);
-                data[0] = flashByte[1];
-                serialPortFlash.Write(data, 0, 1);
-                data[0] = flashByte[0];
-                serialPortFlash.Write(data, 0, 1);
-                data[0] = 0x12;
-                serialPortFlash.Write(data, 0, 1);
-            }
-            catch (Exception ex)
-            {
-                textBoxInfo.Text += "er1 " + ex.Message.ToString() + Environment.NewLine;
-            }
-        }
 
+       
         private async Task MakePhotoAsync()
         {
             Debug.WriteLine("Make photo");
@@ -899,15 +879,19 @@ namespace CameraCOT
         {
             if (!_isRecording)
             {
+                _isRecording = true;
+                UpdateCaptureControls();
+
                 await StartRecordingAsync(); 
             }
             else
             {
+                _isRecording = false;
+                UpdateCaptureControls();
+
                 await StopRecordingAsync();
             }
-
-            // After starting or stopping video recording, update the UI to reflect the MediaCapture state
-            UpdateCaptureControls();
+            
         }
 
         private async Task StartRecordingAsync()
@@ -923,7 +907,7 @@ namespace CameraCOT
                 else
                     _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
                 await _mediaRecording.StartAsync();
-                _isRecording = true;
+                //_isRecording = true;
             }
             catch (Exception e)
             {
@@ -941,6 +925,7 @@ namespace CameraCOT
             Debug.WriteLine("Stopped recording!");
         }
 
+
         private void UpdateCaptureControls()
         {
             // diagnostic information
@@ -956,12 +941,15 @@ namespace CameraCOT
 
             // Update recording button to show "Stop" icon instead of red "Record" icon
             StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
-            StopRecordingIcon.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
-
+            StopRecordingIcon.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
+            Rec.Visibility                = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update flash button
-            NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
-            FlashIcon.Visibility = _isFlash ? Visibility.Visible : Visibility.Collapsed;
+            NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
+            FlashIcon.Visibility        = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
+            plusFlashButton.Visibility  = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
+            minusFlashButton.Visibility = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
+            pbFlashPower.Visibility     = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update lenght meter controls            
             runMeasure.Visibility = (cameraType == (int)camera.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
@@ -996,11 +984,14 @@ namespace CameraCOT
             color.B = 0;
             color.G = 0;
             color.R = 0;
+            
 
             switch (cameraType)
             {
-                case (int)camera.mainCamera: 
+                case (int)camera.mainCamera:
+                    mainCameraButton.Background.Opacity = 10;
                     mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+                    
                     endoCameraButton.Background = new SolidColorBrush(color);
                     termoCameraButton.Background = new SolidColorBrush(color);
                     break;
@@ -1036,31 +1027,71 @@ namespace CameraCOT
 
         }
 
+
         private void buttonFlash_Click(object sender, RoutedEventArgs e)
         {
             _isFlash = !_isFlash;
             UpdateCaptureControls();
         }
 
-        short flashValue = 600;
-        private void flashSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+
+        private void FlashCMD()
         {
-            Slider slider = sender as Slider;
-            if (slider != null)
+            Debug.WriteLine("Send flash");
+            textBoxInfo.Text += "Send flash" + Environment.NewLine;
+
+            byte[] data = new byte[1];
+            byte[] flashByte = new byte[2];
+
+            flashByte[0] = (byte)(  (int)(1199 - pbFlashPower.Value) & 0x00FF);
+            flashByte[1] = (byte)(  (int)(1199 - pbFlashPower.Value) >> 8);
+            try
             {
-                flashValue = (short)slider.Value;
+                data[0] = 0x55;
+                serialPortFlash.Write(data, 0, 1);
+                data[0] = 0x53;
+                serialPortFlash.Write(data, 0, 1);
+                data[0] = flashByte[1];
+                serialPortFlash.Write(data, 0, 1);
+                data[0] = flashByte[0];
+                serialPortFlash.Write(data, 0, 1);
+                data[0] = (byte)(FlashDuration / durationFlashDivider);
+                serialPortFlash.Write(data, 0, 1);
             }
-           
+            catch (Exception ex)
+            {
+                textBoxInfo.Text += "er1 " + ex.Message.ToString() + Environment.NewLine;
+            }
         }
+
+
+        //short flashValue = 600;
+        short FlashDuration = 0x12;
+        short durationFlashDivider = 1;
+        short StepFlashPower = 100;
+
+
+        //private void flashSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        //{
+        //    Slider slider = sender as Slider;
+        //    if (slider != null)
+        //    {
+        //        flashValue = (short)slider.Value;
+        //    }         
+        //}
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
         {
-
+            pbFlashPower.Value = pbFlashPower.Value - StepFlashPower;
+            durationFlashDivider = 3;
+            FlashCMD();
         }
 
         private void plusFlashButton_Click(object sender, RoutedEventArgs e)
         {
-
+            pbFlashPower.Value = pbFlashPower.Value + StepFlashPower;
+            durationFlashDivider = 3;
+            FlashCMD();
         }
     }
 

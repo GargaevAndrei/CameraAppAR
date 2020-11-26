@@ -46,7 +46,8 @@
                     </FontIcon.RenderTransform>
                 </FontIcon>
             </Button>
-            <Slider x:Name="flashSlider" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600" Height="32" Width="80"  />
+            <!--<Slider x:Name="flashSlider" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600" Height="32" Width="80"  />-->
+            <ProgressBar x:Name="pbFlashPower" Value="600" Maximum="1199" Height="10" Width="93"/>
             <Button x:Name="minusFlashButton" Click="minusFlashButton_Click" Width="40">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE949;" RenderTransformOrigin="0.5,0.5" >
                     <FontIcon.RenderTransform>
@@ -60,7 +61,7 @@
             <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="80" Height="80">
                 <Grid>
                     <!-- <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/> -->
-                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow">
+                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -160,6 +161,7 @@
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
+        <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="20" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,127,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="46"/>
 
 
     </Grid>
