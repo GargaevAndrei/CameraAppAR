@@ -17,6 +17,10 @@
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
+        <CaptureElement x:Name="PreviewControlDouble1" HorizontalAlignment="Left" Width="640" Height="720" VerticalAlignment="Center" />
+        <CaptureElement x:Name="PreviewControlDouble2" Height="720" VerticalAlignment="Center" HorizontalAlignment="Right" Width="640"/>
+
+
         <Image x:Name="imageElement" Margin="18,24,104,18" />
         <Image x:Name="imageElementNote" Margin="671,189,147,27" />
 
@@ -58,7 +62,7 @@
 
             <!--<ToggleSwitch x:Name="flashSwitch" Width="80" Height="40"/>-->
 
-            <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="80" Height="80">
+            <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="70" Height="70">
                 <Grid>
                     <!-- <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/> -->
                     <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
@@ -78,12 +82,12 @@
             <!--<Button x:Name="voidButton"  Width="1" Height="1" Visibility="Visible" Opacity="0"/>-->
 
 
-            <Button x:Name="PhotoButton" Click="PhotoButton_Click" Width="80" Height="80">
+            <Button x:Name="PhotoButton" Click="PhotoButton_Click" Width="70" Height="70">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Camera"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="VideoButton" Click="VideoButton_Click" Width="80" Height="80">
+            <Button x:Name="VideoButton" Click="VideoButton_Click" Width="70" Height="70">
                 <Grid>
                     <Ellipse x:Name="StartRecordingIcon" Fill="Red" Width="20" Height="20"/>
                     <Rectangle x:Name="StopRecordingIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
@@ -97,8 +101,8 @@
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
-                    <Setter Property="MinWidth" Value="80"/>
-                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="MinWidth" Value="70"/>
+                    <Setter Property="MinHeight" Value="70"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -111,6 +115,8 @@
 
             <Button x:Name="termoCameraButton" Content="TERMO" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
+            <Button x:Name="doubleCameraButton" Content="DOUBLE" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
+
 
         </StackPanel>
 
@@ -118,8 +124,8 @@
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,40"/>
-                    <Setter Property="MinWidth" Value="80"/>
-                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="MinWidth" Value="70"/>
+                    <Setter Property="MinHeight" Value="70"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -132,6 +138,8 @@
                 </Viewbox>
             </Button>
 
+            <ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>
+
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
             <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Visibility="Visible" Height="71"/>
 
@@ -141,8 +149,8 @@
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,40"/>
-                    <Setter Property="MinWidth" Value="80"/>
-                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="MinWidth" Value="70"/>
+                    <Setter Property="MinHeight" Value="70"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="BorderBrush" Value="White"/>
                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -156,7 +164,7 @@
         <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="1215,605,35,85" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,35,88" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

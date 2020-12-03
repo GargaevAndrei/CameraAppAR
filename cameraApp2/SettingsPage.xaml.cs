@@ -198,7 +198,7 @@ namespace CameraCOT
 
 
   
-        public static string fileJsonName = "cameraConfig1.json";
+        public static string fileJsonName = "cameraConfig3.json";
 
         internal static StreamResolution MyStreamResolution { get => myStreamResolution; set => myStreamResolution = value; }
 
@@ -255,8 +255,8 @@ namespace CameraCOT
 
             JsonSerializer serializer = new JsonSerializer();
             serializer.Converters.Add(new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
-            serializer.NullValueHandling = NullValueHandling.Ignore;
-            serializer.TypeNameHandling = TypeNameHandling.Auto;
+            //serializer.NullValueHandling = NullValueHandling.Ignore;
+            //serializer.TypeNameHandling = TypeNameHandling.Auto;
             serializer.Formatting = Formatting.Indented;
 
             var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
@@ -347,8 +347,9 @@ namespace CameraCOT
             string text = await FileIO.ReadTextAsync(configFile);           
 
             //return JsonConvert.DeserializeObject<JsonCamerasSettings>(text); 
-            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings  {   TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                                                                                                                            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,  });
+            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings  {  Formatting = Formatting.Indented
+
+                                                                                                                                    });
 
         }
 
