@@ -93,6 +93,7 @@ namespace CameraCOT
 
         public struct Camera
         {
+            public StreamResolution PreviewResolution, PhotoResolution, VideoResolution;
             public string Name;
             public string Id;
             int width;
@@ -111,21 +112,7 @@ namespace CameraCOT
             {
                 this.Name = _Name;
                 this._properties = EncodingProperties;                
-            }
-
-            public IMediaEncodingProperties EncodingProperties
-            {
-                get { return _properties; }
-            }
-
-            public void setCameraSettings(int _width, int _height, int _x, int _y, int _fontSize)
-            {
-                this.width = _width;
-                this.height = _height;
-                this.x = _x;
-                this.y = _y;
-                this.fontSize = _fontSize;
-            }
+            }            
 
             public int Width {  get { return width; }   set { width = value; }  }
             public int Height { get { return height; }  set { height = value; } }
@@ -153,16 +140,16 @@ namespace CameraCOT
             cameras = new Camera[3];
 
 
-            jsonCamerasSettings = await readFileSettings();
-            var d = jsonCamerasSettings.MainCameraName;
-            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
-            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
-            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
+            
 
             //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
             //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
+            jsonCamerasSettings = await readFileSettings();
+            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
+            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
+            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
             UpdateCaptureControls();
         }
@@ -597,7 +584,8 @@ namespace CameraCOT
 
 
         public static DeviceInformationCollection cameraDeviceList;
-        
+        //StreamResolution MainPreview, MainPhoto, MainVideo;
+
         private async Task InitializeCameraAsync()
         {
             Debug.WriteLine("InitializeCameraAsync");
@@ -636,10 +624,13 @@ namespace CameraCOT
 
                     foreach (var property in allStreamProperties)
                     {
-                        ComboBoxItem comboBoxItem = new ComboBoxItem();
-                        comboBoxItem.Content = property.GetFriendlyName(true);
-                        comboBoxItem.Tag = property;
-                        PreviewSettings.Items.Add(comboBoxItem);
+                        if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
+                            cameras[(int)camera.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                        if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
+                            cameras[(int)camera.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                        if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
+                            cameras[(int)camera.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+
                     }
 
                     //var encodingProperties = (jsonCamerasSettings.MainEncodingProperties as StreamResolution).EncodingProperties;
@@ -656,9 +647,7 @@ namespace CameraCOT
 
                 if (_isInitialized)
                 {
-                   // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
                     await StartPreviewAsync();
-
                 }
                
 
@@ -1027,10 +1016,12 @@ namespace CameraCOT
 
             //UpdateCaptureControls();
 
-            StreamResolution streamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
+            //StreamResolution streamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
             //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, streamResolution.EncodingProperties);
 
-            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, streamResolution.EncodingProperties);
+            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)camera.mainCamera].PreviewResolution.EncodingProperties);
+            await SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)camera.mainCamera].PhotoResolution.EncodingProperties);
+            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)camera.mainCamera].VideoResolution.EncodingProperties);
 
         }
 
@@ -1253,15 +1244,15 @@ namespace CameraCOT
             FlashCMD();
         }
 
-        private async void PreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isPreviewing)
-            {
-                var selectedItem = (sender as ComboBox).SelectedItem as ComboBoxItem;
-                var encodingProperties = (selectedItem.Tag as StreamResolution).EncodingProperties;
-                await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, encodingProperties);
-            }
-        }
+        //private async void PreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
+        //{
+        //    if (_isPreviewing)
+        //    {
+        //        var selectedItem = (sender as ComboBox).SelectedItem as ComboBoxItem;
+        //        var encodingProperties = (selectedItem.Tag as StreamResolution).EncodingProperties;
+        //        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, encodingProperties);
+        //    }
+        //}
 
         public async Task SetMediaStreamPropertiesAsync(MediaStreamType streamType, IMediaEncodingProperties encodingProperties)
         {

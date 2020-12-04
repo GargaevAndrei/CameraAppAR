@@ -198,9 +198,7 @@ namespace CameraCOT
 
 
   
-        public static string fileJsonName = "cameraConfig3.json";
-
-        internal static StreamResolution MyStreamResolution { get => myStreamResolution; set => myStreamResolution = value; }
+        public static string fileJsonName = "cameraConfig.json";
 
         private async void saveSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -220,9 +218,8 @@ namespace CameraCOT
             tempSelectedItem                       =  (ComboBoxItem)MainPreviewSettings.SelectedItem;
             jsonCamerasSettings.MainCameraPreview  = (string)tempSelectedItem.Content;                      //(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
 
-            jsonCamerasSettings.MainEncodingProperties = (VideoEncodingProperties)(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
-
-            myStreamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
+            //jsonCamerasSettings.MainEncodingProperties = (VideoEncodingProperties)(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
+            //jsonCamerasSettings.MainStreamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
 
 
             tempSelectedItem                       =  (ComboBoxItem)EndoCamera.SelectedItem;            
@@ -254,9 +251,9 @@ namespace CameraCOT
 
 
             JsonSerializer serializer = new JsonSerializer();
-            serializer.Converters.Add(new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
-            //serializer.NullValueHandling = NullValueHandling.Ignore;
-            //serializer.TypeNameHandling = TypeNameHandling.Auto;
+            //serializer.Converters.Add(new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
+            serializer.NullValueHandling = NullValueHandling.Include;
+            serializer.TypeNameHandling = TypeNameHandling.Auto;
             serializer.Formatting = Formatting.Indented;
 
             var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
@@ -297,18 +294,22 @@ namespace CameraCOT
     }
 
 
+    [Serializable]
     class JsonCamerasSettings
     {
 
-        private VideoEncodingProperties _properties;
+        //private VideoEncodingProperties _properties;
+
+        //private StreamResolution streamResolution;// = new StreamResolution();
+        //public VideoEncodingProperties MainEncodingProperties { get { return _properties; } set { _properties = value; } }
+
+        //public StreamResolution MainStreamResolution { get { return streamResolution; } set { streamResolution = value; } }
+
         public string MainCameraName     { get; set; }
         public string MainCameraPreview  { get; set; }                //IMediaEncodingProperties
         public string MainCameraPhoto    { get; set; }
         public string MainCameraVideo    { get; set; }
-
-        public VideoEncodingProperties MainEncodingProperties { get { return _properties; } set { _properties = value; } }
-
-
+       
         public string EndoCameraName     { get; set; }
         public string EndoCameraPreview  { get; set; }
         public string EndoCameraPhoto    { get; set; }
@@ -324,41 +325,34 @@ namespace CameraCOT
 
         }
 
-        /*public JsonCamerasSettings(string jsonString) : this()
-        {
-            JsonObject jsonObject = JsonObject.Parse(jsonString);       
-
-            //StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-            //// получаем файл
-           // StorageFile configFile = await localFolder.GetFileAsync("cameraConfig2.json");
-            //string text =  FileIO.ReadTextAsync(configFile);
-            ////this = JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
-
-            //return text;
-        }*/
-
-
         public static  async Task<JsonCamerasSettings> readFileSettings() 
         {
 
             StorageFolder localFolder = ApplicationData.Current.LocalFolder;
             // получаем файл
             StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
-            string text = await FileIO.ReadTextAsync(configFile);           
+            string text = await FileIO.ReadTextAsync(configFile);
 
-            //return JsonConvert.DeserializeObject<JsonCamerasSettings>(text); 
-            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings  {  Formatting = Formatting.Indented
-
-                                                                                                                                    });
+            //return JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
+            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Include,
+                TypeNameHandling = TypeNameHandling.Auto
+            });
 
         }
 
     }
 
 
-    class StreamResolution
+    public class StreamResolution
     {
         private IMediaEncodingProperties _properties;
+
+        public StreamResolution()
+        {
+        }
 
         public StreamResolution(IMediaEncodingProperties properties)
         {
@@ -460,94 +454,4 @@ namespace CameraCOT
         }
     }
 
-
-    public class MediaCapturePreviewer
-    {
-        CoreDispatcher _dispatcher;
-        CaptureElement _previewControl;
-
-        public MediaCapturePreviewer(CaptureElement previewControl, CoreDispatcher dispatcher)
-        {
-            _previewControl = previewControl;
-            _dispatcher = dispatcher;
-        }
-
-        public bool IsPreviewing { get; private set; }
-        public bool IsRecording { get; set; }
-        public MediaCapture MediaCapture { get; private set; }
-
-        /// <summary>
-        /// Sets encoding properties on a camera stream. Ensures CaptureElement and preview stream are stopped before setting properties.
-        /// </summary>
-        public async Task SetMediaStreamPropertiesAsync(MediaStreamType streamType, IMediaEncodingProperties encodingProperties)
-        {
-            // Stop preview and unlink the CaptureElement from the MediaCapture object
-            await MediaCapture.StopPreviewAsync();
-            _previewControl.Source = null;
-
-            // Apply desired stream properties
-            await MediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, encodingProperties);
-
-            // Recreate the CaptureElement pipeline and restart the preview
-            _previewControl.Source = MediaCapture;
-            await MediaCapture.StartPreviewAsync();
-        }
-
-        /// <summary>
-        /// Initializes the MediaCapture, starts preview.
-        /// </summary>
-        public async Task InitializeCameraAsync()
-        {
-            MediaCapture = new MediaCapture();
-            MediaCapture.Failed += MediaCapture_Failed;
-
-            try
-            {
-                await MediaCapture.InitializeAsync();
-                _previewControl.Source = MediaCapture;
-                await MediaCapture.StartPreviewAsync();
-                IsPreviewing = true;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // This can happen if access to the camera has been revoked.
-                MainPage.Current.NotifyUser("The app was denied access to the camera", MainPage.NotifyType.ErrorMessage);
-                await CleanupCameraAsync();
-            }
-        }
-
-        public async Task CleanupCameraAsync()
-        {
-            if (IsRecording)
-            {
-                await MediaCapture.StopRecordAsync();
-                IsRecording = false;
-            }
-
-            if (IsPreviewing)
-            {
-                await MediaCapture.StopPreviewAsync();
-                IsPreviewing = false;
-            }
-
-            _previewControl.Source = null;
-
-            if (MediaCapture != null)
-            {
-                MediaCapture.Dispose();
-                MediaCapture = null;
-            }
-        }
-
-        private void MediaCapture_Failed(MediaCapture sender, MediaCaptureFailedEventArgs e)
-        {
-            var task = _dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
-            {
-                MainPage.Current.NotifyUser("Preview stopped: " + e.Message, MainPage.NotifyType.ErrorMessage);
-                IsRecording = false;
-                IsPreviewing = false;
-                await CleanupCameraAsync();
-            });
-        }
-    }
 }

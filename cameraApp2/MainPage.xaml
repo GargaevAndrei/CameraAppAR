@@ -138,7 +138,7 @@
                 </Viewbox>
             </Button>
 
-            <ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>
+            <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
             <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Visibility="Visible" Height="71"/>
