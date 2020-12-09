@@ -138,6 +138,12 @@
                 </Viewbox>
             </Button>
 
+            <Button x:Name="readSettings" Click="ReadSettings_Click">
+                <Viewbox MaxHeight="40" MaxWidth="40">
+                    <SymbolIcon Symbol="Read"/>
+                </Viewbox>
+            </Button>
+
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>

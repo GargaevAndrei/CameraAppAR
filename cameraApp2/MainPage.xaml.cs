@@ -58,12 +58,18 @@ namespace CameraCOT
         double lenght = 0;
         DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
+        DispatcherTimer refreshCameraTimer;
         SerialPort serialPortFlash;
         double Xf;
         double Yf;
         double Zf;
         bool _isFlash = true;
         bool firstDistanceFlag = true;
+       
+        bool _isMainCameraFlag;
+        bool _isEndoCameraFlag;
+        bool _isTermoCameraFlag;
+        bool _isFail;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -83,7 +89,7 @@ namespace CameraCOT
             StatusMessage,
             ErrorMessage
         };
-        enum camera 
+        public enum cameraType 
         {
             mainCamera, 
             endoCamera, 
@@ -125,7 +131,7 @@ namespace CameraCOT
 
         public static Camera[] cameras;
         JsonCamerasSettings jsonCamerasSettings;
-        public int cameraType = (int)camera.mainCamera;                            
+        public int currentCameraType; //= (int)cameraType.mainCamera;                            
 
 
 
@@ -139,19 +145,65 @@ namespace CameraCOT
         {
             cameras = new Camera[3];
 
-
-            
-
+           
             //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
             //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
             jsonCamerasSettings = await readFileSettings();
-            cameras[(int)camera.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
-            cameras[(int)camera.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
-            cameras[(int)camera.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
+            cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
+            cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
+            cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
-            UpdateCaptureControls();
+            cameraDeviceListOld = await FindCameraDeviceAsync();
+            _isEndoCameraFlag = cameraDeviceListOld.Count == 2 ? false : true;
+            
+
+            if (cameraDeviceListOld.Count == 0)
+            {
+                Debug.WriteLine("No camera device found!");
+                return;
+            }
+
+       
+            //for (int i = 0; i < cameraDeviceListOld.Count; i++)
+            //{
+                //foreach (DeviceInformation camera in cameraDeviceListOld)
+                //{
+                //    if (camera.Name == cameras[i].Name)
+                //        cameras[i].Id = camera.Id;
+                //}
+
+                foreach (DeviceInformation camera in cameraDeviceListOld)
+                {
+                    if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
+                    {
+                        cameras[(int)cameraType.mainCamera].Id = camera.Id;
+                        _isMainCameraFlag = true;
+                    }
+                    if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
+                    {
+                        cameras[(int)cameraType.endoCamera].Id = camera.Id;
+                        _isEndoCameraFlag = true;
+                    }
+                    if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
+                    {
+                        cameras[(int)cameraType.termoCamera].Id = camera.Id;
+                        _isTermoCameraFlag = true;
+                    }
+                }
+
+            //}
+
+            if(_isMainCameraFlag)
+                currentCameraType = (int)cameraType.mainCamera;
+            else if(_isEndoCameraFlag)
+                currentCameraType = (int)cameraType.endoCamera;
+            else
+                currentCameraType = (int)cameraType.termoCamera;
+
+            await SetUpBasedOnStateAsync();
+            UpdateUIControls();
         }
 
         public MainPage()
@@ -171,6 +223,11 @@ namespace CameraCOT
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
             flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 400);
 
+            refreshCameraTimer = new DispatcherTimer();
+            refreshCameraTimer.Tick += refreshCameraTimer_Tick;
+            refreshCameraTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
+            refreshCameraTimer.Start();
+
             /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
             
             if(serialPortEndo != null)
@@ -183,15 +240,25 @@ namespace CameraCOT
 
             if (serialPortFlash != null)
             {
-                serialPortFlash.Open();
-                serialPortFlash.ReadTimeout = 500;
-                serialPortFlash.WriteTimeout = 500;
-                serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
-                textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
+                try
+                {
+                    serialPortFlash.Open();
+                    serialPortFlash.ReadTimeout = 500;
+                    serialPortFlash.WriteTimeout = 500;
+                    serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
+                    textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
+                }
+                catch(Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                    textBoxInfo.Text = e.Message;
+                }
             }
 
 
         }
+
+        
 
         private void SerialPortFlash_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -205,7 +272,41 @@ namespace CameraCOT
             await MakePhotoAsync();
         }
 
-        
+        private async void refreshCameraTimer_Tick(object sender, object e)
+        {
+            cameraDeviceList = await FindCameraDeviceAsync();
+
+            if (cameraDeviceList.Count != cameraDeviceListOld.Count)
+            {
+                //_isEndoCameraFlag = cameraDeviceList.Count > cameraDeviceListOld.Count ? true : false;
+
+                cameraDeviceListOld = cameraDeviceList;
+                _isMainCameraFlag  = false;
+                _isEndoCameraFlag  = false;
+                _isTermoCameraFlag = false;
+
+                foreach (DeviceInformation camera in cameraDeviceList)
+                {
+                    if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
+                    {
+                        cameras[(int)cameraType.mainCamera].Id = camera.Id;
+                        _isMainCameraFlag = true;
+                    }
+                    if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
+                    {
+                        cameras[(int)cameraType.endoCamera].Id = camera.Id;
+                        _isEndoCameraFlag = true;
+                    }
+                    if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
+                    {
+                        cameras[(int)cameraType.termoCamera].Id = camera.Id;
+                        _isTermoCameraFlag = true;
+                    }
+                }
+                
+                UpdateUIControls();
+            }
+        }
 
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -335,7 +436,7 @@ namespace CameraCOT
                         _findLenghtZero = false;
 
 
-                        UpdateCaptureControls();
+                        UpdateUIControls();
                         runMeasure.Visibility = Visibility.Collapsed;
                         progressRing.Visibility = Visibility.Collapsed;
                         progressRing.IsActive = false;
@@ -350,7 +451,7 @@ namespace CameraCOT
                         firstDistanceFlag = false;
                         _findLenghtZero = false;
 
-                        UpdateCaptureControls();
+                        UpdateUIControls();
 
                         textInfo.Visibility = Visibility.Visible;
                         textInfo.Text = "Калибровка не выполнена";
@@ -469,7 +570,7 @@ namespace CameraCOT
             firstDistanceFlag = true;
 
             _findLenghtZero = true;
-            UpdateCaptureControls();
+            UpdateUIControls();
 
             startMeasure();
         }
@@ -487,7 +588,7 @@ namespace CameraCOT
         {
             //getDistance();
             lenghtMeterTimer.Start();
-            if(cameraType == (int)camera.endoCamera)
+            if(currentCameraType == (int)cameraType.endoCamera)
                 videoEffectSettings.getLenghtFlag = true;          
         }
 
@@ -576,19 +677,46 @@ namespace CameraCOT
 
         private async void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
         {
-            await SetUpBasedOnStateAsync();
-            UpdateCaptureControls();
+            //jsonCamerasSettings = await readFileSettings();
+            //cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
+            //cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
+            //cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
+
+            //cameraDeviceList = await FindCameraDeviceAsync();
+
+            //if (cameraDeviceList.Count == 0)
+            //{
+            //    Debug.WriteLine("No camera device found!");
+            //    return;
+            //}
+
+            //int cameraCount = 3;
+            //for (int i = 0; i < cameraCount; i++)
+            //{
+            //    foreach (DeviceInformation camera in cameraDeviceList)
+            //    {
+            //        if (camera.Name == cameras[i].Name)
+            //            cameras[i].Id = camera.Id;
+            //    }
+            //}
+
+
+            //await SetUpBasedOnStateAsync();
+            //UpdateCaptureControls();
         }
 
 
 
 
         public static DeviceInformationCollection cameraDeviceList;
+        public static DeviceInformationCollection cameraDeviceListOld;
         //StreamResolution MainPreview, MainPhoto, MainVideo;
 
-        private async Task InitializeCameraAsync()
+
+        private async Task DefineCameraResolutionAsync()
         {
-            Debug.WriteLine("InitializeCameraAsync");
+            Debug.WriteLine("CameraResolutionAsync");
+            IEnumerable<StreamResolution> allStreamProperties;
 
             if (_mediaCapture == null)
             {
@@ -598,21 +726,74 @@ namespace CameraCOT
                 {
                     Debug.WriteLine("No camera device found!");
                     return;
-                }                
+                }
 
-
-                string cameraName = cameras[cameraType].Name;
-                string cameraId = "";
 
                 foreach (DeviceInformation camera in cameraDeviceList)
                 {
-                    if (camera.Name == cameraName)
-                        cameraId = camera.Id;
-                }    
+
+                    _mediaCapture = new MediaCapture();
+                    _mediaCapture.Failed += MediaCaptureFiled;
+                    var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
+
+                    try
+                    {
+                        await _mediaCapture.InitializeAsync(settings);
+
+                        allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+                       // allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+                        foreach (var property in allStreamProperties)
+                        {
+                            if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
+                                cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                            if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
+                                cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                            if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
+                                cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+
+                        }
+                        //_isInitialized = true;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Debug.WriteLine("The app was denied access to the camera");
+                    }
+
+                }
+                            
+            }
+        }
+
+
+        private async Task InitializeCameraAsync()
+        {
+            Debug.WriteLine("InitializeCameraAsync");
+
+            if (_mediaCapture == null)
+            {
+                //cameraDeviceList = await FindCameraDeviceAsync();
+
+                //if (cameraDeviceList.Count == 0)
+                //{
+                //    Debug.WriteLine("No camera device found!");
+                //    return;
+                //}                
+
+
+                //string cameraName = cameras[currentCameraType].Name;
+                //string cameraId = "";
+
+                //// Нужно единожды найти и задать id камер
+                //foreach (DeviceInformation camera in cameraDeviceList)
+                //{
+                //    if (camera.Name == cameraName)
+                //        cameraId = camera.Id;
+                //}    
 
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;             
-                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameraId };
+                var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameras[currentCameraType].Id };
 
 
                 try
@@ -625,18 +806,13 @@ namespace CameraCOT
                     foreach (var property in allStreamProperties)
                     {
                         if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
-                            cameras[(int)camera.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                            cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
                         if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
-                            cameras[(int)camera.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                            cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
                         if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
-                            cameras[(int)camera.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+                            cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
 
                     }
-
-                    //var encodingProperties = (jsonCamerasSettings.MainEncodingProperties as StreamResolution).EncodingProperties;
-
-                    //StreamResolution streamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
-                    //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, streamResolution.EncodingProperties);
 
                     _isInitialized = true;
                 }
@@ -719,13 +895,11 @@ namespace CameraCOT
             displayRequest.RequestActive();
 
 
-
-            //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
             PreviewControl.Source = _mediaCapture;
 
 
             //------------ add video effect -----------------
-            if (_cntCamera == (int)camera.endoCamera)
+            if (_cntCamera == (int)cameraType.endoCamera)
             {
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
@@ -734,13 +908,16 @@ namespace CameraCOT
                 videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
             }
             //-----------------------------------------------
+            try
+            {
+                await _mediaCapture.StartPreviewAsync();
+                _isPreviewing = true;
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("error preview " + e.Message);
+            }
 
-            await _mediaCapture.StartPreviewAsync();
-            _isPreviewing = true;
-
-            // await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, jsonCamerasSettings.MainEncodingProperties);
-            
-           
         }
 
         private async Task StartPreviewDoubleAsync()
@@ -755,9 +932,18 @@ namespace CameraCOT
             _isPreviewing = true;
             
         }
+        
         private async Task StopPreviewAsync()
         {
-            await _mediaCapture.StopPreviewAsync();
+            try
+            {
+                await _mediaCapture.StopPreviewAsync();
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("error stop preview" + e.Message);
+                _isFail = true;
+            }
             _isPreviewing = false;
             
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -780,6 +966,7 @@ namespace CameraCOT
             });
         }
 
+        int nextCamera;
         private async Task CleanupCameraAsync()
         {
             Debug.WriteLine("CleanupCameraAsync");
@@ -816,6 +1003,27 @@ namespace CameraCOT
                 _mediaCaptureDouble2.Dispose();
                 _mediaCaptureDouble2 = null;
             }
+
+            if(false)
+            {
+                _isFail = false;
+                _isUIActive = false;
+
+                currentCameraType = (++nextCamera) % 3;                
+
+                _isDouble = false;
+
+                await SetUpBasedOnStateAsync();
+
+                stopMeasure();
+                firstDistanceFlag = false;
+                _findLenghtZero = false;
+                videoEffectSettings.getLenghtFlag = false;
+
+
+                UpdateUIControls();
+            }
+            
         }
 
         private async void MediaCaptureFiled(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
@@ -834,7 +1042,7 @@ namespace CameraCOT
                 await _setupTask;
             }
 
-            bool wantUIActive = _isActivePage && Window.Current.Visible && !_isSuspending;
+            bool wantUIActive = _isActivePage && Window.Current.Visible && !_isSuspending;    // 
 
             if (_isUIActive != wantUIActive)
             {
@@ -894,6 +1102,7 @@ namespace CameraCOT
             storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
 
             var stream = new InMemoryRandomAccessStream();
+
             await _mediaCapture.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream);
 
             try
@@ -939,8 +1148,8 @@ namespace CameraCOT
         {
             Debug.WriteLine("SwitchCamera on main");
             _isUIActive = false;
-            //_cntCamera = 0;
-            cameraType = (int)camera.mainCamera;
+
+            currentCameraType = (int)cameraType.mainCamera;
             await CleanupCameraAsync();
 
             _isDouble = false;
@@ -953,7 +1162,7 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = false;
 
 
-            UpdateCaptureControls();
+            UpdateUIControls();
         }
 
         private async void endoCameraButton_Click(object sender, RoutedEventArgs e)
@@ -961,7 +1170,7 @@ namespace CameraCOT
             Debug.WriteLine("SwitchCamera on endo");
             _isUIActive = false;
 
-            cameraType = (int)camera.endoCamera;
+            currentCameraType = (int)cameraType.endoCamera;
 
             await CleanupCameraAsync();
 
@@ -973,7 +1182,7 @@ namespace CameraCOT
 
             runMeasure.Visibility = Visibility.Visible;
 
-            UpdateCaptureControls();
+            UpdateUIControls();
         }
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
@@ -981,7 +1190,7 @@ namespace CameraCOT
             Debug.WriteLine("SwitchCamera on termo");
             _isUIActive = false;
 
-            cameraType = (int)camera.termoCamera;
+            currentCameraType = (int)cameraType.termoCamera;
             await CleanupCameraAsync();
 
             _isDouble = false;
@@ -993,35 +1202,28 @@ namespace CameraCOT
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
 
-            UpdateCaptureControls();
+            UpdateUIControls();
         }
 
         private async void doubleCameraButton_Click(object sender, RoutedEventArgs e)
         {
-            //Debug.WriteLine("SwitchCamera on double");
-            //_isUIActive = false;
+            Debug.WriteLine("SwitchCamera on double");
+            _isUIActive = false;
 
-            //cameraType = (int)camera.doubleCamera;
-            //await CleanupCameraAsync();
+            currentCameraType = (int)cameraType.doubleCamera;
+            await CleanupCameraAsync();
 
-            //_isDouble = true;
+            _isDouble = true;
 
-            //await SetUpBasedOnStateAsync();
+            await SetUpBasedOnStateAsync();
 
-            //stopMeasure();
-            //firstDistanceFlag = false;
-            //_findLenghtZero = false;
-            //videoEffectSettings.getLenghtFlag = false;
+            stopMeasure();
+            firstDistanceFlag = false;
+            _findLenghtZero = false;
+            videoEffectSettings.getLenghtFlag = false;
 
 
-            //UpdateCaptureControls();
-
-            //StreamResolution streamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
-            //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, streamResolution.EncodingProperties);
-
-            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)camera.mainCamera].PreviewResolution.EncodingProperties);
-            await SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)camera.mainCamera].PhotoResolution.EncodingProperties);
-            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)camera.mainCamera].VideoResolution.EncodingProperties);
+            UpdateUIControls();           
 
         }
 
@@ -1030,14 +1232,14 @@ namespace CameraCOT
             if (!_isRecording)
             {
                 _isRecording = true;
-                UpdateCaptureControls();
+                UpdateUIControls();
 
                 await StartRecordingAsync(); 
             }
             else
             {
                 _isRecording = false;
-                UpdateCaptureControls();
+                UpdateUIControls();
 
                 await StopRecordingAsync();
             }
@@ -1052,7 +1254,7 @@ namespace CameraCOT
             StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
-                if (cameraType == (int)camera.termoCamera)
+                if (currentCameraType == (int)cameraType.termoCamera)
                     _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Wvga), file);
                 else
                     _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
@@ -1076,8 +1278,14 @@ namespace CameraCOT
         }
 
 
-        private void UpdateCaptureControls()
+        private void UpdateUIControls()
         {
+
+            mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
@@ -1102,7 +1310,7 @@ namespace CameraCOT
             pbFlashPower.Visibility     = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update lenght meter controls            
-            runMeasure.Visibility = (cameraType == (int)camera.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             
             if(_findLenghtZero)
             {
@@ -1136,21 +1344,21 @@ namespace CameraCOT
             color.R = 0;
             
 
-            switch (cameraType)
+            switch (currentCameraType)
             {
-                case (int)camera.mainCamera:
+                case (int)cameraType.mainCamera:
                     mainCameraButton.Background.Opacity = 10;
                     mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
                     
                     endoCameraButton.Background = new SolidColorBrush(color);
                     termoCameraButton.Background = new SolidColorBrush(color);
                     break;
-                case (int)camera.endoCamera:
+                case (int)cameraType.endoCamera:
                     mainCameraButton.Background = new SolidColorBrush(color);
                     endoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
                     termoCameraButton.Background = new SolidColorBrush(color);
                     break;
-                case (int)camera.termoCamera:
+                case (int)cameraType.termoCamera:
                     mainCameraButton.Background = new SolidColorBrush(color);
                     endoCameraButton.Background = new SolidColorBrush(color);
                     termoCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
@@ -1181,7 +1389,7 @@ namespace CameraCOT
         private void buttonFlash_Click(object sender, RoutedEventArgs e)
         {
             _isFlash = !_isFlash;
-            UpdateCaptureControls();
+            UpdateUIControls();
         }
 
 
@@ -1219,16 +1427,7 @@ namespace CameraCOT
         short FlashDuration = 0x12;
         short durationFlashDivider = 1;
         short StepFlashPower = 100;
-
-
-        //private void flashSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-        //{
-        //    Slider slider = sender as Slider;
-        //    if (slider != null)
-        //    {
-        //        flashValue = (short)slider.Value;
-        //    }         
-        //}
+        
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
         {
@@ -1268,6 +1467,12 @@ namespace CameraCOT
             await _mediaCapture.StartPreviewAsync();
         }
 
+        private async void ReadSettings_Click(object sender, RoutedEventArgs e)
+        {
+            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);
+            await SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+            await SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+        }
     }
 
 
