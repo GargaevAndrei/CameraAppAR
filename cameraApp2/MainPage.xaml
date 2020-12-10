@@ -43,6 +43,7 @@
             </StackPanel.Resources>
 
             <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"/>
+
             <Button x:Name="plusFlashButton" Click="plusFlashButton_Click" Width="40">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE948;" RenderTransformOrigin="0.5,0.5" >
                     <FontIcon.RenderTransform>
@@ -60,12 +61,30 @@
                 </FontIcon>
             </Button>
 
+
+            <Button x:Name="plusFlashButtonEndo" Click="plusFlashButtonEndo_Click" Width="40" Visibility="Collapsed">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE948;" RenderTransformOrigin="0.5,0.5" >
+                    <FontIcon.RenderTransform>
+                        <CompositeTransform ScaleX="1" ScaleY="1"/>
+                    </FontIcon.RenderTransform>
+                </FontIcon>
+            </Button>
+            <!--<Slider x:Name="flashSlider" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600" Height="32" Width="80"  />-->
+            <ProgressBar x:Name="pbFlashPowerEndo" Value="600" Maximum="1000" Height="10" Width="93" Visibility="Collapsed"/>
+            <Button x:Name="minusFlashButtonEndo" Click="minusFlashButtonEndo_Click" Width="40" Visibility="Collapsed">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE949;" RenderTransformOrigin="0.5,0.5" >
+                    <FontIcon.RenderTransform>
+                        <CompositeTransform ScaleX="1" ScaleY="1"/>
+                    </FontIcon.RenderTransform>
+                </FontIcon>
+            </Button>
+
+
             <!--<ToggleSwitch x:Name="flashSwitch" Width="80" Height="40"/>-->
 
             <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="70" Height="70">
                 <Grid>
-                    <!-- <Ellipse x:Name="FlashIcon" Fill="Yellow" Width="20" Height="20"/> -->
-                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
+                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -75,7 +94,21 @@
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
-                    <!--<Ellipse x:Name="NotFlashIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>-->
+                </Grid>
+            </Button>
+
+            <Button x:Name="buttonFlashEndo" Click="buttonFlashEndo_Click" Width="70" Height="70" Visibility="Collapsed">
+                <Grid>
+                    <FontIcon x:Name="FlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="NotFlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEC8A;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
                 </Grid>
             </Button>
 
