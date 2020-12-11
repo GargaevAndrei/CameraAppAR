@@ -126,6 +126,20 @@
                     <Rectangle x:Name="StopRecordingIcon" Fill="White" Width="20" Height="20" Visibility="Collapsed"/>
                 </Grid>
             </Button>
+            <Button x:Name="PauseVideoButton" Click="PauseVideoButton_Click" Width="70" Height="70" Visibility="Collapsed">
+                <Grid>
+                    <FontIcon x:Name="PauseIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xEDB4;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="ResumeIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEDB5;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
 
 
         </StackPanel>
@@ -203,7 +217,7 @@
         <TextBox x:Name="textBoxInfo" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,35,88" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,31,10" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

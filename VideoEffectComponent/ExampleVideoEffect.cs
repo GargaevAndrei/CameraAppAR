@@ -148,12 +148,12 @@ namespace VideoEffectComponent
             {
 
 
-                var gaussianBlurEffect = new GaussianBlurEffect
-                {
-                    Source = inputBitmap,
-                    BlurAmount = (float)BlurAmount,
-                    Optimization = EffectOptimization.Speed
-                };
+                //var gaussianBlurEffect = new GaussianBlurEffect
+                //{
+                //    Source = inputBitmap,
+                //    BlurAmount = (float)BlurAmount,
+                //    Optimization = EffectOptimization.Speed
+                //};
 
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
 
@@ -165,20 +165,23 @@ namespace VideoEffectComponent
                         FontWeight = Windows.UI.Text.FontWeights.Bold
                     });
                 }
+
                 //ds.DrawText(DateTime.Now.ToString("dd MMM yyyy HH:mm:ss"), videoEffectSettings.X, videoEffectSettings.Y + 50, Colors.PaleTurquoise, new CanvasTextFormat
                 //{
                 //    FontSize = videoEffectSettings.FontSize,
                 //    FontWeight = Windows.UI.Text.FontWeights.Bold
                 //});
 
-                
-                   
-                /*
-                ds.DrawText(tempValue.coordinate, 200, 980, Colors.Aquamarine, new CanvasTextFormat
+
+
+                if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
                 {
-                    FontSize = 44,
-                    FontWeight = Windows.UI.Text.FontWeights.Bold
-                });*/
+                    ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.Aquamarine, new CanvasTextFormat
+                    {
+                        FontSize = 44,
+                        FontWeight = Windows.UI.Text.FontWeights.Bold
+                    });
+                }
 
                 // Rect rect = new Rect(190, 700, 600, 600);
                 // ds.DrawRectangle(rect, Colors.Chartreuse);

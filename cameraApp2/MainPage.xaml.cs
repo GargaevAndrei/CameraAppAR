@@ -67,6 +67,7 @@ namespace CameraCOT
         DispatcherTimer refreshCameraTimer;
         SerialPort serialPortFlash;        
         bool _isFlash = true;
+        bool _isPause = false;
         bool _isFlashEndo = true;
         bool firstDistanceFlag = true;
        
@@ -355,6 +356,7 @@ namespace CameraCOT
         {
             getDistance();
             //serialPortEndo.Write("BAAZ");
+            getAccel();
         }
 
         HidDevice device;
@@ -475,10 +477,30 @@ namespace CameraCOT
 
                     if (ByteArray[5] == 32)     // MSG_GET_ACCEL_DATA
                     {
+                        //byte[] data = new byte[8];
                         
 
+                        short Xaccel = (short)((((short)(ByteArray[7]) << 2  | (short)(ByteArray[6])  >> 6)) << 6);
+                        short Yaccel = (short)((((short)(ByteArray[9]) << 2  | (short)(ByteArray[8])  >> 6)) << 6);
+                        short Zaccel = (short)((((short)(ByteArray[11]) << 2 | (short)(ByteArray[10]) >> 6)) << 6);
+
+                        double Xf1 = (double)Xaccel / 4096;
+                        double Yf1 = (double)Yaccel / 4096;
+                        double Zf1 = (double)Zaccel / 4096;
+
+                        double k = 0.2;
+
+                        //Xf = Xf1 * k - (1 - k) * Xf;
+                        //Yf = Yf1 * k - (1 - k) * Yf;
+                        //Zf = Zf1 * k - (1 - k) * Zf;
+
+                        Xf = Xf1;
+                        Yf = Yf1;
+                        Zf = Zf1;
+
                         textInfo.Visibility = Visibility.Visible;
-                        textInfo.Text = "Данные акселерометра";
+                        textBoxInfo.Text = "Данные акселерометра\n";
+                        textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
                     }
 
                 }));
@@ -661,7 +683,6 @@ namespace CameraCOT
                 videoEffectSettings.getLenghtFlag = false;
         }
 
-
         private void getDistanse_Click(object sender, RoutedEventArgs e)
         {
             //getDistance();
@@ -678,7 +699,7 @@ namespace CameraCOT
 
 
 
-
+        //-----------------------------------------------------------------------
         public void NotifyUser(string strMessage, NotifyType type)
         {
             // If called from the UI thread, then update immediately.
@@ -782,6 +803,8 @@ namespace CameraCOT
             //await SetUpBasedOnStateAsync();
             //UpdateCaptureControls();
         }
+        //-----------------------------------------------------------------------
+
 
 
         public static DeviceInformationCollection cameraDeviceList;
@@ -975,7 +998,7 @@ namespace CameraCOT
 
 
             //------------ add video effect -----------------
-            if (_cntCamera == (int)cameraType.endoCamera)
+            if (currentCameraType == (int)cameraType.endoCamera)
             {
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
@@ -1206,6 +1229,11 @@ namespace CameraCOT
                
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            stopMeasure();
+            firstDistanceFlag = false;
+            _findLenghtZero = false;
+            videoEffectSettings.getLenghtFlag = false;
+
             Debug.WriteLine("SwitchCamera on main");
             _isUIActive = false;
 
@@ -1222,11 +1250,6 @@ namespace CameraCOT
             {
                 Debug.WriteLine("error main camera button" + ex.Message);
             }
-            stopMeasure();
-            firstDistanceFlag = false;
-            _findLenghtZero = false;
-            videoEffectSettings.getLenghtFlag = false;
-
 
             UpdateUIControls();
         }
@@ -1315,6 +1338,7 @@ namespace CameraCOT
 
         private async void VideoButton_Click(object sender, RoutedEventArgs e)
         {
+            _isPause = false;
             if (!_isRecording)
             {
                 _isRecording = true;
@@ -1366,6 +1390,9 @@ namespace CameraCOT
 
         private void UpdateUIControls()
         {
+            PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+            PauseIcon.Visibility  = _isPause ? Visibility.Collapsed : Visibility.Visible;
+            ResumeIcon.Visibility = _isPause ? Visibility.Visible : Visibility.Collapsed;
 
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
@@ -1386,7 +1413,7 @@ namespace CameraCOT
             // Update recording button to show "Stop" icon instead of red "Record" icon
             StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             StopRecordingIcon.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
-            Rec.Visibility                = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
+            Rec.Visibility                = _isRecording && !_isPause ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update flash button
             NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -1611,8 +1638,18 @@ namespace CameraCOT
             getAccel();
 
             setFlashingLight(light);
-        }       
-       
+        }
+
+        private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isPause = !_isPause;
+            UpdateUIControls();
+
+            if(_isPause)
+                await _mediaRecording.PauseAsync(Windows.Media.Devices.MediaCapturePauseBehavior.ReleaseHardwareResources);
+            else
+                await _mediaRecording.ResumeAsync();
+        }
     }
 
 
