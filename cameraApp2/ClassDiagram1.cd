@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CameraCOT.App" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAQAAIAAA=</HashCode>
+      <FileName>App.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CameraCOT.MainPage" BaseTypeListCollapsed="true">
+    <Position X="6.5" Y="0.5" Width="2.75" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="CameraCOT.MainPage.NotifyType">
+        <TypeIdentifier>
+          <NewMemberFileName>MainPage.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Enum Name="CameraCOT.MainPage.cameraType">
+        <TypeIdentifier>
+          <NewMemberFileName>MainPage.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="CameraCOT.MainPage.Camera">
+        <TypeIdentifier>
+          <NewMemberFileName>MainPage.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>UkJ0JI+eg0GAQDJyHwTJfAfAz4JiDEiUBiFEDoSjYBM=</HashCode>
+      <FileName>MainPage.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.549" Collapsed="true" />
+  </Class>
+  <Class Name="CameraCOT.SettingsPage" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="2.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAAAAAAIAAAIAAAAgQCAAAAAAAIAAAAAAg=</HashCode>
+      <FileName>SettingsPage.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CameraCOT.JsonCamerasSettings">
+    <Position X="3.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAIAIAAAACAAEAAgAAAAAAAAEgAAAAAAEAAAIggQAAA=</HashCode>
+      <FileName>SettingsPage.xaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CameraCOT.StreamResolution">
+    <Position X="3.5" Y="4.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAQAACABAAAEAAAAgAAAEAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>SettingsPage.xaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VideoEffectComponent.ExampleVideoEffect">
+    <Position X="12" Y="0.5" Width="2.25" />
+    <TypeIdentifier />
+  </Class>
+  <Struct Name="VideoEffectComponent.videoEffectSettings">
+    <Position X="9.75" Y="0.5" Width="1.75" />
+    <TypeIdentifier />
+  </Struct>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

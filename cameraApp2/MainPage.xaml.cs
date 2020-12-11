@@ -998,7 +998,7 @@ namespace CameraCOT
 
 
             //------------ add video effect -----------------
-            if (currentCameraType == (int)cameraType.endoCamera)
+            if (currentCameraType == (int)cameraType.endoCamera || currentCameraType == (int)cameraType.mainCamera)
             {
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
@@ -1007,6 +1007,7 @@ namespace CameraCOT
                 videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
             }
             //-----------------------------------------------
+
             try
             {
                 await _mediaCapture.StartPreviewAsync();
@@ -1650,6 +1651,14 @@ namespace CameraCOT
             else
                 await _mediaRecording.ResumeAsync();
         }
+
+        static int temp1 = 0;
+        private void NotesButton_Click(object sender, RoutedEventArgs e)
+        {
+            videoEffectSettings.commet = "Заметка" + ++temp1;
+        }
+
+
     }
 
 

@@ -36,6 +36,7 @@ namespace VideoEffectComponent
     {
         public static string lenght;
         public static string coordinate;
+        public static string commet;
         public static int X;
         public static int Y;
         public static int FontSize;
@@ -174,14 +175,24 @@ namespace VideoEffectComponent
 
 
 
-                if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
+                if (videoEffectSettings.coordinate != null)
                 {
-                    ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.Aquamarine, new CanvasTextFormat
+                    ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.PaleTurquoise, new CanvasTextFormat
                     {
                         FontSize = 44,
                         FontWeight = Windows.UI.Text.FontWeights.Bold
                     });
                 }
+
+                if (videoEffectSettings.commet != null)
+                {
+                    ds.DrawText(videoEffectSettings.commet, 50, 400, Colors.PaleTurquoise, new CanvasTextFormat
+                    {
+                        FontSize = 20,
+
+                    });
+                }
+
 
                 // Rect rect = new Rect(190, 700, 600, 600);
                 // ds.DrawRectangle(rect, Colors.Chartreuse);

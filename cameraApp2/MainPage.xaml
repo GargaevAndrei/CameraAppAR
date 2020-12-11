@@ -17,8 +17,8 @@
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
-        <CaptureElement x:Name="PreviewControlDouble1" HorizontalAlignment="Left" Width="640" Height="720" VerticalAlignment="Center" />
-        <CaptureElement x:Name="PreviewControlDouble2" Height="720" VerticalAlignment="Center" HorizontalAlignment="Right" Width="640"/>
+        <CaptureElement x:Name="PreviewControlDouble1" Height="720" VerticalAlignment="Center" Margin="0,0,640,0" />
+        <CaptureElement x:Name="PreviewControlDouble2" Height="720" VerticalAlignment="Center" Margin="640,0,0,0"/>
 
 
         <Image x:Name="imageElement" Margin="18,24,104,18" />
@@ -189,6 +189,16 @@
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Read"/>
                 </Viewbox>
+            </Button>
+
+            <Button x:Name="notesButton" Click="NotesButton_Click">
+                <Grid>
+                    <FontIcon x:Name="notesButtonIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE70B;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
             </Button>
 
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
