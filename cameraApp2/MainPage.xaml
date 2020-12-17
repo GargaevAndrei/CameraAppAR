@@ -11,9 +11,9 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
 
-        <!-- <Image Source="C:\temp\CameraPhoto.jpg" />  -->
 
-        <!-- <canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>  -->
+
+        <canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
@@ -144,6 +144,12 @@
 
         </StackPanel>
 
+        <StackPanel x:Name="termoPanel" VerticalAlignment="Center" Margin="0,0,140,0" HorizontalAlignment="Right" Width="100 " Visibility="Collapsed">
+            <TextBox x:Name="textBoxTmax" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmax" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+            <Image Source="Assets/lepton_color_map_fusion.png" Margin="0,0,0,0" Height="350" Width="80" />
+            <TextBox x:Name="textBoxTmin" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+        </StackPanel>
+
         <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center">
             <StackPanel.Resources>
                 <Style TargetType="Button">
@@ -167,10 +173,10 @@
 
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,0,0,0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="10,40"/>
+                    <Setter Property="Margin" Value="10,20"/>
                     <Setter Property="MinWidth" Value="70"/>
                     <Setter Property="MinHeight" Value="70"/>
                     <Setter Property="Foreground" Value="White"/>
@@ -180,13 +186,13 @@
             </StackPanel.Resources>
 
             <Button x:Name="runMeasure" Click="runMeasure_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
+                <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
             </Button>
 
-            <Button x:Name="readSettings" Click="ReadSettings_Click">
-                <Viewbox MaxHeight="40" MaxWidth="40">
+            <Button x:Name="readSettings" Click="ReadSettings_Click" Visibility="Collapsed">
+                <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Read"/>
                 </Viewbox>
             </Button>
@@ -204,7 +210,7 @@
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
-            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Visibility="Visible" Height="71"/>
+            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Collapsed"/>
 
         </StackPanel>
 

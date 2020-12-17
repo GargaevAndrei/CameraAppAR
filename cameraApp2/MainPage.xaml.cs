@@ -24,6 +24,9 @@ using Windows.UI.Xaml.Media;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Windows.Foundation.Collections;
+using System.IO.MemoryMappedFiles;
+using System.IO;
+using Windows.Networking.Sockets;
 
 
 
@@ -65,6 +68,7 @@ namespace CameraCOT
         DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
         DispatcherTimer refreshCameraTimer;
+        DispatcherTimer histogramStatisticTimer;
         SerialPort serialPortFlash;        
         bool _isFlash = true;
         bool _isPause = false;
@@ -88,6 +92,13 @@ namespace CameraCOT
         private bool _isUIActive;
         public int _cntCamera;  //was private
         private StorageFolder _captureFolder = null;
+
+        static string PortNumber = "8005";
+        static string serverAddress = "127.0.0.1"; // адрес сервера
+
+        string strMinT, strMaxT, strPointT;
+        double minT, maxT, pointT;
+
 
         public enum NotifyType
         {
@@ -224,6 +235,11 @@ namespace CameraCOT
             refreshCameraTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
             refreshCameraTimer.Start();
 
+            histogramStatisticTimer = new DispatcherTimer();
+            histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
+            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 111);
+            //histogramStatisticTimer.Start();
+
             /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
             
             if(serialPortEndo != null)
@@ -252,9 +268,63 @@ namespace CameraCOT
             }
 
 
+            
         }
 
-        
+        private void histogramStatisticTimer_Tick(object sender, object e)
+        {
+            StartClient();
+        }
+
+        private async void StartClient()
+        {
+            try
+            {
+                using (var streamSocket = new StreamSocket())
+                {
+                    var hostName = new Windows.Networking.HostName(serverAddress);
+
+                    await streamSocket.ConnectAsync(hostName, PortNumber);
+
+                    string request = "Hello, World!";
+                    using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
+                    {
+                        using (var streamWriter = new StreamWriter(outputStream))
+                        {
+                            await streamWriter.WriteLineAsync(request);
+                            await streamWriter.FlushAsync();
+                        }
+                    }
+
+                    string response;
+                    using (Stream inputStream = streamSocket.InputStream.AsStreamForRead())
+                    {
+                        using (StreamReader streamReader = new StreamReader(inputStream))
+                        {
+                            response = streamReader.ReadLine();
+                        }
+                    }
+
+                    var index = response.IndexOf(":");
+                    strMinT = response.Substring(0, index);
+                    strMaxT = response.Substring(index + 1);
+                    strPointT = response.Substring(index + 1);
+                    minT = Convert.ToDouble(strMinT);
+                    maxT = Convert.ToDouble(strMaxT);
+                    pointT = Convert.ToDouble(strMaxT);
+
+                    textBoxTmax.Text = maxT.ToString("0.0");
+                    textBoxTmin.Text = minT.ToString("0.0");
+                    //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
+                //this.clientListBox.Text += "error " + ex.Message;
+            }
+        }
 
         private void SerialPortFlash_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -1252,6 +1322,7 @@ namespace CameraCOT
                 Debug.WriteLine("error main camera button" + ex.Message);
             }
 
+            histogramStatisticTimer.Stop();
             UpdateUIControls();
         }
 
@@ -1277,6 +1348,8 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = true;
 
             runMeasure.Visibility = Visibility.Visible;
+
+            histogramStatisticTimer.Stop();
 
             UpdateUIControls();
         }
@@ -1307,6 +1380,8 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = false;
 
             UpdateUIControls();
+
+            histogramStatisticTimer.Start();
         }
 
         private async void doubleCameraButton_Click(object sender, RoutedEventArgs e)
@@ -1332,7 +1407,7 @@ namespace CameraCOT
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
 
-
+            histogramStatisticTimer.Stop();
             UpdateUIControls();           
 
         }
@@ -1398,6 +1473,7 @@ namespace CameraCOT
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
 
             // diagnostic information
@@ -1650,6 +1726,11 @@ namespace CameraCOT
                 await _mediaRecording.PauseAsync(Windows.Media.Devices.MediaCapturePauseBehavior.ReleaseHardwareResources);
             else
                 await _mediaRecording.ResumeAsync();
+        }
+
+        private void canvas_CreateResources(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
+        {
+
         }
 
         static int temp1 = 0;
