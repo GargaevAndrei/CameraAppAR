@@ -13,7 +13,22 @@
 
 
 
-        <canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>
+        <!--<canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>-->
+        <!--<Grid>
+            <FontIcon x:Name="CenterIcon"  Width="40" Glyph="&#xE711;" RenderTransformOrigin="0.5,0.5" Foreground="Black">
+                <FontIcon.RenderTransform>
+                    <CompositeTransform ScaleX="2" ScaleY="2"/>
+                </FontIcon.RenderTransform>
+            </FontIcon>
+        </Grid>-->
+        <StackPanel x:Name="CenterIcon1" VerticalAlignment="Top" Margin="0,360,0,0" HorizontalAlignment="Center" Visibility="Collapsed" >
+            <FontIcon x:Name="CenterIcon"  Width="40" Glyph="&#xE711;" RenderTransformOrigin="0.5,0.5" Foreground="Black">
+                <FontIcon.RenderTransform>
+                    <CompositeTransform ScaleX="2" ScaleY="2"/>
+                </FontIcon.RenderTransform>
+            </FontIcon>
+        </StackPanel>
+
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
@@ -84,12 +99,12 @@
 
             <Button x:Name="buttonFlash" Click="buttonFlash_Click" Width="70" Height="70">
                 <Grid>
-                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow">
+                    <FontIcon x:Name="FlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
-                    <FontIcon x:Name="NotFlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEC8A;" RenderTransformOrigin="0.5,0.5">
+                    <FontIcon x:Name="NotFlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -99,12 +114,12 @@
 
             <Button x:Name="buttonFlashEndo" Click="buttonFlashEndo_Click" Width="70" Height="70" Visibility="Collapsed">
                 <Grid>
-                    <FontIcon x:Name="FlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE706;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
+                    <FontIcon x:Name="FlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
-                    <FontIcon x:Name="NotFlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEC8A;" RenderTransformOrigin="0.5,0.5">
+                    <FontIcon x:Name="NotFlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -148,6 +163,7 @@
             <TextBox x:Name="textBoxTmax" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmax" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
             <Image Source="Assets/lepton_color_map_fusion.png" Margin="0,0,0,0" Height="350" Width="80" />
             <TextBox x:Name="textBoxTmin" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+            <TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
         </StackPanel>
 
         <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center">
@@ -185,13 +201,13 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button x:Name="runMeasure" Click="runMeasure_Click">
+            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Collapsed">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
             </Button>
 
-            <Button x:Name="readSettings" Click="ReadSettings_Click" Visibility="Collapsed">
+            <Button x:Name="readSettings" Click="ReadSettings_Click" Visibility="Visible">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Read"/>
                 </Viewbox>
@@ -213,6 +229,68 @@
             <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Collapsed"/>
 
         </StackPanel>
+
+
+        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,20"/>
+                    <Setter Property="MinWidth" Value="60"/>
+                    <Setter Property="MinHeight" Value="60"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+
+            <Button x:Name="buttonClearNotes" Click="ButtonClearNotes_Click">
+                <Grid>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE74D;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+            
+            <Button x:Name="buttonUpNotes" Click="ButtonUpNotes_Click">
+                <Grid>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE72B;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
+            <ListBox x:Name="textBlockNotes" Height="71" Width="500"/>
+
+            
+
+            <Button x:Name="buttonDownNotes" Click="buttonDownNotes_Click">
+                <Grid>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE72A;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
+            
+
+            <Button x:Name="buttonSetNotes" Click="ButtonSetNotes_Click">
+                <Grid>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xEB97;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
+        </StackPanel>
+
 
         <StackPanel Orientation="Horizontal"  VerticalAlignment="Bottom" HorizontalAlignment="Center">
             <StackPanel.Resources>
@@ -238,7 +316,7 @@
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
-        <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="20" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,127,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="46"/>
+        <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,127,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="46"/>
 
 
     </Grid>

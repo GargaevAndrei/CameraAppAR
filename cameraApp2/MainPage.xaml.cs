@@ -27,6 +27,8 @@ using Windows.Foundation.Collections;
 using System.IO.MemoryMappedFiles;
 using System.IO;
 using Windows.Networking.Sockets;
+using Windows.Media.Capture.Frames;
+using System.Threading;
 
 
 
@@ -49,6 +51,7 @@ namespace CameraCOT
         //private MediaCapturePreviewer _previewer = null;
 
 
+        MediaFrameReader mediaFrameReader;
 
         private MediaCapture _mediaCapture;
         private MediaCapture _mediaCaptureDouble1;
@@ -79,6 +82,7 @@ namespace CameraCOT
         bool _isEndoCameraFlag;
         bool _isTermoCameraFlag;
         bool _isFail;
+        bool _isNotes;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -172,7 +176,8 @@ namespace CameraCOT
             cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
             cameraDeviceListOld = await FindCameraDeviceAsync();
-            _isEndoCameraFlag = cameraDeviceListOld.Count == 2 ? false : true;
+
+            //_isEndoCameraFlag = cameraDeviceListOld.Count == 2 ? false : true;
             
 
             if (cameraDeviceListOld.Count == 0)
@@ -209,6 +214,9 @@ namespace CameraCOT
             else
                 currentCameraType = (int)cameraType.termoCamera;
 
+
+            await DefineCameraResolutionAsync();
+
             await SetUpBasedOnStateAsync();
             UpdateUIControls();
         }
@@ -237,7 +245,7 @@ namespace CameraCOT
 
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
-            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 111);
+            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
             //histogramStatisticTimer.Start();
 
             /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
@@ -301,21 +309,33 @@ namespace CameraCOT
                     {
                         using (StreamReader streamReader = new StreamReader(inputStream))
                         {
-                            response = streamReader.ReadLine();
+                            response = await streamReader.ReadLineAsync();
                         }
                     }
 
-                    var index = response.IndexOf(":");
-                    strMinT = response.Substring(0, index);
-                    strMaxT = response.Substring(index + 1);
-                    strPointT = response.Substring(index + 1);
-                    minT = Convert.ToDouble(strMinT);
-                    maxT = Convert.ToDouble(strMaxT);
-                    pointT = Convert.ToDouble(strMaxT);
+                    if (response != null)
+                    {
+                        try
+                        {
+                            var index1 = response.IndexOf(":");
+                            var index2 = response.LastIndexOf(":");
+                            strMinT = response.Substring(0, index1);
+                            strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
+                            strPointT = response.Substring(index2 + 1);
+                            minT = Convert.ToDouble(strMinT);
+                            maxT = Convert.ToDouble(strMaxT);
+                            pointT = Convert.ToDouble(strPointT);
 
-                    textBoxTmax.Text = maxT.ToString("0.0");
-                    textBoxTmin.Text = minT.ToString("0.0");
-                    //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
+                            textBoxTmax.Text = maxT.ToString("0.0");
+                            textBoxTmin.Text = minT.ToString("0.0");
+                            textBoxTpoint.Text = pointT.ToString("0.0");
+                            //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+                    }
                 }
 
             }
@@ -903,33 +923,99 @@ namespace CameraCOT
 
                     _mediaCapture = new MediaCapture();
                     _mediaCapture.Failed += MediaCaptureFiled;
-                    var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
 
-                    try
+                    if(camera.Name == cameras[(int)cameraType.mainCamera].Name)
                     {
-                        await _mediaCapture.InitializeAsync(settings);
+                        var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
 
-                        allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
-                       // allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
-
-                        foreach (var property in allStreamProperties)
+                        try
                         {
-                            if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
-                                cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
-                            if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
-                                cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
-                            if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
-                                cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+                            await _mediaCapture.InitializeAsync(settings);
 
+                            allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+                            // allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+                            foreach (var property in allStreamProperties)
+                            {
+                                if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+
+                            }
+                            //_isInitialized = true;
                         }
-                        //_isInitialized = true;
+                        catch (UnauthorizedAccessException)
+                        {
+                            Debug.WriteLine("The app was denied access to the camera");
+                        }
                     }
-                    catch (UnauthorizedAccessException)
+
+                    if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
                     {
-                        Debug.WriteLine("The app was denied access to the camera");
+                        var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
+
+                        try
+                        {
+                            await _mediaCapture.InitializeAsync(settings);
+
+                            allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+                            // allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+                            foreach (var property in allStreamProperties)
+                            {
+                                if (jsonCamerasSettings.EndoCameraPreview == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.endoCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.EndoCameraPhoto == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.endoCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.EndoCameraVideo == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.endoCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+
+                            }
+                            //_isInitialized = true;
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Debug.WriteLine("The app was denied access to the camera");
+                        }
                     }
+
+                    if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
+                    {
+                        var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
+
+                        try
+                        {
+                            await _mediaCapture.InitializeAsync(settings);
+
+                            allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
+                            // allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
+
+                            foreach (var property in allStreamProperties)
+                            {
+                                if (jsonCamerasSettings.TermoCameraPreview == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.termoCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.TermoCameraPhoto == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.termoCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
+                                if (jsonCamerasSettings.TermoCameraVideo == property.GetFriendlyName(true))
+                                    cameras[(int)cameraType.termoCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
+
+                            }
+                            //_isInitialized = true;
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Debug.WriteLine("The app was denied access to the camera");
+                        }
+                    }
+
 
                 }
+
+                await CleanupCameraAsync();
+
                             
             }
         }
@@ -940,49 +1026,28 @@ namespace CameraCOT
             Debug.WriteLine("InitializeCameraAsync");
 
             if (_mediaCapture == null)
-            {
-                //cameraDeviceList = await FindCameraDeviceAsync();
-
-                //if (cameraDeviceList.Count == 0)
-                //{
-                //    Debug.WriteLine("No camera device found!");
-                //    return;
-                //}                
-
-
-                //string cameraName = cameras[currentCameraType].Name;
-                //string cameraId = "";
-
-                //// Нужно единожды найти и задать id камер
-                //foreach (DeviceInformation camera in cameraDeviceList)
-                //{
-                //    if (camera.Name == cameraName)
-                //        cameraId = camera.Id;
-                //}    
+            {                
 
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;             
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameras[currentCameraType].Id };
-
-
+                //settings.PhotoCaptureSource = Windows.Media.Capture.PhotoCaptureSource.VideoPreview;
+                                
                 try
                 {
                     await _mediaCapture.InitializeAsync(settings);
-
-                    IEnumerable<StreamResolution>  allStreamProperties = _mediaCapture.VideoDeviceController.GetAvailableMediaStreamProperties(MediaStreamType.VideoPreview).Select(x => new StreamResolution(x));
-                    allStreamProperties = allStreamProperties.OrderByDescending(x => x.Height * x.Width).ThenByDescending(x => x.FrameRate);
-
-                    foreach (var property in allStreamProperties)
+                    if (currentCameraType == (int)cameraType.mainCamera)
                     {
-                        if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
-                            cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
-                        if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
-                            cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
-                        if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
-                            cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
-
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
                     }
-
+                    if (currentCameraType == (int)cameraType.endoCamera)
+                    {
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.endoCamera].PreviewResolution.EncodingProperties);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.endoCamera].PhotoResolution.EncodingProperties);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
+                    }
                     _isInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
@@ -998,6 +1063,55 @@ namespace CameraCOT
 
             }
         }
+
+
+        private SoftwareBitmap backBuffer;
+        private void ColorFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
+        {
+            var mediaFrameReference = sender.TryAcquireLatestFrame();
+            var videoMediaFrame = mediaFrameReference?.VideoMediaFrame;
+            var softwareBitmap = videoMediaFrame?.SoftwareBitmap;
+
+
+            if (softwareBitmap != null)
+            {
+                if (softwareBitmap.BitmapPixelFormat != Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8 ||
+                    softwareBitmap.BitmapAlphaMode != Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied)
+                {
+                    softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                }
+
+                // Swap the processed frame to _backBuffer and dispose of the unused image.
+                softwareBitmap = Interlocked.Exchange(ref backBuffer, softwareBitmap);
+                softwareBitmap?.Dispose();
+
+                // Changes to XAML ImageElement must happen on UI thread through Dispatcher
+                //var task = imageElement.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+                //    async () =>
+                //    {
+                //// Don't let two copies of this task run at the same time.
+                //if (taskRunning)
+                //        {
+                //            return;
+                //        }
+                //        taskRunning = true;
+
+                //// Keep draining frames from the backbuffer until the backbuffer is empty.
+                //SoftwareBitmap latestBitmap;
+                //        while ((latestBitmap = Interlocked.Exchange(ref backBuffer, null)) != null)
+                //        {
+                //            var imageSource = (SoftwareBitmapSource)imageElement.Source;
+                //            await imageSource.SetBitmapAsync(latestBitmap);
+                //            latestBitmap.Dispose();
+                //        }
+
+                //        taskRunning = false;
+                //    });
+            }
+
+            mediaFrameReference.Dispose();
+        }
+
 
         private async Task InitializeDoubleCameraAsync()
         {
@@ -1466,6 +1580,9 @@ namespace CameraCOT
 
         private void UpdateUIControls()
         {
+
+            panelNotes.Visibility = _isNotes ? Visibility.Visible : Visibility.Collapsed;
+
             PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
             PauseIcon.Visibility  = _isPause ? Visibility.Collapsed : Visibility.Visible;
             ResumeIcon.Visibility = _isPause ? Visibility.Visible : Visibility.Collapsed;
@@ -1474,6 +1591,7 @@ namespace CameraCOT
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
 
             // diagnostic information
@@ -1575,6 +1693,8 @@ namespace CameraCOT
                     doubleCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
                     break;
             }
+
+            notesButton.Background = !_isNotes ? new SolidColorBrush(color) : new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
 
 
             //videoEffectSettings.X = cameras[_cntCamera].X;
@@ -1717,6 +1837,26 @@ namespace CameraCOT
             setFlashingLight(light);
         }
 
+        private void ButtonUpNotes_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void buttonDownNotes_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ButtonClearNotes_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
+        {
+            videoEffectSettings.commet = "Заметка" + ++temp1;
+        }
+
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
         {
             _isPause = !_isPause;
@@ -1736,7 +1876,9 @@ namespace CameraCOT
         static int temp1 = 0;
         private void NotesButton_Click(object sender, RoutedEventArgs e)
         {
-            videoEffectSettings.commet = "Заметка" + ++temp1;
+            _isNotes = !_isNotes;
+            UpdateUIControls();
+            //videoEffectSettings.commet = "Заметка" + ++temp1;
         }
 
 

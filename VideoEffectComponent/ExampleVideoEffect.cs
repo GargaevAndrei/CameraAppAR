@@ -13,7 +13,7 @@ using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas;
 using Windows.UI;
 using Microsoft.Graphics.Canvas.Text;
-using Windows.Foundation;
+
 //using CameraCOT;
 
 
@@ -43,7 +43,7 @@ namespace VideoEffectComponent
         public static bool getLenghtFlag;
     }
     public sealed class ExampleVideoEffect : IBasicVideoEffect
-    {
+    {        
 
         public void Close(MediaEffectClosedReason reason)
         {
@@ -60,13 +60,13 @@ namespace VideoEffectComponent
         public bool IsReadOnly { get { return false; } }
 
         private VideoEncodingProperties encodingProperties;
-        /*public void SetEncodingProperties(VideoEncodingProperties encodingProperties, IDirect3DDevice device)
-        {
-            this.encodingProperties = encodingProperties;
-        }*/
+        //public void SetEncodingProperties(VideoEncodingProperties encodingProperties, IDirect3DDevice device)
+        //{
+        //    this.encodingProperties = encodingProperties;
+        //}
 
         private CanvasDevice canvasDevice;
-        public void SetEncodingProperties(VideoEncodingProperties encodingProperties, IDirect3DDevice device)
+        public void SetEncodingProperties(VideoEncodingProperties encodingProperties, IDirect3DDevice device)   
         {
             canvasDevice = CanvasDevice.CreateFromDirect3D11Device(device);
         }
@@ -148,14 +148,6 @@ namespace VideoEffectComponent
             using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
             {
 
-
-                //var gaussianBlurEffect = new GaussianBlurEffect
-                //{
-                //    Source = inputBitmap,
-                //    BlurAmount = (float)BlurAmount,
-                //    Optimization = EffectOptimization.Speed
-                //};
-
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
 
                 if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
@@ -172,7 +164,6 @@ namespace VideoEffectComponent
                 //    FontSize = videoEffectSettings.FontSize,
                 //    FontWeight = Windows.UI.Text.FontWeights.Bold
                 //});
-
 
 
                 if (videoEffectSettings.coordinate != null)
@@ -199,6 +190,8 @@ namespace VideoEffectComponent
 
             }
         }
+
+        
 
 
     }
