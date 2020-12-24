@@ -10,7 +10,7 @@
   <Identity
     Name="814dbe6e-299f-4da7-9680-a0db07e738bc"
     Publisher="CN=Andrei"
-    Version="1.0.17.0" />
+    Version="1.0.23.0" />
 
   <mp:PhoneIdentity PhoneProductId="814dbe6e-299f-4da7-9680-a0db07e738bc" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -49,6 +49,7 @@
       <uap6:Capability Name="graphicsCapture" />
       <uap:Capability Name="picturesLibrary" />
       <uap:Capability Name="videosLibrary" />
+      <Capability Name="privateNetworkClientServer"/>
       <DeviceCapability Name="microphone" />
       <DeviceCapability Name="webcam" />
       <DeviceCapability Name="humanInterfaceDevice" />

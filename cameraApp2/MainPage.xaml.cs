@@ -68,10 +68,15 @@ namespace CameraCOT
         double Xf;
         double Yf;
         double Zf;
+
         DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
         DispatcherTimer refreshCameraTimer;
         DispatcherTimer histogramStatisticTimer;
+        DispatcherTimer opacityTimer;
+        DispatcherTimer recordTimer;
+        DispatcherTimer recordTimerPause;
+
         SerialPort serialPortFlash;        
         bool _isFlash = true;
         bool _isPause = false;
@@ -83,6 +88,7 @@ namespace CameraCOT
         bool _isTermoCameraFlag;
         bool _isFail;
         bool _isNotes;
+        bool _isNotFirstStart;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -97,7 +103,7 @@ namespace CameraCOT
         public int _cntCamera;  //was private
         private StorageFolder _captureFolder = null;
 
-        static string PortNumber = "8005";
+        static string serverPort = "8005";
         static string serverAddress = "127.0.0.1"; // адрес сервера
 
         string strMinT, strMaxT, strPointT;
@@ -219,6 +225,7 @@ namespace CameraCOT
 
             await SetUpBasedOnStateAsync();
             UpdateUIControls();
+            _isNotFirstStart = true;
         }
 
         public MainPage()
@@ -247,6 +254,19 @@ namespace CameraCOT
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
             histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
             //histogramStatisticTimer.Start();
+
+            opacityTimer = new DispatcherTimer();
+            opacityTimer.Tick += opacityTimer_Tick;
+            opacityTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+
+            recordTimer = new DispatcherTimer();
+            recordTimer.Tick += recordTimer_Tick;
+            recordTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+
+            recordTimerPause = new DispatcherTimer();
+            recordTimerPause.Tick += recordTimerPause_Tick;
+            recordTimerPause.Interval = new TimeSpan(0, 0, 0, 0, 100);
+
 
             /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
             
@@ -279,22 +299,67 @@ namespace CameraCOT
             
         }
 
+        private void recordTimerPause_Tick(object sender, object e)
+        {
+            //DateTime currentTime = DateTime.Now;
+            //deltaTimePause = currentTime - timePause;
+        }
+
+        //TimeSpan deltaTimePause;
+        //DateTime timePause;
+        //DateTime timeStartRecord;
+        Stopwatch stopWatch = new Stopwatch();
+        private void recordTimer_Tick(object sender, object e)
+        {
+            //DateTime currentTime = DateTime.Now;            
+            //TimeSpan deltaTime = currentTime - timeStartRecord;
+            //deltaTime -= deltaTimePause; 
+            //recordTimeTextBox.Text = deltaTime.ToString(@"hh\:mm\:ss");
+
+            recordTimeTextBox.Text = stopWatch.Elapsed.ToString(@"hh\:mm\:ss");
+        }
+
+        private void opacityTimer_Tick(object sender, object e)
+        {
+            PreviewControl.Opacity = 1;
+            opacityTimer.Stop();
+        }
+
+        static int index;
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
+            textBoxInfo.Text += ++index + "\n";
             StartClient();
         }
 
+        StreamSocket streamSocket;
         private async void StartClient()
         {
+            textBoxInfo.Text += "start client \n";
             try
             {
-                using (var streamSocket = new StreamSocket())
+                using ( streamSocket = new StreamSocket())
                 {
+                    textBoxInfo.Text += "create streamSocket \n";
                     var hostName = new Windows.Networking.HostName(serverAddress);
+                    textBoxInfo.Text += "create hostName \n";
 
-                    await streamSocket.ConnectAsync(hostName, PortNumber);
+                    try
+                    {
+                        await streamSocket.ConnectAsync(hostName, serverPort);
+                        textBoxInfo.Text += "streamSocket.ConnectAsync \n";
+                    }
+                    catch(Exception ex)
+                    {
+                        textBoxInfo.Text += ex.Message + "\n";
+                    }
 
-                    string request = "Hello, World!";
+                    textBoxInfo.Text += streamSocket.Information.LocalAddress + " " +
+                                        streamSocket.Information.LocalPort + " " +
+                                        streamSocket.Information.RemoteAddress + " " +
+                                        streamSocket.Information.RemotePort + "\n";
+
+                    string request = "request!";
                     using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
                     {
                         using (var streamWriter = new StreamWriter(outputStream))
@@ -303,6 +368,8 @@ namespace CameraCOT
                             await streamWriter.FlushAsync();
                         }
                     }
+
+                    await Task.Delay(100);
 
                     string response;
                     using (Stream inputStream = streamSocket.InputStream.AsStreamForRead())
@@ -343,6 +410,7 @@ namespace CameraCOT
             {
                 Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
                 //this.clientListBox.Text += "error " + ex.Message;
+                textBoxInfo.Text += "error " + ex.Message;
             }
         }
 
@@ -825,6 +893,7 @@ namespace CameraCOT
             Application.Current.Suspending += Application_Suspending;
             Application.Current.Resuming += Application_Resuming;
             Window.Current.VisibilityChanged += Window_VisibilityChanged;
+            //Window.Current.Closed += Window_Closed;
 
             _isActivePage = true;
 
@@ -889,10 +958,15 @@ namespace CameraCOT
             //    }
             //}
 
-
-            //await SetUpBasedOnStateAsync();
+            if(_isNotFirstStart)
+                await SetUpBasedOnStateAsync();
             //UpdateCaptureControls();
         }
+
+        //private void Window_Closed(object sender, VisibilityChangedEventArgs args)
+        //{
+        //    streamSocket.Dispose();
+        //}
         //-----------------------------------------------------------------------
 
 
@@ -1351,12 +1425,16 @@ namespace CameraCOT
 
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
+            PreviewControl.Opacity = 0.5;
+            opacityTimer.Start();
+
             Debug.WriteLine("Start flashDelayTimer");
             if (_isFlash)
             {
                 flashDelayTimer.Start();
                 durationFlashDivider = 1;
-                FlashCMD();
+                if(currentCameraType != (int)cameraType.termoCamera)
+                    FlashCMD();
             }
             else
                 await MakePhotoAsync();
@@ -1436,7 +1514,10 @@ namespace CameraCOT
                 Debug.WriteLine("error main camera button" + ex.Message);
             }
 
+            //streamSocket.Dispose();
             histogramStatisticTimer.Stop();
+            
+
             UpdateUIControls();
         }
 
@@ -1494,6 +1575,7 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = false;
 
             UpdateUIControls();
+            
 
             histogramStatisticTimer.Start();
         }
@@ -1534,7 +1616,12 @@ namespace CameraCOT
                 _isRecording = true;
                 UpdateUIControls();
 
-                await StartRecordingAsync(); 
+                await StartRecordingAsync();
+
+                //timeStartRecord = DateTime.Now;
+                recordTimer.Start();
+                stopWatch.Start();
+
             }
             else
             {
@@ -1542,6 +1629,10 @@ namespace CameraCOT
                 UpdateUIControls();
 
                 await StopRecordingAsync();
+
+                stopWatch.Reset();               
+                recordTimer.Stop();
+
             }
             
         }
@@ -1580,7 +1671,10 @@ namespace CameraCOT
 
         private void UpdateUIControls()
         {
+            //recordTimeTextBox.Visibility = _isR
 
+            buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
+            notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
             panelNotes.Visibility = _isNotes ? Visibility.Visible : Visibility.Collapsed;
 
             PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
@@ -1592,10 +1686,10 @@ namespace CameraCOT
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
 
             // diagnostic information
-            textBoxInfo.Visibility = Visibility.Visible;
+            textBoxInfo.Visibility = Visibility.Collapsed;
 
             //_getDistanse.Visibility = Visibility.Collapsed;
             //_stopMeasure.Visibility = Visibility.Collapsed;
@@ -1608,7 +1702,8 @@ namespace CameraCOT
             // Update recording button to show "Stop" icon instead of red "Record" icon
             StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             StopRecordingIcon.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
-            Rec.Visibility                = _isRecording && !_isPause ? Visibility.Visible   : Visibility.Collapsed;
+            Rec.Visibility                = _isRecording  ? Visibility.Visible   : Visibility.Collapsed;    //&& !_isPause
+            recordTimeTextBox.Visibility  = _isRecording ? Visibility.Visible : Visibility.Collapsed;
 
             // Update flash button
             NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -1695,6 +1790,13 @@ namespace CameraCOT
             }
 
             notesButton.Background = !_isNotes ? new SolidColorBrush(color) : new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
+
+            buttonFlash.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            plusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            minusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            pbFlashPower.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            Rec.Text = _isPause ? "Pause" : "Rec";
+
 
 
             //videoEffectSettings.X = cameras[_cntCamera].X;
@@ -1854,18 +1956,30 @@ namespace CameraCOT
 
         private void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
         {
-            videoEffectSettings.commet = "Заметка" + ++temp1;
+            //videoEffectSettings.commet = "Заметка" + ++temp1;
+            videoEffectSettings.commet = "Заметка пользователя";
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
         {
             _isPause = !_isPause;
+
+
             UpdateUIControls();
 
-            if(_isPause)
+            if (_isPause)
+            {
                 await _mediaRecording.PauseAsync(Windows.Media.Devices.MediaCapturePauseBehavior.ReleaseHardwareResources);
+
+                //timePause = DateTime.Now;
+                //recordTimerPause.Start();
+                stopWatch.Stop();
+            }
             else
+            {
+                stopWatch.Start();
                 await _mediaRecording.ResumeAsync();
+            }
         }
 
         private void canvas_CreateResources(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)

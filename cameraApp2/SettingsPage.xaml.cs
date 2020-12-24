@@ -26,6 +26,7 @@ namespace CameraCOT
         MediaCapture mediaCaptureTemp;
         public static SettingsPage CurrentSettings;
 
+
         public SettingsPage()
         {
             this.InitializeComponent();
@@ -328,12 +329,16 @@ namespace CameraCOT
         public static  async Task<JsonCamerasSettings> readFileSettings() 
         {
 
-            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            //StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            //StorageFolder localFolder = await StorageFolder.GetFolderFromPathAsync(@"C:\temp");
+
+            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            var localFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+
             // получаем файл
             StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
             string text = await FileIO.ReadTextAsync(configFile);
 
-            //return JsonConvert.DeserializeObject<JsonCamerasSettings>(text);
             return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings
             {
                 Formatting = Formatting.Indented,
