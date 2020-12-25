@@ -243,7 +243,7 @@ namespace CameraCOT
 
             flashDelayTimer = new DispatcherTimer();
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
-            flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 400);
+            flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
 
             refreshCameraTimer = new DispatcherTimer();
             refreshCameraTimer.Tick += refreshCameraTimer_Tick;
@@ -325,6 +325,7 @@ namespace CameraCOT
             opacityTimer.Stop();
         }
 
+
         static int index;
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
@@ -332,10 +333,13 @@ namespace CameraCOT
             StartClient();
         }
 
+
         StreamSocket streamSocket;
         private async void StartClient()
         {
+            CancellationTokenSource cts = new CancellationTokenSource();
             textBoxInfo.Text += "start client \n";
+
             try
             {
                 using ( streamSocket = new StreamSocket())
@@ -346,12 +350,19 @@ namespace CameraCOT
 
                     try
                     {
-                        await streamSocket.ConnectAsync(hostName, serverPort);
+                        cts.CancelAfter(10000);
+                        await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token); ;
                         textBoxInfo.Text += "streamSocket.ConnectAsync \n";
                     }
-                    catch(Exception ex)
+                    catch (TaskCanceledException)
                     {
-                        textBoxInfo.Text += ex.Message + "\n";
+                        //reamSocket.Close();
+                        // Debug.WriteLine("Operation was cancelled.");
+                        textBoxInfo.Text += "Operation was cancelled. \n";
+                    }
+                    catch (Exception ex)
+                    {
+                        textBoxInfo.Text += "connect async error " + ex.Message + "\n";
                     }
 
                     textBoxInfo.Text += streamSocket.Information.LocalAddress + " " +
@@ -366,10 +377,13 @@ namespace CameraCOT
                         {
                             await streamWriter.WriteLineAsync(request);
                             await streamWriter.FlushAsync();
+
+                            //streamWriter.writ
+
                         }
                     }
 
-                    await Task.Delay(100);
+                    //await Task.Delay(100);
 
                     string response;
                     using (Stream inputStream = streamSocket.InputStream.AsStreamForRead())
@@ -912,6 +926,8 @@ namespace CameraCOT
 
         private void Application_Suspending(object sender, SuspendingEventArgs e)
         {
+            histogramStatisticTimer.Stop();
+
             _isSuspending = true;
 
             var defferal = e.SuspendingOperation.GetDeferral();
@@ -1671,7 +1687,8 @@ namespace CameraCOT
 
         private void UpdateUIControls()
         {
-            //recordTimeTextBox.Visibility = _isR
+            // diagnostic information
+            textBoxInfo.Visibility = Visibility.Collapsed;
 
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
@@ -1686,10 +1703,7 @@ namespace CameraCOT
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
-
-            // diagnostic information
-            textBoxInfo.Visibility = Visibility.Collapsed;
+            //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;            
 
             //_getDistanse.Visibility = Visibility.Collapsed;
             //_stopMeasure.Visibility = Visibility.Collapsed;
@@ -1702,8 +1716,8 @@ namespace CameraCOT
             // Update recording button to show "Stop" icon instead of red "Record" icon
             StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             StopRecordingIcon.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
-            Rec.Visibility                = _isRecording  ? Visibility.Visible   : Visibility.Collapsed;    //&& !_isPause
-            recordTimeTextBox.Visibility  = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+            Rec.Visibility                = _isRecording  ? Visibility.Visible  : Visibility.Collapsed;    //&& !_isPause
+            recordTimeTextBox.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update flash button
             NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -1873,7 +1887,7 @@ namespace CameraCOT
         }
 
         //short flashValue = 600;
-        short FlashDuration = 0x12;
+        short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 100;
         
@@ -1958,6 +1972,8 @@ namespace CameraCOT
         {
             //videoEffectSettings.commet = "Заметка" + ++temp1;
             videoEffectSettings.commet = "Заметка пользователя";
+            //int temp = int.Parse(textBlockNotes.Text);
+            //flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, temp);
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)

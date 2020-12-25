@@ -177,7 +177,7 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.PaleTurquoise, new CanvasTextFormat
+                    ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
                     {
                         FontSize = 88,
 

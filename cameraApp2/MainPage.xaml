@@ -44,7 +44,7 @@
 
 
 
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -311,12 +311,12 @@
         <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,31,10" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,31,10" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
-        <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Collapsed" Margin="0,10,190,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
+        <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Visible" Margin="0,10,190,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150" Foreground="Red"/>
         <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,120,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="90"/>
 
 
