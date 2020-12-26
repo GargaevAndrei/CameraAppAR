@@ -10,7 +10,7 @@
   <Identity
     Name="814dbe6e-299f-4da7-9680-a0db07e738bc"
     Publisher="CN=Andrei"
-    Version="1.0.30.0" />
+    Version="1.0.33.0" />
 
   <mp:PhoneIdentity PhoneProductId="814dbe6e-299f-4da7-9680-a0db07e738bc" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -35,11 +35,11 @@
       <uap:VisualElements
         DisplayName="CameraCOT"
         Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png"
+        Square44x44Logo="Assets\CameraCOT.png"
         Description="cameraCOT"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png"/>
       </uap:VisualElements>
     </Application>
   </Applications>
@@ -50,6 +50,7 @@
       <uap:Capability Name="picturesLibrary" />
       <uap:Capability Name="videosLibrary" />
       <Capability Name="privateNetworkClientServer"/>
+      <Capability Name="internetClientServer"/>
       <DeviceCapability Name="microphone" />
       <DeviceCapability Name="webcam" />
       <DeviceCapability Name="humanInterfaceDevice" />

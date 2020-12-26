@@ -13,6 +13,7 @@ using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas;
 using Windows.UI;
 using Microsoft.Graphics.Canvas.Text;
+using Windows.Foundation;
 
 //using CameraCOT;
 
@@ -177,7 +178,9 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
+                    Rect rect = new Rect(50, 2100, 3100, 200);
+                    //ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
+                    ds.DrawText(videoEffectSettings.commet, rect, Colors.Cyan, new CanvasTextFormat
                     {
                         FontSize = 88,
 

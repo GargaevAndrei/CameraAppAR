@@ -178,11 +178,11 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button  x:Name="mainCameraButton" Content="MAIN" Click="mainCameraButton_Click" MaxHeight="40" MaxWidth="42" />
+            <Button  x:Name="mainCameraButton" Content="CAM" Click="mainCameraButton_Click" MaxHeight="40" MaxWidth="42" />
 
             <Button x:Name="endoCameraButton" Content="ENDO" Click="endoCameraButton_Click"  MaxHeight="40" MaxWidth="42"/>
 
-            <Button x:Name="termoCameraButton" Content="TERMO" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
+            <Button x:Name="termoCameraButton" Content="TERM" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
             <Button x:Name="doubleCameraButton" Content="DOUBLE" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Collapsed" />
 
@@ -253,6 +253,16 @@
                 </Grid>
             </Button>
 
+            <!--<Button x:Name="buttonClearNotes" Click="ButtonUpNotes_Click">
+                <Grid>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE72B;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>-->
+
             <Button x:Name="buttonUpNotes" Click="ButtonUpNotes_Click">
                 <Grid>
                     <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE72B;" RenderTransformOrigin="0.5,0.5" >
@@ -263,7 +273,7 @@
                 </Grid>
             </Button>
 
-            <TextBox x:Name="textBlockNotes" Height="71" Width="500" FontSize="18"/>
+            <TextBox x:Name="textBlockNotes" TextWrapping="Wrap" MaxLength="220"  Height="71" Width="500" FontSize="18" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
 
 

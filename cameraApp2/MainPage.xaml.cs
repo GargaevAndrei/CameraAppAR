@@ -29,6 +29,9 @@ using System.IO;
 using Windows.Networking.Sockets;
 using Windows.Media.Capture.Frames;
 using System.Threading;
+using System.Net.WebSockets;
+using System.Net;
+using Windows.Networking;
 
 
 
@@ -57,8 +60,14 @@ namespace CameraCOT
         private MediaCapture _mediaCaptureDouble1;
         private MediaCapture _mediaCaptureDouble2;
         private readonly DisplayRequest displayRequest = new DisplayRequest();
+
         private StorageFolder storageFolder = null;
+        private StorageFolder naparnikFolder = null;
+        private StorageFolder photoFolder = null;
+        private StorageFolder videoFolder = null;
+
         LowLagMediaRecording _mediaRecording;
+
         string Lenght;
         double initialLenght = 0;
         double lenght = 0;
@@ -103,11 +112,14 @@ namespace CameraCOT
         public int _cntCamera;  //was private
         private StorageFolder _captureFolder = null;
 
-        static string serverPort = "8005";
+        static string serverPort = "61111";
         static string serverAddress = "127.0.0.1"; // адрес сервера
 
         string strMinT, strMaxT, strPointT;
         double minT, maxT, pointT;
+
+        List<string> stringNote = new List<string> (new string[] { "" });
+        int indexNoteShow;
 
 
         public enum NotifyType
@@ -169,8 +181,64 @@ namespace CameraCOT
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            cameras = new Camera[3];
+            //var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            //storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
 
+            //var isFolderExist = storageFolder.TryGetItemAsync("Напарник");
+            //if (isFolderExist == null)
+            //{
+            //    try
+            //    {
+            //        naparnikFolder = await storageFolder.CreateFolderAsync("Напарник", CreationCollisionOption.FailIfExists);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        textBoxInfo.Text += ex.Message;
+            //    }
+            //}
+
+          
+            //    isFolderExist = naparnikFolder.TryGetItemAsync("Фото");
+            //    if (isFolderExist == null)
+            //    {
+            //        try
+            //        {
+            //            photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            textBoxInfo.Text += ex.Message;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        photoFolder = await naparnikFolder.GetFolderAsync("Фото");
+            //    }
+
+
+            //    isFolderExist = naparnikFolder.TryGetItemAsync("Фото");
+
+            //    if (isFolderExist == null)
+            //    {
+            //        try
+            //        {
+            //            videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            textBoxInfo.Text += ex.Message;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        videoFolder = await naparnikFolder.GetFolderAsync("Видео");
+            //    }
+
+            
+            
+            
+
+            cameras = new Camera[3];
            
             //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
@@ -182,8 +250,6 @@ namespace CameraCOT
             cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
             cameraDeviceListOld = await FindCameraDeviceAsync();
-
-            //_isEndoCameraFlag = cameraDeviceListOld.Count == 2 ? false : true;
             
 
             if (cameraDeviceListOld.Count == 0)
@@ -337,6 +403,12 @@ namespace CameraCOT
         StreamSocket streamSocket;
         private async void StartClient()
         {
+            //IPAddress address = IPAddress.Parse(serverAddress);
+
+            HostName localHostName = new HostName("127.0.0.1");
+            HostName remoteHostName = new HostName("127.0.0.1");
+            EndpointPair address = new EndpointPair(localHostName, "61112", remoteHostName, "61111");
+            
             CancellationTokenSource cts = new CancellationTokenSource();
             textBoxInfo.Text += "start client \n";
 
@@ -350,9 +422,12 @@ namespace CameraCOT
 
                     try
                     {
-                        cts.CancelAfter(10000);
-                        await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token); ;
-                        textBoxInfo.Text += "streamSocket.ConnectAsync \n";
+                        cts.CancelAfter(1000);
+                        textBoxInfo.Text += hostName + " \n";
+                        textBoxInfo.Text += "before streamSocket.ConnectAsync \n";
+                        //await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token);
+                        await streamSocket.ConnectAsync(address).AsTask(cts.Token);
+                        textBoxInfo.Text += "after streamSocket.ConnectAsync \n";
                     }
                     catch (TaskCanceledException)
                     {
@@ -427,6 +502,13 @@ namespace CameraCOT
                 textBoxInfo.Text += "error " + ex.Message;
             }
         }
+
+
+        //private async void StartClient1()
+        //{
+        //    ClientWebSocket ws = new ClientWebSocket();
+        //    ws.ConnectAsync();
+        //}
 
         private void SerialPortFlash_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -1441,8 +1523,7 @@ namespace CameraCOT
 
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            PreviewControl.Opacity = 0.5;
-            opacityTimer.Start();
+            
 
             Debug.WriteLine("Start flashDelayTimer");
             if (_isFlash)
@@ -1459,9 +1540,16 @@ namespace CameraCOT
       
         private async Task MakePhotoAsync()
         {
+            PreviewControl.Opacity = 0.5;
+            opacityTimer.Start();
+
             Debug.WriteLine("Make photo");
-            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
-            storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+            //var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            //storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;           
+
+
+            //string desiredName = "Напарник";
+            //StorageFolder naparnikFolder =   await storageFolder.CreateFolderAsync(desiredName, CreationCollisionOption.FailIfExists);
 
             var stream = new InMemoryRandomAccessStream();
 
@@ -1469,7 +1557,7 @@ namespace CameraCOT
 
             try
             {
-                var photofile = await storageFolder.CreateFileAsync("CameraPhoto.jpg", CreationCollisionOption.GenerateUniqueName);
+                var photofile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
                 await SavePhotoAsync(stream, photofile);
                 Debug.WriteLine("Photo saved in" + photofile.Path);
             }
@@ -1657,8 +1745,8 @@ namespace CameraCOT
         {
             Debug.WriteLine("StartRecord");
 
-            var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
-            StorageFile file = await myVideos.SaveFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+            //var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
+            StorageFile file = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
                 if (currentCameraType == (int)cameraType.termoCamera)
@@ -1688,7 +1776,7 @@ namespace CameraCOT
         private void UpdateUIControls()
         {
             // diagnostic information
-            textBoxInfo.Visibility = Visibility.Collapsed;
+            textBoxInfo.Visibility = Visibility.Visible;
 
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
@@ -1953,14 +2041,27 @@ namespace CameraCOT
             setFlashingLight(light);
         }
 
+
         private void ButtonUpNotes_Click(object sender, RoutedEventArgs e)
         {
-
+            if ((stringNote.Count > 0) && (stringNote.Count - (indexNoteShow + 1) > 0))
+            {
+                indexNoteShow = indexNoteShow + 1;
+                videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
+                textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
+            }                    
+            
         }
 
         private void buttonDownNotes_Click(object sender, RoutedEventArgs e)
         {
-
+            if (indexNoteShow > 0)
+            {
+                indexNoteShow = indexNoteShow - 1;
+                videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
+                textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
+            }                       
+                       
         }
 
         private void ButtonClearNotes_Click(object sender, RoutedEventArgs e)
@@ -1970,10 +2071,13 @@ namespace CameraCOT
 
         private void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
         {
-            //videoEffectSettings.commet = "Заметка" + ++temp1;
-            videoEffectSettings.commet = "Заметка пользователя";
             //int temp = int.Parse(textBlockNotes.Text);
             //flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, temp);
+            //videoEffectSettings.commet = "Заметка пользователя длинная длинная 2 длинная длинная 3 длинная 4 длинная 5 длинная 6 длинная 7 длинная 8 длинная 9 длинная 10 длинная 11 длинная 12 длинная ";
+
+            stringNote.Add(textBlockNotes.Text);
+            
+            videoEffectSettings.commet = textBlockNotes.Text;
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)

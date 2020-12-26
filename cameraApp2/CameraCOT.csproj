@@ -145,7 +145,32 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\CameraCOT.altform-lightunplated_targetsize-16.png" />
+    <Content Include="Assets\CameraCOT.altform-lightunplated_targetsize-24.png" />
+    <Content Include="Assets\CameraCOT.altform-lightunplated_targetsize-256.png" />
+    <Content Include="Assets\CameraCOT.altform-lightunplated_targetsize-32.png" />
+    <Content Include="Assets\CameraCOT.altform-lightunplated_targetsize-48.png" />
+    <Content Include="Assets\CameraCOT.altform-unplated_targetsize-16.png" />
+    <Content Include="Assets\CameraCOT.altform-unplated_targetsize-24.png" />
+    <Content Include="Assets\CameraCOT.altform-unplated_targetsize-256.png" />
+    <Content Include="Assets\CameraCOT.altform-unplated_targetsize-32.png" />
+    <Content Include="Assets\CameraCOT.altform-unplated_targetsize-48.png" />
+    <Content Include="Assets\CameraCOT.ico" />
+    <Content Include="Assets\CameraCOT.scale-100.png" />
+    <Content Include="Assets\CameraCOT.scale-125.png" />
+    <Content Include="Assets\CameraCOT.scale-150.png" />
+    <Content Include="Assets\CameraCOT.scale-200.png" />
+    <Content Include="Assets\CameraCOT.scale-400.png" />
+    <Content Include="Assets\CameraCOT.targetsize-16.png" />
+    <Content Include="Assets\CameraCOT.targetsize-24.png" />
+    <Content Include="Assets\CameraCOT.targetsize-256.png" />
+    <Content Include="Assets\CameraCOT.targetsize-32.png" />
+    <Content Include="Assets\CameraCOT.targetsize-48.png" />
     <Content Include="Assets\lepton_color_map_fusion.png" />
+    <Content Include="Assets\SplashScreen.scale-100.png" />
+    <Content Include="Assets\SplashScreen.scale-125.png" />
+    <Content Include="Assets\SplashScreen.scale-150.png" />
+    <Content Include="Assets\SplashScreen.scale-400.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
