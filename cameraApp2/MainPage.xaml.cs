@@ -1707,7 +1707,7 @@ namespace CameraCOT
                 await MakePhotoAsync();
         }
 
-      
+        StorageFile photofile;
         private async Task MakePhotoAsync()
         {
             PreviewControl.Opacity = 0.5;
@@ -1729,9 +1729,12 @@ namespace CameraCOT
             {
                 //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
                 var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
-                var photofile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
                 if((currentCameraType == (int)cameraType.termoCamera))
                     photofile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                else
+                    photofile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+
+
 
                 await SavePhotoAsync(stream, photofile);
                 Debug.WriteLine("Photo saved in" + photofile.Path);
@@ -1771,6 +1774,14 @@ namespace CameraCOT
                
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isRecording)
+            {
+                await StopRecordingAsync();
+
+                stopWatch.Reset();
+                recordTimer.Stop();
+            }
+
             stopMeasure();
             firstDistanceFlag = false;
             _findLenghtZero = false;
@@ -1802,6 +1813,16 @@ namespace CameraCOT
 
         private async void endoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+
+            if (_isRecording)
+            {
+                await StopRecordingAsync();
+
+                stopWatch.Reset();
+                recordTimer.Stop();
+            }
+
+
             Debug.WriteLine("SwitchCamera on endo");
             _isUIActive = false;
 
@@ -1830,6 +1851,15 @@ namespace CameraCOT
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isRecording)
+            {
+                await StopRecordingAsync();
+
+                stopWatch.Reset();
+                recordTimer.Stop();
+            }
+
+
             Debug.WriteLine("SwitchCamera on termo");
             _isUIActive = false;
             _isFlash = false;

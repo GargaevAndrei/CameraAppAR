@@ -231,7 +231,7 @@
         </StackPanel>
 
 
-        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0" Visibility="Collapsed">
+        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0" Visibility="Visible">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
