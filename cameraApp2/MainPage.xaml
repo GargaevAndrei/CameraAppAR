@@ -11,7 +11,7 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
 
-
+        <ListBox x:Name="clientListBox" Margin="184,256,599,250"/>
 
         <!--<canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>-->
         <!--<Grid>
@@ -231,7 +231,7 @@
         </StackPanel>
 
 
-        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0">
+        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0" Visibility="Collapsed">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -318,10 +318,10 @@
 
         </StackPanel>
 
-        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315"/>
+        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,0,31,10" VerticalAlignment="Bottom" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,687,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

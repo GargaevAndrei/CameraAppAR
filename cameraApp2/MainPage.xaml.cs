@@ -65,6 +65,7 @@ namespace CameraCOT
         private StorageFolder naparnikFolder = null;
         private StorageFolder photoFolder = null;
         private StorageFolder videoFolder = null;
+        private StorageFile configFile = null;
 
         LowLagMediaRecording _mediaRecording;
 
@@ -86,7 +87,9 @@ namespace CameraCOT
         DispatcherTimer recordTimer;
         DispatcherTimer recordTimerPause;
 
-        SerialPort serialPortFlash;        
+        SerialPort serialPortFlash;
+        SerialPort serialPortLepton;
+
         bool _isFlash = true;
         bool _isPause = false;
         bool _isFlashEndo = true;
@@ -116,6 +119,7 @@ namespace CameraCOT
         static string serverAddress = "127.0.0.1"; // адрес сервера
 
         string strMinT, strMaxT, strPointT;
+
         double minT, maxT, pointT;
 
         List<string> stringNote = new List<string> (new string[] { "" });
@@ -181,76 +185,93 @@ namespace CameraCOT
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            //var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
-            //storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
 
-            //var isFolderExist = storageFolder.TryGetItemAsync("Напарник");
-            //if (isFolderExist == null)
-            //{
-            //    try
-            //    {
-            //        naparnikFolder = await storageFolder.CreateFolderAsync("Напарник", CreationCollisionOption.FailIfExists);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        textBoxInfo.Text += ex.Message;
-            //    }
-            //}
+            naparnikFolder = (StorageFolder)await storageFolder.TryGetItemAsync("Напарник");
+            if (naparnikFolder == null)
+            {
+                try
+                {
+                    naparnikFolder = await storageFolder.CreateFolderAsync("Напарник", CreationCollisionOption.FailIfExists);
+                    photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
+                    videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
+                    StorageFile configFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                }
+                catch (Exception ex)
+                {
+                    textBoxInfo.Text += ex.Message;
+                }
+            }
+            else
+            {
+                photoFolder = (StorageFolder)await naparnikFolder.TryGetItemAsync("Фото");
+                if (photoFolder == null)
+                {
+                    try
+                    {                        
+                        photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);                       
+                    }
+                    catch (Exception ex)
+                    {
+                        textBoxInfo.Text += ex.Message;
+                    }
+                }
+                videoFolder = (StorageFolder)await naparnikFolder.TryGetItemAsync("Видео");
+                if (videoFolder == null)
+                {
+                    try
+                    {
+                        videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
+                    }
+                    catch (Exception ex)
+                    {
+                        textBoxInfo.Text += ex.Message;
+                    }
+                }
 
-          
-            //    isFolderExist = naparnikFolder.TryGetItemAsync("Фото");
-            //    if (isFolderExist == null)
-            //    {
-            //        try
-            //        {
-            //            photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            textBoxInfo.Text += ex.Message;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        photoFolder = await naparnikFolder.GetFolderAsync("Фото");
-            //    }
+                configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("Заметки.txt");
+                if(configFile == null)
+                    configFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                else
+                {
+                    IList<string> data = await FileIO.ReadLinesAsync(configFile);                                          
+                    stringNote = data.ToList();
+                }
+            }
 
-
-            //    isFolderExist = naparnikFolder.TryGetItemAsync("Фото");
-
-            //    if (isFolderExist == null)
-            //    {
-            //        try
-            //        {
-            //            videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            textBoxInfo.Text += ex.Message;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        videoFolder = await naparnikFolder.GetFolderAsync("Видео");
-            //    }
-
-            
-            
-            
+           
 
             cameras = new Camera[3];
-           
-            //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera
+
+            //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera //"USB Camera2
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
             //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
-            jsonCamerasSettings = await readFileSettings();
+            //load settings
+            //jsonCamerasSettings = await readFileSettings();
+
+            jsonCamerasSettings = new JsonCamerasSettings();
+
+            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
+            jsonCamerasSettings.MainCameraPreview = "3264x2448 [1,33] 15FPS NV12";
+            jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
+            jsonCamerasSettings.MainCameraVideo = "3264x2448 [1,33] 15FPS NV12";
+            jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
+            jsonCamerasSettings.EndoCameraPreview = "1600x1200 [1,33] 30FPS NV12";
+            jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
+            jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
+            jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
+            jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS RGB24";
+            jsonCamerasSettings.TermoCameraPhoto =   "80x60 [1,33] 9FPS RGB24";
+            jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS RGB24";
+
             cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
             cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
             cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
 
             cameraDeviceListOld = await FindCameraDeviceAsync();
-            
+            refreshCameraTimer.Start();
 
             if (cameraDeviceListOld.Count == 0)
             {
@@ -314,7 +335,7 @@ namespace CameraCOT
             refreshCameraTimer = new DispatcherTimer();
             refreshCameraTimer.Tick += refreshCameraTimer_Tick;
             refreshCameraTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
-            refreshCameraTimer.Start();
+            
 
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
@@ -361,8 +382,96 @@ namespace CameraCOT
                 }
             }
 
+            serialPortLepton = new SerialPort("COM7", 115200, Parity.None, 8, StopBits.One);    //COM2  // COM7
 
+            if (serialPortLepton != null)
+            {
+                try
+                {
+                    serialPortLepton.Open();
+                    serialPortLepton.ReadTimeout = 2000;
+                    serialPortLepton.WriteTimeout = 2000;
+
+                    if (serialPortLepton.IsOpen)
+                        serialPortLepton.DataReceived += SerialPortLepton_DataReceived;
+
+                    textBoxInfo.Text += "serialPortLepton open" + Environment.NewLine;
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                    textBoxInfo.Text += e.Message;
+                }
+            }
+
+
+        }
+
+        public  void OutputsData()
+        {
+            this.textBoxTmax.Text = maxT.ToString("0.0");
+            this.textBoxTmin.Text = minT.ToString("0.0");
+
+            serialPortLepton.DiscardInBuffer();
+            //histogramStatisticTimer.Start();
+        }
+
+        public async Task ProcessData(string response)
+        {
             
+            try
+            {
+                var index1 = response.IndexOf(":");
+                var index2 = response.LastIndexOf(":");
+                strMinT = response.Substring(0, index1);
+                strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
+                strPointT = response.Substring(index2 + 1);
+                minT = Convert.ToDouble(strMinT);
+                maxT = Convert.ToDouble(strMaxT);
+
+                //pointT = Convert.ToDouble(strPointT);// привет Андрей
+
+                //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => this.textBoxTmax.Text = maxT.ToString("0.0"));
+                //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => this.textBoxTmin.Text = minT.ToString("0.0"));
+
+                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
+
+                // await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => textBoxTpoint.Text = pointT.ToString("0.0"));
+
+                //textBoxTmax.Text = maxT.ToString("0.0");
+                //textBoxTmin.Text = minT.ToString("0.0");
+                //textBoxTpoint.Text = pointT.ToString("0.0");
+
+                //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                textBoxInfo.Text += ex.Message;
+            }
+        }
+
+        private async  void SerialPortLepton_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            var serialPort = (SerialPort)sender;
+            //byte[] data = new byte[256];
+            //serialPort.Read(data, 0, 8);
+            try
+            {
+                var response = serialPort.ReadLine();
+                ProcessData(response);
+
+                //var response = serialPort.BaseStream.ReadAsync();
+            }
+            catch(Exception ex)
+            {
+                textBoxInfo.Text +=  ex.Message;
+            }
+            //textBoxInfo.Text += response;
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
+           
+
         }
 
         private void recordTimerPause_Tick(object sender, object e)
@@ -395,8 +504,17 @@ namespace CameraCOT
         static int index;
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
-            textBoxInfo.Text += ++index + "\n";
-            StartClient();
+            //textBoxInfo.Text += ++index + "\n";
+            //StartClient();
+            try
+            {
+                serialPortLepton.WriteLine("request");
+            }
+            catch(Exception ex)
+            {
+                textBoxInfo.Text += ex.Message;
+            }
+            histogramStatisticTimer.Stop();
         }
 
 
@@ -405,29 +523,29 @@ namespace CameraCOT
         {
             //IPAddress address = IPAddress.Parse(serverAddress);
 
-            HostName localHostName = new HostName("127.0.0.1");
-            HostName remoteHostName = new HostName("127.0.0.1");
-            EndpointPair address = new EndpointPair(localHostName, "61112", remoteHostName, "61111");
+            //HostName localHostName = new HostName("127.0.0.1");
+            //HostName remoteHostName = new HostName("127.0.0.1");
+            //EndpointPair address = new EndpointPair(localHostName, "61112", remoteHostName, "61111");
             
             CancellationTokenSource cts = new CancellationTokenSource();
-            textBoxInfo.Text += "start client \n";
+            //textBoxInfo.Text += "start client \n";
 
             try
             {
                 using ( streamSocket = new StreamSocket())
                 {
-                    textBoxInfo.Text += "create streamSocket \n";
+                   // textBoxInfo.Text += "create streamSocket \n";
                     var hostName = new Windows.Networking.HostName(serverAddress);
-                    textBoxInfo.Text += "create hostName \n";
+                    //textBoxInfo.Text += "create hostName \n";
 
                     try
                     {
                         cts.CancelAfter(1000);
-                        textBoxInfo.Text += hostName + " \n";
-                        textBoxInfo.Text += "before streamSocket.ConnectAsync \n";
-                        //await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token);
-                        await streamSocket.ConnectAsync(address).AsTask(cts.Token);
-                        textBoxInfo.Text += "after streamSocket.ConnectAsync \n";
+                        //textBoxInfo.Text += hostName + " \n";
+                        //textBoxInfo.Text += "before streamSocket.ConnectAsync \n";
+                        await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token);
+                        //await streamSocket.ConnectAsync(address).AsTask(cts.Token);
+                        //textBoxInfo.Text += "after streamSocket.ConnectAsync \n";
                     }
                     catch (TaskCanceledException)
                     {
@@ -440,23 +558,23 @@ namespace CameraCOT
                         textBoxInfo.Text += "connect async error " + ex.Message + "\n";
                     }
 
-                    textBoxInfo.Text += streamSocket.Information.LocalAddress + " " +
-                                        streamSocket.Information.LocalPort + " " +
-                                        streamSocket.Information.RemoteAddress + " " +
-                                        streamSocket.Information.RemotePort + "\n";
+                    //textBoxInfo.Text += streamSocket.Information.LocalAddress + " " +
+                                       // streamSocket.Information.LocalPort + " " +
+                                       // streamSocket.Information.RemoteAddress + " " +
+                                       // streamSocket.Information.RemotePort + "\n";
 
-                    string request = "request!";
-                    using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
-                    {
-                        using (var streamWriter = new StreamWriter(outputStream))
-                        {
-                            await streamWriter.WriteLineAsync(request);
-                            await streamWriter.FlushAsync();
+                    //string request = "request!";
+                    //using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
+                    //{
+                    //    using (var streamWriter = new StreamWriter(outputStream))
+                    //    {
+                    //        await streamWriter.WriteLineAsync(request);
+                    //        await streamWriter.FlushAsync();
 
-                            //streamWriter.writ
+                    //        //streamWriter.writ
 
-                        }
-                    }
+                    //    }
+                    //}
 
                     //await Task.Delay(100);
 
@@ -503,6 +621,58 @@ namespace CameraCOT
             }
         }
 
+        static string ClientPortNumber = "61111";
+        static string ServerPortNumber = "61112";
+        private async void StartUdpClient()
+        {
+            try
+            {
+                var clientDatagramSocket = new Windows.Networking.Sockets.DatagramSocket();
+
+            clientDatagramSocket.MessageReceived += ClientDatagramSocket_MessageReceived;
+
+            // The server hostname that we will be establishing a connection to. In this example, the server and client are in the same process.
+            var hostName = new Windows.Networking.HostName("127.0.0.1");
+
+            this.clientListBox.Items.Add("client is about to bind...");
+
+            await clientDatagramSocket.BindServiceNameAsync(ClientPortNumber);
+                string request = "Hello, World!";
+                using (var serverDatagramSocket = new Windows.Networking.Sockets.DatagramSocket())
+                {
+                    using (Stream outputStream = (await serverDatagramSocket.GetOutputStreamAsync(hostName, ServerPortNumber)).AsStreamForWrite())
+                    {
+                        using (var streamWriter = new StreamWriter(outputStream))
+                        {
+                            await streamWriter.WriteLineAsync(request);
+                            await streamWriter.FlushAsync();
+                        }
+                    }
+                }
+
+                this.clientListBox.Items.Add(string.Format("client sent the request: \"{0}\"", request));
+            }
+            catch (Exception ex)
+            {
+                Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
+                this.clientListBox.Items.Add(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : ex.Message);
+            }
+        }
+
+        private async void ClientDatagramSocket_MessageReceived(DatagramSocket sender, DatagramSocketMessageReceivedEventArgs args)
+        {
+            string response;
+            using (DataReader dataReader = args.GetDataReader())
+            {
+                response = dataReader.ReadString(dataReader.UnconsumedBufferLength).Trim();
+            }
+
+            await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => this.clientListBox.Items.Add(string.Format("client received the response: \"{0}\"", response)));
+
+            sender.Dispose();
+
+            await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => this.clientListBox.Items.Add("client closed its socket"));
+        }
 
         //private async void StartClient1()
         //{
@@ -1557,7 +1727,12 @@ namespace CameraCOT
 
             try
             {
+                //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
+                var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
                 var photofile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                if((currentCameraType == (int)cameraType.termoCamera))
+                    photofile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+
                 await SavePhotoAsync(stream, photofile);
                 Debug.WriteLine("Photo saved in" + photofile.Path);
             }
@@ -1657,6 +1832,7 @@ namespace CameraCOT
         {
             Debug.WriteLine("SwitchCamera on termo");
             _isUIActive = false;
+            _isFlash = false;
 
             currentCameraType = (int)cameraType.termoCamera;
 
@@ -1708,6 +1884,7 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = false;
 
             histogramStatisticTimer.Stop();
+
             UpdateUIControls();           
 
         }
@@ -1776,11 +1953,13 @@ namespace CameraCOT
         private void UpdateUIControls()
         {
             // diagnostic information
-            textBoxInfo.Visibility = Visibility.Visible;
+            textBoxInfo.Visibility = Visibility.Collapsed;
 
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            panelNotes.Visibility = _isNotes ? Visibility.Visible : Visibility.Collapsed;
+            
+            panelNotes.Visibility = _isNotes && (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            
 
             PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
             PauseIcon.Visibility  = _isPause ? Visibility.Collapsed : Visibility.Visible;
@@ -1789,8 +1968,9 @@ namespace CameraCOT
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            
             termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            //CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;            
 
             //_getDistanse.Visibility = Visibility.Collapsed;
@@ -1913,8 +2093,10 @@ namespace CameraCOT
 
         }
 
-        private void getScenarioSettings_Click(object sender, RoutedEventArgs e)
-        {            
+        private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
+        {
+            await CleanupCameraAsync();
+
             this.Frame.Navigate(typeof(SettingsPage));
         }
 
@@ -2069,15 +2251,27 @@ namespace CameraCOT
 
         }
 
-        private void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
+        private async void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
         {
             //int temp = int.Parse(textBlockNotes.Text);
             //flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, temp);
             //videoEffectSettings.commet = "Заметка пользователя длинная длинная 2 длинная длинная 3 длинная 4 длинная 5 длинная 6 длинная 7 длинная 8 длинная 9 длинная 10 длинная 11 длинная 12 длинная ";
 
-            stringNote.Add(textBlockNotes.Text);
-            
+            if (textBlockNotes.Text == "")
+                indexNoteShow = 0;
+
+            if (!stringNote.Contains(textBlockNotes.Text))
+            {
+                stringNote.Add(textBlockNotes.Text);
+
+                await FileIO.AppendTextAsync(configFile, "\n" + textBlockNotes.Text);
+
+                //videoEffectSettings.commet = textBlockNotes.Text;
+                
+            }
             videoEffectSettings.commet = textBlockNotes.Text;
+            //videoEffectSettings.commet = stringNote[indexNoteShow];
+
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
@@ -2110,6 +2304,9 @@ namespace CameraCOT
         static int temp1 = 0;
         private void NotesButton_Click(object sender, RoutedEventArgs e)
         {
+           // StartUdpClient();
+
+            indexNoteShow = stringNote.Count - 1;
             _isNotes = !_isNotes;
             UpdateUIControls();
             //videoEffectSettings.commet = "Заметка" + ++temp1;

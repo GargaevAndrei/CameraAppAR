@@ -218,6 +218,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\cameraConfig.json" />
     <None Include="CameraCOT_TemporaryKey.pfx" />
     <None Include="ClassDiagram1.cd" />
   </ItemGroup>

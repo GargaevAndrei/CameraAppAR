@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -329,14 +330,18 @@ namespace CameraCOT
         public static  async Task<JsonCamerasSettings> readFileSettings() 
         {
 
-            //StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-            //StorageFolder localFolder = await StorageFolder.GetFolderFromPathAsync(@"C:\temp");
+            //StorageFolder installedLocation = Windows.ApplicationModel.Package.Current.InstalledLocation;
+            //StorageFolder folder = await installedLocation.GetFolderAsync("Assets");
+            //IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
+
+            //StorageFile configFile = await folder.GetFileAsync(SettingsPage.fileJsonName);
+
 
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
             var localFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
-
-            // получаем файл
             StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
+
+
             string text = await FileIO.ReadTextAsync(configFile);
 
             return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings

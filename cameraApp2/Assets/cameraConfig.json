@@ -1,0 +1,14 @@
+{
+  "MainCameraName": "USB Camera2",
+  "MainCameraPreview": "3264x2448 [1,33] 15FPS NV12",
+  "MainCameraPhoto": "3264x2448 [1,33] 15FPS NV12",
+  "MainCameraVideo": "3264x2448 [1,33] 15FPS NV12",
+  "EndoCameraName": "HD WEBCAM",
+  "EndoCameraPreview": "1600x1200 [1,33] 30FPS NV12",
+  "EndoCameraPhoto": "1600x1200 [1,33] 30FPS NV12",
+  "EndoCameraVideo": "1600x1200 [1,33] 30FPS NV12",
+  "TermoCameraName": "PureThermal (fw:v1.0.0)",
+  "TermoCameraPreview": "80x60 [1,33] 9FPS RGB24",
+  "TermoCameraPhoto": "80x60 [1,33] 9FPS RGB24",
+  "TermoCameraVideo": "80x60 [1,33] 9FPS RGB24"
+}

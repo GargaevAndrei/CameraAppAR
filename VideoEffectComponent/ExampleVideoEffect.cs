@@ -178,7 +178,7 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    Rect rect = new Rect(50, 2100, 3100, 200);
+                    Rect rect = new Rect(50, 2100, 3250, 200);
                     //ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
                     ds.DrawText(videoEffectSettings.commet, rect, Colors.Cyan, new CanvasTextFormat
                     {
@@ -186,7 +186,7 @@ namespace VideoEffectComponent
 
                     });
                 }
-
+                
 
                 // Rect rect = new Rect(190, 700, 600, 600);
                 // ds.DrawRectangle(rect, Colors.Chartreuse);
