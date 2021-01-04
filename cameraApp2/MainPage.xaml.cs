@@ -32,6 +32,7 @@ using System.Threading;
 using System.Net.WebSockets;
 using System.Net;
 using Windows.Networking;
+using Windows.UI.Xaml.Media.Imaging;
 
 
 
@@ -253,7 +254,7 @@ namespace CameraCOT
 
             jsonCamerasSettings = new JsonCamerasSettings();
 
-            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
+            jsonCamerasSettings.MainCameraName = "USB Camera2";
             jsonCamerasSettings.MainCameraPreview = "3264x2448 [1,33] 15FPS NV12";
             jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
             jsonCamerasSettings.MainCameraVideo = "3264x2448 [1,33] 15FPS NV12";
@@ -263,8 +264,11 @@ namespace CameraCOT
             jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
             jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS RGB24";
-            jsonCamerasSettings.TermoCameraPhoto =   "80x60 [1,33] 9FPS RGB24";
+            jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS RGB24";
             jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS RGB24";
+            //jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+            //jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+            //jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
 
             cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
             cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
@@ -1707,7 +1711,7 @@ namespace CameraCOT
                 await MakePhotoAsync();
         }
 
-        StorageFile photofile;
+        StorageFile savedFile;
         private async Task MakePhotoAsync()
         {
             PreviewControl.Opacity = 0.5;
@@ -1730,18 +1734,45 @@ namespace CameraCOT
                 //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
                 var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
                 if((currentCameraType == (int)cameraType.termoCamera))
-                    photofile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                    savedFile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
                 else
-                    photofile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                    savedFile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
 
 
+                await SavePhotoAsync(stream, savedFile);               
 
-                await SavePhotoAsync(stream, photofile);
-                Debug.WriteLine("Photo saved in" + photofile.Path);
+
+                Debug.WriteLine("Photo saved in" + savedFile.Path);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("Exception while making photo " + ex.Message.ToString());
+            }
+
+            try
+            {
+                //BitmapImage bitmapImage = new BitmapImage();
+                //await bitmapImage.SetSourceAsync(stream);
+                
+                BitmapImage bitmapPreviewImage = await StorageFileToBitmapImage(savedFile);
+                imageControlPreview.Source = bitmapPreviewImage;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Exception while making preview " + ex.Message.ToString());
+            }
+
+        }
+
+        public static async Task<BitmapImage> StorageFileToBitmapImage(StorageFile savedStorageFile)
+        {
+            using (IRandomAccessStream fileStream = await savedStorageFile.OpenAsync(Windows.Storage.FileAccessMode.Read))
+            {
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.DecodePixelHeight = 200;
+                bitmapImage.DecodePixelWidth = 200;
+                await bitmapImage.SetSourceAsync(fileStream);
+                return bitmapImage;
             }
         }
 
@@ -1953,13 +1984,14 @@ namespace CameraCOT
             Debug.WriteLine("StartRecord");
 
             //var myVideos = await Windows.Storage.StorageLibrary.GetLibraryAsync(Windows.Storage.KnownLibraryId.Pictures);
-            StorageFile file = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+           // StorageFile file = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+             savedFile = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
                 if (currentCameraType == (int)cameraType.termoCamera)
-                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Wvga), file);
+                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Wvga), savedFile);
                 else
-                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), file);
+                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), savedFile);
                 await _mediaRecording.StartAsync();
                 //_isRecording = true;
             }
@@ -1973,8 +2005,22 @@ namespace CameraCOT
         {
             Debug.WriteLine("Stopping recording...");
 
+            var previewProperties = _mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties;
+            VideoFrame videoFrame = new VideoFrame(BitmapPixelFormat.Bgra8, (int)previewProperties.Width, (int)previewProperties.Height);
+
+            var previewFrame = await _mediaCapture.GetPreviewFrameAsync(videoFrame);
+            SoftwareBitmap previewBitmap = previewFrame.SoftwareBitmap;
+            var source = new SoftwareBitmapSource();
+            await source.SetBitmapAsync(previewBitmap);
+            imageControlPreview.Source = source;
+
+            previewFrame.Dispose();
+            previewFrame = null;
+
             _isRecording = false;
             await _mediaCapture.StopRecordAsync();
+
+            
 
             Debug.WriteLine("Stopped recording!");
         }
@@ -2302,6 +2348,12 @@ namespace CameraCOT
             videoEffectSettings.commet = textBlockNotes.Text;
             //videoEffectSettings.commet = stringNote[indexNoteShow];
 
+        }
+
+        private async void imageControlPreview_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+
+            await Windows.System.Launcher.LaunchFileAsync(savedFile);
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)

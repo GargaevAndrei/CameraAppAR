@@ -321,6 +321,8 @@
         <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
+        <Image x:Name="imageControlPreview" Margin="10,400,850,10" Stretch="Fill" Tapped="imageControlPreview_Tapped"/>
+
         <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,687,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
