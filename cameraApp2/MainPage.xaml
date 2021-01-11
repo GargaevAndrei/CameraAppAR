@@ -189,7 +189,7 @@
 
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,0,0,0">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,0,0,0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -231,7 +231,7 @@
         </StackPanel>
 
 
-        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,99,0,0" Visibility="Visible">
+        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,99,0,0" Visibility="Visible" Width="727">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -273,7 +273,7 @@
                 </Grid>
             </Button>
 
-            <TextBox x:Name="textBlockNotes" TextWrapping="Wrap" MaxLength="220"  Height="71" Width="500" FontSize="18" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            <TextBox x:Name="textBlockNotes" TextWrapping="Wrap" MaxLength="220"  Height="71" Width="483" FontSize="18" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
 
 
@@ -321,7 +321,7 @@
         <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
         <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
 
-        <Image x:Name="imageControlPreview" Margin="10,400,850,10" Stretch="Fill" Tapped="imageControlPreview_Tapped"/>
+        <Image x:Name="imageControlPreview" Margin="10,400,867,10" Stretch="Fill" Tapped="imageControlPreview_Tapped"/>
 
         <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,687,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">

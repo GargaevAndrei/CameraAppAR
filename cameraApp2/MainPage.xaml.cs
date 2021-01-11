@@ -254,7 +254,7 @@ namespace CameraCOT
 
             jsonCamerasSettings = new JsonCamerasSettings();
 
-            jsonCamerasSettings.MainCameraName = "USB Camera2";
+            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
             jsonCamerasSettings.MainCameraPreview = "3264x2448 [1,33] 15FPS NV12";
             jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
             jsonCamerasSettings.MainCameraVideo = "3264x2448 [1,33] 15FPS NV12";
@@ -2353,7 +2353,11 @@ namespace CameraCOT
         private async void imageControlPreview_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
 
-            await Windows.System.Launcher.LaunchFileAsync(savedFile);
+            
+            StorageFolder dlFolder = await savedFile.GetParentAsync();
+            await Windows.System.Launcher.LaunchFolderAsync(dlFolder);
+
+            //await Windows.System.Launcher.LaunchFileAsync(savedFile);
         }
 
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
