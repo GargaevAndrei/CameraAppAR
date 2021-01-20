@@ -148,7 +148,7 @@ namespace VideoEffectComponent
             using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))
             using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
             {
-
+                var buf = inputBitmap.GetPixelBytes();
                 ds.DrawImage(inputBitmap); //gaussianBlurEffect
 
                 if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
@@ -178,11 +178,11 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    Rect rect = new Rect(50, 2100, 3250, 200);
+                    Rect rect = new Rect(50, 10 , 3250, 200);  // 2100    //1000
                     //ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
                     ds.DrawText(videoEffectSettings.commet, rect, Colors.Cyan, new CanvasTextFormat
                     {
-                        FontSize = 88,
+                        FontSize = 6,    //88
 
                     });
                 }

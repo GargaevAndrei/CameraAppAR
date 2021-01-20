@@ -33,6 +33,7 @@ using System.Net.WebSockets;
 using System.Net;
 using Windows.Networking;
 using Windows.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 
 
@@ -254,10 +255,10 @@ namespace CameraCOT
 
             jsonCamerasSettings = new JsonCamerasSettings();
 
-            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
-            jsonCamerasSettings.MainCameraPreview = "3264x2448 [1,33] 15FPS NV12";
+            jsonCamerasSettings.MainCameraName = "USB Camera2";
+            jsonCamerasSettings.MainCameraPreview = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
-            jsonCamerasSettings.MainCameraVideo = "3264x2448 [1,33] 15FPS NV12";
+            jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
             jsonCamerasSettings.EndoCameraPreview = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
@@ -343,7 +344,7 @@ namespace CameraCOT
 
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
-            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
+            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
             //histogramStatisticTimer.Start();
 
             opacityTimer = new DispatcherTimer();
@@ -506,6 +507,7 @@ namespace CameraCOT
 
 
         static int index;
+        
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
             //textBoxInfo.Text += ++index + "\n";
@@ -1385,14 +1387,26 @@ namespace CameraCOT
                     if (currentCameraType == (int)cameraType.mainCamera)
                     {
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);
+                        await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+                        await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
                     }
                     if (currentCameraType == (int)cameraType.endoCamera)
                     {
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.endoCamera].PreviewResolution.EncodingProperties);
+                        await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.endoCamera].PhotoResolution.EncodingProperties);
+                        await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
+                    }
+                    if (currentCameraType == (int)cameraType.termoCamera)
+                    {
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.termoCamera].PreviewResolution.EncodingProperties);
+                        await Task.Delay(20);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.termoCamera].PhotoResolution.EncodingProperties);
+                        await Task.Delay(20);
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
                     }
                     _isInitialized = true;
                 }
@@ -1403,6 +1417,12 @@ namespace CameraCOT
 
                 if (_isInitialized)
                 {
+
+
+
+
+
+
                     await StartPreviewAsync();
                 }
                
@@ -1411,7 +1431,83 @@ namespace CameraCOT
         }
 
 
+        //------------ frame reader --------------------------
+        //----------------------------------------------------
         private SoftwareBitmap backBuffer;
+        private  byte[] imageBuffer;
+        
+
+        private async void GetFrame_Click()
+        {
+
+            var frameSourceGroups = await MediaFrameSourceGroup.FindAllAsync();
+
+            MediaFrameSourceGroup selectedGroup = null;
+            MediaFrameSourceInfo colorSourceInfo = null;
+
+            foreach (var sourceGroup in frameSourceGroups)
+            {
+                foreach (var sourceInfo in sourceGroup.SourceInfos)
+                {
+                    if (sourceInfo.MediaStreamType == MediaStreamType.VideoRecord && sourceInfo.SourceKind == MediaFrameSourceKind.Color)
+                    {
+                        colorSourceInfo = sourceInfo;
+                        break;
+                    }
+                }
+                if (colorSourceInfo != null)
+                {
+                    selectedGroup = sourceGroup;
+                    break;
+                }
+            }
+
+
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            _mediaCapture = new MediaCapture();
+
+            var settings = new MediaCaptureInitializationSettings()
+            {
+                SourceGroup = selectedGroup,
+                SharingMode = MediaCaptureSharingMode.ExclusiveControl,
+                MemoryPreference = MediaCaptureMemoryPreference.Cpu,
+                StreamingCaptureMode = StreamingCaptureMode.Video
+            };
+            try
+            {
+                await _mediaCapture.InitializeAsync(settings);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("MediaCapture initialization failed: " + ex.Message);
+                return;
+            }
+;
+
+            var colorFrameSourse = _mediaCapture.FrameSources[colorSourceInfo.Id];
+            var preferredFormat = colorFrameSourse.SupportedFormats.Where(format =>
+            {
+                return format.VideoFormat.Width <= 800;               //&& format.Subtype == MediaEncodingSubtypes.Argb32
+            }).FirstOrDefault();
+            if (preferredFormat == null)
+            {
+                Debug.WriteLine("designed format not supported");
+                return;
+            }
+
+            await colorFrameSourse.SetFormatAsync(preferredFormat);
+
+            mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(colorFrameSourse, MediaEncodingSubtypes.Argb32);
+            mediaFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+            await mediaFrameReader.StartAsync();
+
+        }
+
         private void ColorFrameReader_FrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
         {
             var mediaFrameReference = sender.TryAcquireLatestFrame();
@@ -1429,34 +1525,21 @@ namespace CameraCOT
 
                 // Swap the processed frame to _backBuffer and dispose of the unused image.
                 softwareBitmap = Interlocked.Exchange(ref backBuffer, softwareBitmap);
+
+                imageBuffer = new byte[backBuffer.PixelWidth*backBuffer.PixelHeight*4];
+                backBuffer.CopyToBuffer(imageBuffer.AsBuffer());
+
+
                 softwareBitmap?.Dispose();
-
-                // Changes to XAML ImageElement must happen on UI thread through Dispatcher
-                //var task = imageElement.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-                //    async () =>
-                //    {
-                //// Don't let two copies of this task run at the same time.
-                //if (taskRunning)
-                //        {
-                //            return;
-                //        }
-                //        taskRunning = true;
-
-                //// Keep draining frames from the backbuffer until the backbuffer is empty.
-                //SoftwareBitmap latestBitmap;
-                //        while ((latestBitmap = Interlocked.Exchange(ref backBuffer, null)) != null)
-                //        {
-                //            var imageSource = (SoftwareBitmapSource)imageElement.Source;
-                //            await imageSource.SetBitmapAsync(latestBitmap);
-                //            latestBitmap.Dispose();
-                //        }
-
-                //        taskRunning = false;
-                //    });
+                
             }
 
-            mediaFrameReference.Dispose();
+            //mediaFrameReference.Dispose();
         }
+
+
+        //----------------------------------------------------
+        //---------------------------------------------------
 
 
         private async Task InitializeDoubleCameraAsync()
@@ -1528,14 +1611,14 @@ namespace CameraCOT
 
 
             //------------ add video effect -----------------
-            if (currentCameraType == (int)cameraType.endoCamera || currentCameraType == (int)cameraType.mainCamera)
-            {
+            //if (currentCameraType == (int)cameraType.endoCamera || currentCameraType == (int)cameraType.mainCamera)
+            //{
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
                 IMediaExtension videoEffect = await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
                 videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
-            }
+            //}
             //-----------------------------------------------
 
             try
@@ -1764,6 +1847,61 @@ namespace CameraCOT
 
         }
 
+        private async Task MakePhotoDoubleAsync()
+        {
+            PreviewControl.Opacity = 0.5;
+            opacityTimer.Start();
+
+            Debug.WriteLine("Make photo");
+
+            var stream1 = new InMemoryRandomAccessStream();
+            var stream2 = new InMemoryRandomAccessStream();
+
+            await _mediaCaptureDouble1.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream1);
+            await _mediaCaptureDouble2.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream2);
+
+            try
+            {
+                var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
+                savedFile = await photoFolder.CreateFileAsync("Camera " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                
+
+
+                await SavePhotoAsync(stream1, savedFile);
+
+
+                Debug.WriteLine("Photo saved in" + savedFile.Path);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Exception while making photo " + ex.Message.ToString());
+            }
+
+            try
+            {
+                BitmapImage bitmapImage1 = new BitmapImage();
+                BitmapImage bitmapImage2 = new BitmapImage();
+                await bitmapImage1.SetSourceAsync(stream1);
+                await bitmapImage2.SetSourceAsync(stream2);
+
+                //Bitmap bitmap = new Bitmap(image1.Width + image2.Width, Math.Max(image1.Height, image2.Height));
+                //using (Graphics g = Graphics.FromImage(bitmap))
+                //{
+                //    g.DrawImage(image1, 0, 0);
+                //    g.DrawImage(image2, image1.Width, 0);
+                //}
+
+                BitmapImage bitmapPreviewImage = await StorageFileToBitmapImage(savedFile);
+                imageControlPreview.Source = bitmapPreviewImage;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Exception while making preview " + ex.Message.ToString());
+            }
+
+        }
+
+
         public static async Task<BitmapImage> StorageFileToBitmapImage(StorageFile savedStorageFile)
         {
             using (IRandomAccessStream fileStream = await savedStorageFile.OpenAsync(Windows.Storage.FileAccessMode.Read))
@@ -1789,7 +1927,7 @@ namespace CameraCOT
 
                     if ((decoder.OrientedPixelWidth == 80) && (decoder.OrientedPixelHeight == 60))
                     {
-                        encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Linear;
+                        encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
                         encoder.BitmapTransform.ScaledHeight = 360;
                         encoder.BitmapTransform.ScaledWidth = 480;
 
@@ -1909,6 +2047,8 @@ namespace CameraCOT
             {
                 Debug.WriteLine("error termo camera button" + ex.Message);
             }
+
+            //GetFrame_Click();
 
             stopMeasure();
             firstDistanceFlag = false;
@@ -2034,8 +2174,8 @@ namespace CameraCOT
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
             
-            panelNotes.Visibility = _isNotes && (currentCameraType != (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            
+            panelNotes.Visibility = _isNotes  ? Visibility.Visible : Visibility.Collapsed;  //&& (currentCameraType != (int)cameraType.termoCamera)
+
 
             PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
             PauseIcon.Visibility  = _isPause ? Visibility.Collapsed : Visibility.Visible;
@@ -2394,7 +2534,9 @@ namespace CameraCOT
 
             indexNoteShow = stringNote.Count - 1;
             _isNotes = !_isNotes;
-            UpdateUIControls();
+            UpdateUIControls();            
+
+
             //videoEffectSettings.commet = "Заметка" + ++temp1;
         }
 

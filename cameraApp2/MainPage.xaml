@@ -9,7 +9,7 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
+    <Grid x:Name="mainGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
 
         <ListBox x:Name="clientListBox" Margin="184,256,599,250"/>
 
@@ -32,8 +32,8 @@
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
-        <CaptureElement x:Name="PreviewControlDouble1" Height="720" VerticalAlignment="Center" Margin="0,0,640,0" />
-        <CaptureElement x:Name="PreviewControlDouble2" Height="720" VerticalAlignment="Center" Margin="640,0,0,0"/>
+        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" Stretch="Uniform" Margin="0,0,480,0" HorizontalAlignment="Right" Width="640"  />
+        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" Stretch="Uniform" Margin="480,0,0,0" HorizontalAlignment="Right" Width="640" />
 
 
         <Image x:Name="imageElement" Margin="18,24,104,18" />
@@ -184,7 +184,7 @@
 
             <Button x:Name="termoCameraButton" Content="TERM" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
-            <Button x:Name="doubleCameraButton" Content="DOUBLE" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Collapsed" />
+            <Button x:Name="doubleCameraButton" Content="DOUBL" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Visible" />
 
 
         </StackPanel>
