@@ -10,8 +10,12 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
 
     <Grid x:Name="mainGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="21*"/>
+            <RowDefinition Height="19*"/>
+        </Grid.RowDefinitions>
 
-        <ListBox x:Name="clientListBox" Margin="184,256,599,250"/>
+        <ListBox x:Name="clientListBox" Margin="184,256,828,250" Grid.RowSpan="2"/>
 
         <!--<canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>-->
         <!--<Grid>
@@ -30,21 +34,21 @@
         </StackPanel>
 
 
-        <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
+        <CaptureElement x:Name="PreviewControl" Stretch="Uniform" Grid.RowSpan="2"/>
 
-        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" Stretch="Uniform" Margin="0,0,480,0" HorizontalAlignment="Right" Width="640"  />
-        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" Stretch="Uniform" Margin="480,0,0,0" HorizontalAlignment="Right" Width="640" />
+        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Top" Stretch="Uniform" Margin="0,360,480,0" HorizontalAlignment="Right" Width="640"  />
+        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Top" Stretch="Uniform" Margin="0,360,0,0" HorizontalAlignment="Right" Width="640" />
 
 
-        <Image x:Name="imageElement" Margin="18,24,104,18" />
-        <Image x:Name="imageElementNote" Margin="671,189,147,27" />
+        <Image x:Name="imageElement" Margin="18,24,104,18" Grid.RowSpan="2" />
+        <Image x:Name="imageElementNote" Margin="671,189,147,27" Grid.RowSpan="2" />
 
         <!-- <canvas:CanvasControl Width="500" Height="300" x:Name="canv"
             Draw="CanvasControl_Draw" CreateResources="CanvasControl_CreateResources" ClearColor="LightGray"/>-->
 
 
 
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,117,6,0" Grid.RowSpan="2">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -159,14 +163,18 @@
 
         </StackPanel>
 
-        <StackPanel x:Name="termoPanel" VerticalAlignment="Center" Margin="0,0,140,0" HorizontalAlignment="Right" Width="100 " Visibility="Collapsed">
+        <StackPanel x:Name="termoPanel" VerticalAlignment="Top" Margin="0,103,140,0" HorizontalAlignment="Right" Width="100 " Visibility="Visible" Grid.RowSpan="2">
             <TextBox x:Name="textBoxTmax" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmax" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
             <Image Source="Assets/lepton_color_map_fusion.png" Margin="0,0,0,0" Height="350" Width="80" />
             <TextBox x:Name="textBoxTmin" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
-            <TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" Visibility="Collapsed" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+            <TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tp" TextWrapping="Wrap" Visibility="Visible" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center">
+        <StackPanel x:Name="termoPanelDot" VerticalAlignment="Top" Margin="0,280,500,0" HorizontalAlignment="Right" Width="100 " Visibility="Visible" Grid.RowSpan="2">
+            <Image Source="Assets/cursor.png" Height="50" Width="50" />
+        </StackPanel>
+
+        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="0,140,0,0" Grid.RowSpan="2">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -302,7 +310,7 @@
         </StackPanel>
 
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Bottom" HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,342,0,0" Grid.Row="1">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,40"/>
@@ -318,12 +326,12 @@
 
         </StackPanel>
 
-        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
-        <Frame x:Name="ScenarioFrame" Margin="264,360,640,140"/>
+        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed" Grid.RowSpan="2"/>
+        <!--<Frame x:Name="ScenarioFrame" Margin="264,360,640,140" Grid.RowSpan="2"/>-->
 
-        <Image x:Name="imageControlPreview" Margin="10,400,867,10" Stretch="Fill" Tapped="imageControlPreview_Tapped"/>
+        <Image x:Name="imageControlPreview" Margin="10,22,867,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" Grid.Row="1"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,687,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,309,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" Grid.Row="1" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

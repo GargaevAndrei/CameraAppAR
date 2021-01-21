@@ -166,6 +166,7 @@
     <Content Include="Assets\CameraCOT.targetsize-256.png" />
     <Content Include="Assets\CameraCOT.targetsize-32.png" />
     <Content Include="Assets\CameraCOT.targetsize-48.png" />
+    <Content Include="Assets\cursor.png" />
     <Content Include="Assets\lepton_color_map_fusion.png" />
     <Content Include="Assets\SplashScreen.scale-100.png" />
     <Content Include="Assets\SplashScreen.scale-125.png" />
