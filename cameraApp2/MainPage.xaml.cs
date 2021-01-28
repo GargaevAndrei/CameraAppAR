@@ -255,7 +255,7 @@ namespace CameraCOT
 
             jsonCamerasSettings = new JsonCamerasSettings();
 
-            jsonCamerasSettings.MainCameraName = "USB Camera2";
+            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
             jsonCamerasSettings.MainCameraPreview = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
             jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
@@ -264,12 +264,12 @@ namespace CameraCOT
             jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
             jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
-            jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS RGB24";
-            jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS RGB24";
-            jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS RGB24";
-            //jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-            //jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-            //jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+
+            jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+            jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+            jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+
+
 
             cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
             cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
@@ -348,7 +348,7 @@ namespace CameraCOT
 
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
-            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
+            histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             //histogramStatisticTimer.Start();
 
             opacityTimer = new DispatcherTimer();
@@ -435,7 +435,9 @@ namespace CameraCOT
                 var index2 = response.LastIndexOf(":");
                 strMinT = response.Substring(0, index1);
                 strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
-                strPointT = response.Substring(index2 + 1);
+                //strPointT = response.Substring(index2 + 1);
+                strPointT = videoEffectSettings.temperature.ToString("0.0");
+
                 minT = Convert.ToDouble(strMinT);
                 maxT = Convert.ToDouble(strMaxT);
 
@@ -1442,7 +1444,7 @@ namespace CameraCOT
         }
 
 
-        //------------ frame reader --------------------------
+        #region frame reader --------------------------
         //----------------------------------------------------
         private SoftwareBitmap backBuffer;
         private  byte[] imageBuffer;
@@ -1550,7 +1552,7 @@ namespace CameraCOT
 
 
         //----------------------------------------------------
-        //---------------------------------------------------
+        #endregion
 
 
         private async Task InitializeDoubleCameraAsync()
@@ -1826,7 +1828,7 @@ namespace CameraCOT
             try
             {
                 //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
-                var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
+                var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " Tcenter=" + strPointT + " ";
                 if((currentCameraType == (int)cameraType.termoCamera))
                     savedFile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
                 else
@@ -1970,6 +1972,7 @@ namespace CameraCOT
 
             Debug.WriteLine("SwitchCamera on main");
             _isUIActive = false;
+            _isFlash = true;
 
             currentCameraType = (int)cameraType.mainCamera;
             try
@@ -2006,6 +2009,7 @@ namespace CameraCOT
 
             Debug.WriteLine("SwitchCamera on endo");
             _isUIActive = false;
+            //_isFlash = false;
 
             currentCameraType = (int)cameraType.endoCamera;
 
@@ -2200,7 +2204,9 @@ namespace CameraCOT
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             
-            termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            termoPanel.Visibility    = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            termoPanel1.Visibility   = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            termoPanelDot.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             //CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;            
 
@@ -2220,6 +2226,7 @@ namespace CameraCOT
 
             // Update flash button
             NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
+            NotFlashIcon1.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
             FlashIcon.Visibility        = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
             plusFlashButton.Visibility  = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
             minusFlashButton.Visibility = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
@@ -2227,12 +2234,12 @@ namespace CameraCOT
             buttonFlash.Visibility      = (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
 
             // Update flash button Endo
-            NotFlashIconEndo.Visibility      = _isFlashEndo ? Visibility.Collapsed : Visibility.Visible;
-            FlashIconEndo.Visibility         = _isFlashEndo ? Visibility.Visible   : Visibility.Collapsed;
+            //NotFlashIconEndo.Visibility      = _isFlashEndo ? Visibility.Collapsed : Visibility.Visible;
+            //FlashIconEndo.Visibility         = _isFlashEndo ? Visibility.Visible   : Visibility.Collapsed;
             plusFlashButtonEndo.Visibility   = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             minusFlashButtonEndo.Visibility  = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             pbFlashPowerEndo.Visibility      = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            buttonFlashEndo.Visibility       = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            //buttonFlashEndo.Visibility       = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
 
 
 
@@ -2304,10 +2311,17 @@ namespace CameraCOT
 
             notesButton.Background = !_isNotes ? new SolidColorBrush(color) : new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
 
-            buttonFlash.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            plusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            minusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            pbFlashPower.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            buttonFlash.Visibility      = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            plusFlashButton.Visibility  = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            minusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            pbFlashPower.Visibility     = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+
+            //buttonFlashEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
+            plusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
+            minusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
+            pbFlashPowerEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
+
+
             Rec.Text = _isPause ? "Pause" : "Rec";
 
 
@@ -2338,7 +2352,7 @@ namespace CameraCOT
         }
         private void buttonFlashEndo_Click(object sender, RoutedEventArgs e)
         {
-            _isFlashEndo = !_isFlashEndo;
+            //_isFlashEndo = !_isFlashEndo;
             UpdateUIControls();
         }
         private void FlashCMD()

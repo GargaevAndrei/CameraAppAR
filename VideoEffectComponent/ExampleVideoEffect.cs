@@ -171,7 +171,15 @@ namespace VideoEffectComponent
                     var R = buf[9436];
                     var G = buf[9437];
                     var B = buf[9438];
+
+                    //buf[9436] = 0;
+                    //buf[9437] = 255;
+                    //buf[9438] = 0;
+
                     //var Y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+
+                    //inputBitmap.SetPixelBytes(buf);
+                    //ds.DrawImage(inputBitmap);
 
                     indexMin = 0;
                     errMin = 1000000;
@@ -222,11 +230,11 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    Rect rect = new Rect(50, 10 , 3250, 200);  // 2100    //1000
+                    Rect rect = new Rect(50, 1000 , 3250, 200);  // 2100    //1000
                     //ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
                     ds.DrawText(videoEffectSettings.commet, rect, Colors.Cyan, new CanvasTextFormat
                     {
-                        FontSize = 6,    //88
+                        FontSize = 44,    //88   //44
 
                     });
                 }

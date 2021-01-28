@@ -10,12 +10,14 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
 
     <Grid x:Name="mainGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="21*"/>
-            <RowDefinition Height="19*"/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ListBox x:Name="clientListBox" Margin="184,256,828,250" Grid.RowSpan="2"/>
+        <ListBox x:Name="clientListBox" Margin="184,256,828,250"/>
 
         <!--<canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>-->
         <!--<Grid>
@@ -25,7 +27,7 @@
                 </FontIcon.RenderTransform>
             </FontIcon>
         </Grid>-->
-        <StackPanel x:Name="CenterIcon1" VerticalAlignment="Top" Margin="0,360,0,0" HorizontalAlignment="Center" Visibility="Collapsed" >
+        <StackPanel x:Name="CenterIcon1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" Height="0" Width="0" >
             <FontIcon x:Name="CenterIcon"  Width="40" Glyph="&#xE711;" RenderTransformOrigin="0.5,0.5" Foreground="Black">
                 <FontIcon.RenderTransform>
                     <CompositeTransform ScaleX="2" ScaleY="2"/>
@@ -34,21 +36,21 @@
         </StackPanel>
 
 
-        <CaptureElement x:Name="PreviewControl" Stretch="Uniform" Grid.RowSpan="2"/>
+        <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
-        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Top" Stretch="Uniform" Margin="0,360,480,0" HorizontalAlignment="Right" Width="640"  />
-        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Top" Stretch="Uniform" Margin="0,360,0,0" HorizontalAlignment="Right" Width="640" />
+        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" Stretch="Uniform" Margin="160,0,0,0" HorizontalAlignment="Left" Width="640" Height="0"  />
+        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" Stretch="Uniform" Margin="640,0,0,0" HorizontalAlignment="Left" Width="640" Height="0" />
 
 
-        <Image x:Name="imageElement" Margin="18,24,104,18" Grid.RowSpan="2" />
-        <Image x:Name="imageElementNote" Margin="671,189,147,27" Grid.RowSpan="2" />
+        <Image x:Name="imageElement" Margin="18,24,104,18" />
+        <Image x:Name="imageElementNote" Margin="671,189,147,27" />
 
         <!-- <canvas:CanvasControl Width="500" Height="300" x:Name="canv"
             Draw="CanvasControl_Draw" CreateResources="CanvasControl_CreateResources" ClearColor="LightGray"/>-->
 
 
 
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,117,6,0" Grid.RowSpan="2">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Height="486" Width="93">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -108,7 +110,12 @@
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
-                    <FontIcon x:Name="NotFlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5">
+                    <FontIcon x:Name="NotFlashIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xE945;" Foreground="Yellow" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="NotFlashIcon1" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xEF2C;" RenderTransformOrigin="0.5,0.5">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -118,7 +125,7 @@
 
             <Button x:Name="buttonFlashEndo" Click="buttonFlashEndo_Click" Width="70" Height="70" Visibility="Collapsed">
                 <Grid>
-                    <FontIcon x:Name="FlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5" Foreground="Yellow" VerticalAlignment="Top">
+                    <FontIcon x:Name="FlashIconEndo" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Height="40" Glyph="&#xE945;" RenderTransformOrigin="0.5,0.5"  VerticalAlignment="Top">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
@@ -163,18 +170,22 @@
 
         </StackPanel>
 
-        <StackPanel x:Name="termoPanel" VerticalAlignment="Top" Margin="0,103,140,0" HorizontalAlignment="Right" Width="100 " Visibility="Visible" Grid.RowSpan="2">
-            <TextBox x:Name="textBoxTmax" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmax" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+        <StackPanel x:Name="termoPanel" Margin="0,0,158,0" FlowDirection="RightToLeft" VerticalAlignment="Center" HorizontalAlignment="Right" Width="100 " Visibility="Collapsed" Height="480" >
+            <TextBox x:Name="textBoxTmax" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmax" TextWrapping="Wrap" VerticalAlignment="Top" Height="60" Width="115" FontSize="42"/>
             <Image Source="Assets/lepton_color_map_fusion.png" Margin="0,0,0,0" Height="350" Width="80" />
-            <TextBox x:Name="textBoxTmin" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
-            <TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tp" TextWrapping="Wrap" Visibility="Visible" VerticalAlignment="Top" Height="55" Width="105" FontSize="36"/>
+            <TextBox x:Name="textBoxTmin" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tmin" TextWrapping="Wrap" VerticalAlignment="Top" Height="60" Width="115" FontSize="42"/>
+            <!--<TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tp" TextWrapping="Wrap" Visibility="Visible" VerticalAlignment="Top" Height="60" Width="115" FontSize="42"/>-->
         </StackPanel>
 
-        <StackPanel x:Name="termoPanelDot" VerticalAlignment="Top" Margin="0,280,500,0" HorizontalAlignment="Right" Width="100 " Visibility="Visible" Grid.RowSpan="2">
-            <Image Source="Assets/cursor.png" Height="50" Width="50" />
+        <StackPanel x:Name="termoPanel1" Margin="0,0,470,0" VerticalAlignment="Center" HorizontalAlignment="Right" Width="140 " Visibility="Collapsed" Height="540" >
+            <TextBox x:Name="textBoxTpoint" HorizontalAlignment="Right" Margin="0,0,0,0" Text="Tp" TextWrapping="Wrap" Visibility="Visible" VerticalAlignment="Top" Height="80" Width="140" FontSize="52"/>
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="0,140,0,0" Grid.RowSpan="2">
+        <StackPanel x:Name="termoPanelDot" VerticalAlignment="Top" Margin="0,232,490,0" HorizontalAlignment="Right" Width="60" Visibility="Visible" Height="50">
+            <Image Source="Assets/cursor.png" Height="50" Width="50"  />
+        </StackPanel>
+
+        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center" Height="440" Width="90">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -192,12 +203,12 @@
 
             <Button x:Name="termoCameraButton" Content="TERM" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
-            <Button x:Name="doubleCameraButton" Content="DOUBL" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Visible" />
+            <Button x:Name="doubleCameraButton" Content="DOUBL" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Collapsed" />
 
 
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,0,0,0">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,0,0,0" Height="110" Width="170">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -239,7 +250,7 @@
         </StackPanel>
 
 
-        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,99,0,0" Visibility="Visible" Width="727">
+        <StackPanel x:Name="panelNotes" Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,99,0,0" Visibility="Collapsed" Width="727" Height="100">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -310,7 +321,7 @@
         </StackPanel>
 
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,342,0,0" Grid.Row="1">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,699,0,0" Height="0" Width="0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,40"/>
@@ -326,18 +337,18 @@
 
         </StackPanel>
 
-        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed" Grid.RowSpan="2"/>
+        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="186,214,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
         <!--<Frame x:Name="ScenarioFrame" Margin="264,360,640,140" Grid.RowSpan="2"/>-->
 
-        <Image x:Name="imageControlPreview" Margin="10,22,867,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" Grid.Row="1"/>
+        <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="90" Height="90" VerticalAlignment="Bottom"/>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,309,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" Grid.Row="1" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,666,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>
         </Button>
-        <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Visible" Margin="0,10,190,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150" Foreground="Red"/>
-        <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,120,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="90"/>
+        <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Visible" Margin="0,10,310,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150" Foreground="Red" Height="37"/>
+        <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,240,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="90" Height="37"/>
 
 
     </Grid>
