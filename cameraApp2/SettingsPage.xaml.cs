@@ -258,7 +258,12 @@ namespace CameraCOT
             serializer.TypeNameHandling = TypeNameHandling.Auto;
             serializer.Formatting = Formatting.Indented;
 
-            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
+            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
+            var storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+            var naparnikFolder = (StorageFolder)await storageFolder.TryGetItemAsync("Напарник");
+            var file = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
+            //var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
+
             using (StreamWriter sw = new StreamWriter(file.Path))
             using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
             {
@@ -329,17 +334,14 @@ namespace CameraCOT
 
         public static  async Task<JsonCamerasSettings> readFileSettings() 
         {
-
-            //StorageFolder installedLocation = Windows.ApplicationModel.Package.Current.InstalledLocation;
-            //StorageFolder folder = await installedLocation.GetFolderAsync("Assets");
-            //IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
-
-            //StorageFile configFile = await folder.GetFileAsync(SettingsPage.fileJsonName);
-
-
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
-            var localFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
-            StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
+            //var localFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+            //StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
+
+
+            var storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
+            var naparnikFolder = (StorageFolder)await storageFolder.TryGetItemAsync("Напарник");
+            var configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
 
 
             string text = await FileIO.ReadTextAsync(configFile);

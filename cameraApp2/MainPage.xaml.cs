@@ -68,6 +68,7 @@ namespace CameraCOT
         private StorageFolder photoFolder = null;
         private StorageFolder videoFolder = null;
         private StorageFile configFile = null;
+        private StorageFile notesFile = null;
 
         LowLagMediaRecording _mediaRecording;
 
@@ -120,7 +121,7 @@ namespace CameraCOT
         static string serverPort = "61111";
         static string serverAddress = "127.0.0.1"; // адрес сервера
 
-        string strMinT, strMaxT, strPointT;
+        string strMinT, strMaxT, strPointT, strTemp;
 
         double minT, maxT, pointT;
 
@@ -232,12 +233,12 @@ namespace CameraCOT
                     }
                 }
 
-                configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("Заметки.txt");
-                if(configFile == null)
-                    configFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                notesFile = (StorageFile)await naparnikFolder.TryGetItemAsync("Заметки.txt");
+                if(notesFile == null)
+                    notesFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
                 else
                 {
-                    IList<string> data = await FileIO.ReadLinesAsync(configFile);                                          
+                    IList<string> data = await FileIO.ReadLinesAsync(notesFile);                                          
                     stringNote = data.ToList();
                 }
             }
@@ -250,25 +251,33 @@ namespace CameraCOT
             //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
             //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
 
+
+
             //load settings
-            //jsonCamerasSettings = await readFileSettings();
+            configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
+            if (configFile == null)
+            {
+                jsonCamerasSettings = new JsonCamerasSettings();
 
-            jsonCamerasSettings = new JsonCamerasSettings();
+                jsonCamerasSettings.MainCameraName = "USB Camera2";
+                jsonCamerasSettings.MainCameraPreview = "1600x1200 [1,33] 30FPS NV12";
+                jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
+                jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
-            jsonCamerasSettings.MainCameraName = "rmoncam 8M";
-            jsonCamerasSettings.MainCameraPreview = "1600x1200 [1,33] 30FPS NV12";
-            jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
-            jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
-            jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
-            jsonCamerasSettings.EndoCameraPreview = "1600x1200 [1,33] 30FPS NV12";
-            jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
-            jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
-            jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
+                jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
+                jsonCamerasSettings.EndoCameraPreview = "1600x1200 [1,33] 30FPS NV12";
+                jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
+                jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
-            jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-            jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-            jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-
+                jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
+                jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+                jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+                jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+            }                
+            else
+            {
+                jsonCamerasSettings = await readFileSettings();
+            }
 
 
             cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
@@ -327,8 +336,8 @@ namespace CameraCOT
             Current = this;
             // _previewer = new MediaCapturePreviewer(PreviewControl, Dispatcher);     
 
-            for (int i = 0, j = 0; i < colormap_fusion.Length - 2; i += 3, j++)
-                colormap_gray[j] = 0.2126 * colormap_fusion[i] + 0.7152 * colormap_fusion[i + 1] + 0.0722 * colormap_fusion[i + 2];
+            //for (int i = 0, j = 0; i < colormap_fusion.Length - 2; i += 3, j++)
+            //    colormap_gray[j] = 0.2126 * colormap_fusion[i] + 0.7152 * colormap_fusion[i + 1] + 0.0722 * colormap_fusion[i + 2];
 
 
             EnumerateHidDevices();
@@ -420,7 +429,8 @@ namespace CameraCOT
         {
             this.textBoxTmax.Text = maxT.ToString("0.0");
             this.textBoxTmin.Text = minT.ToString("0.0");
-            this.textBoxTpoint.Text = videoEffectSettings.temperature.ToString("0.0");
+            textBoxTpoint.Text = videoEffectSettings.temperature.ToString("0.0");
+            this.textBoxInfo.Text += strTemp + "\n";
 
             serialPortLepton.DiscardInBuffer();
             //histogramStatisticTimer.Start();
@@ -428,7 +438,16 @@ namespace CameraCOT
 
         public async Task ProcessData(string response)
         {
-            
+            try
+            {
+                strTemp = response;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                textBoxInfo.Text += ex.Message;
+            }
+
             try
             {
                 var index1 = response.IndexOf(":");
@@ -438,29 +457,17 @@ namespace CameraCOT
                 //strPointT = response.Substring(index2 + 1);
                 strPointT = videoEffectSettings.temperature.ToString("0.0");
 
+                //strTemp = response;
+
                 minT = Convert.ToDouble(strMinT);
                 maxT = Convert.ToDouble(strMaxT);
 
                 videoEffectSettings.Tmax = maxT;
                 videoEffectSettings.Tmin = minT;
-
-
-                //var a = videoEffectSettings.temperature;
-
-                //pointT = Convert.ToDouble(strPointT);// привет Андрей
-
-                //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => this.textBoxTmax.Text = maxT.ToString("0.0"));
-                //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => this.textBoxTmin.Text = minT.ToString("0.0"));
-
+                
                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
 
-                // await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => textBoxTpoint.Text = pointT.ToString("0.0"));
 
-                //textBoxTmax.Text = maxT.ToString("0.0");
-                //textBoxTmin.Text = minT.ToString("0.0");
-                //textBoxTpoint.Text = pointT.ToString("0.0");
-
-                //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
             }
             catch (Exception ex)
             {
@@ -487,6 +494,7 @@ namespace CameraCOT
             }
             //textBoxInfo.Text += response;
 
+            //await Task.Delay(500);
             await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
            
 
@@ -734,7 +742,8 @@ namespace CameraCOT
                     if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
                     {
                         cameras[(int)cameraType.endoCamera].Id = camera.Id;
-                        _isEndoCameraFlag = true;
+                        _isEndoCameraFlag = true;                        
+
                     }
                     if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
                     {
@@ -742,7 +751,8 @@ namespace CameraCOT
                         _isTermoCameraFlag = true;
                     }
                 }
-                
+
+             
                 UpdateUIControls();
             }
 
@@ -1207,6 +1217,8 @@ namespace CameraCOT
                 //await SetUpBasedOnStateAsync();
                 defferal.Complete();
             });
+            //defferal.Complete();
+
         }
 
         protected override async void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -1221,29 +1233,7 @@ namespace CameraCOT
         }
 
         private async void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
-        {
-            //jsonCamerasSettings = await readFileSettings();
-            //cameras[(int)cameraType.mainCamera].setCameraSettings(jsonCamerasSettings.MainCameraName);
-            //cameras[(int)cameraType.endoCamera].setCameraSettings(jsonCamerasSettings.EndoCameraName);
-            //cameras[(int)cameraType.termoCamera].setCameraSettings(jsonCamerasSettings.TermoCameraName);
-
-            //cameraDeviceList = await FindCameraDeviceAsync();
-
-            //if (cameraDeviceList.Count == 0)
-            //{
-            //    Debug.WriteLine("No camera device found!");
-            //    return;
-            //}
-
-            //int cameraCount = 3;
-            //for (int i = 0; i < cameraCount; i++)
-            //{
-            //    foreach (DeviceInformation camera in cameraDeviceList)
-            //    {
-            //        if (camera.Name == cameras[i].Name)
-            //            cameras[i].Id = camera.Id;
-            //    }
-            //}
+        {            
 
             if(_isNotFirstStart)
                 await SetUpBasedOnStateAsync();
@@ -1285,7 +1275,7 @@ namespace CameraCOT
                     _mediaCapture = new MediaCapture();
                     _mediaCapture.Failed += MediaCaptureFiled;
 
-                    if(camera.Name == cameras[(int)cameraType.mainCamera].Name)
+                    if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
                     {
                         var settings = new MediaCaptureInitializationSettings { VideoDeviceId = camera.Id };
 
@@ -1305,6 +1295,12 @@ namespace CameraCOT
                                 if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
                                     cameras[(int)cameraType.mainCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
 
+                            }
+                            if (_mediaCapture != null)
+                            {
+                                _mediaCapture.Failed -= MediaCaptureFiled;
+                                _mediaCapture.Dispose();
+                                _mediaCapture = null;
                             }
                             //_isInitialized = true;
                         }
@@ -1335,6 +1331,12 @@ namespace CameraCOT
                                     cameras[(int)cameraType.endoCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
 
                             }
+                            if (_mediaCapture != null)
+                            {
+                                _mediaCapture.Failed -= MediaCaptureFiled;
+                                _mediaCapture.Dispose();
+                                _mediaCapture = null;
+                            }
                             //_isInitialized = true;
                         }
                         catch (UnauthorizedAccessException)
@@ -1363,6 +1365,12 @@ namespace CameraCOT
                                 if (jsonCamerasSettings.TermoCameraVideo == property.GetFriendlyName(true))
                                     cameras[(int)cameraType.termoCamera].VideoResolution = new StreamResolution(property.EncodingProperties);
 
+                            }
+                            if (_mediaCapture != null)
+                            {
+                                _mediaCapture.Failed -= MediaCaptureFiled;
+                                _mediaCapture.Dispose();
+                                _mediaCapture = null;
                             }
                             //_isInitialized = true;
                         }
@@ -1399,24 +1407,25 @@ namespace CameraCOT
                     await _mediaCapture.InitializeAsync(settings);
                     if (currentCameraType == (int)cameraType.mainCamera)
                     {
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);
-                        await Task.Delay(20);
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
-                        await Task.Delay(20);
+                       //await Task.Delay(300);
+                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);                                              
+
+                       await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+
                     }
                     if (currentCameraType == (int)cameraType.endoCamera)
                     {
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.endoCamera].PreviewResolution.EncodingProperties);
+                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.endoCamera].PreviewResolution.EncodingProperties);
+                        //await Task.Delay(20);                       
+                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
                         await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.endoCamera].PhotoResolution.EncodingProperties);
-                        await Task.Delay(20);
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
                     }
                     if (currentCameraType == (int)cameraType.termoCamera)
                     {
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.termoCamera].PreviewResolution.EncodingProperties);
-                        await Task.Delay(20);
+                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.termoCamera].PreviewResolution.EncodingProperties);
+                        //await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.termoCamera].PhotoResolution.EncodingProperties);
                         await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
@@ -1430,11 +1439,6 @@ namespace CameraCOT
 
                 if (_isInitialized)
                 {
-
-
-
-
-
 
                     await StartPreviewAsync();
                 }
@@ -1626,11 +1630,14 @@ namespace CameraCOT
             //------------ add video effect -----------------
             //if (currentCameraType == (int)cameraType.endoCamera || currentCameraType == (int)cameraType.mainCamera)
             //{
+
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
                 IMediaExtension videoEffect = await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
-                videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
+            //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
+            
+
             //}
             //-----------------------------------------------
 
@@ -1672,7 +1679,7 @@ namespace CameraCOT
             }
             _isPreviewing = false;
             
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
             {
                 PreviewControl.Source = null;
                 //_displayRequest.RequestRelease();
@@ -1749,12 +1756,12 @@ namespace CameraCOT
         private async Task SetUpBasedOnStateAsync()
         {
 
-            while (!_setupTask.IsCompleted)
+            while (!_setupTask.IsCompleted)     //
             {
                 await _setupTask;
             }
 
-            bool wantUIActive = _isActivePage && Window.Current.Visible && !_isSuspending;    // 
+            bool wantUIActive = _isActivePage  && Window.Current.Visible && !_isSuspending;    //
 
             if (_isUIActive != wantUIActive)
             {
@@ -1793,21 +1800,38 @@ namespace CameraCOT
 
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            
+            if (currentCameraType == (int)cameraType.mainCamera)
+            {
+                await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
+                await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
 
+                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+                await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            }
             Debug.WriteLine("Start flashDelayTimer");
             if (_isFlash)
             {
                 flashDelayTimer.Start();
                 durationFlashDivider = 1;
-                if(currentCameraType != (int)cameraType.termoCamera)
+                if (currentCameraType != (int)cameraType.termoCamera)
                     FlashCMD();
             }
             else
-                await MakePhotoAsync();
+            {
+                MakePhotoAsync();
+
+                if (currentCameraType == (int)cameraType.mainCamera)
+                {
+                    await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
+                    await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+
+                    var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+                    await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+                }
+            }
         }
 
-        StorageFile savedFile;
+            StorageFile savedFile;
         private async Task MakePhotoAsync()
         {
             PreviewControl.Opacity = 0.5;
@@ -1828,8 +1852,11 @@ namespace CameraCOT
             try
             {
                 //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
-                var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " Tcenter=" + strPointT + " ";
-                if((currentCameraType == (int)cameraType.termoCamera))
+                //var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " Tcenter=" + strPointT + " ";
+
+                var temp = " Tcenter=" + strPointT + " ";
+
+                if ((currentCameraType == (int)cameraType.termoCamera))
                     savedFile = await photoFolder.CreateFileAsync("Camera "+ temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
                 else
                     savedFile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
@@ -1956,6 +1983,11 @@ namespace CameraCOT
                
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
+
+            _isUIActive = false;
+            _isDouble = false;
+            _isFlash = true;
+
             if (_isRecording)
             {
                 await StopRecordingAsync();
@@ -1968,19 +2000,12 @@ namespace CameraCOT
             firstDistanceFlag = false;
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
-            videoEffectSettings.termo = false;
-
-            Debug.WriteLine("SwitchCamera on main");
-            _isUIActive = false;
-            _isFlash = true;
+            videoEffectSettings.termo = false;            
 
             currentCameraType = (int)cameraType.mainCamera;
             try
             {
-                await CleanupCameraAsync();
-
-                _isDouble = false;
-
+                await CleanupCameraAsync();                
                 await SetUpBasedOnStateAsync();
             }
             catch (Exception ex)
@@ -1991,7 +2016,6 @@ namespace CameraCOT
             //streamSocket.Dispose();
             histogramStatisticTimer.Stop();
             
-
             UpdateUIControls();
         }
 
@@ -2028,7 +2052,7 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = true;
             videoEffectSettings.termo = false;
 
-            runMeasure.Visibility = Visibility.Visible;
+            //runMeasure.Visibility = Visibility.Visible;
 
             histogramStatisticTimer.Stop();
 
@@ -2150,7 +2174,7 @@ namespace CameraCOT
                 if (currentCameraType == (int)cameraType.termoCamera)
                     _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Wvga), savedFile);
                 else
-                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), savedFile);
+                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p), savedFile);
                 await _mediaRecording.StartAsync();
                 //_isRecording = true;
             }
@@ -2203,10 +2227,11 @@ namespace CameraCOT
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
-            
-            termoPanel.Visibility    = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            termoPanel1.Visibility   = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+
+            //termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            termoPanel1.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             termoPanelDot.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+
             //CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;            
 
@@ -2246,7 +2271,7 @@ namespace CameraCOT
 
 
             // Update lenght meter controls            
-            runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            //runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             
             if(_findLenghtZero)
             {
@@ -2572,8 +2597,8 @@ namespace CameraCOT
 
 
 
-        static int[] colormap_fusion = new int[] { 17, 18, 48, 11, 14, 33, 13, 16, 39, 15, 18, 44, 16, 19, 46, 18, 19, 53, 19, 20, 57, 21, 21, 62, 20, 22, 63, 16, 23, 72, 18, 24, 77, 23, 21, 79, 27, 24, 85, 30, 28, 94, 30, 30, 97, 41, 38, 118, 40, 37, 119, 41, 40, 124, 40, 41, 123, 41, 42, 126, 46, 40, 126, 50, 41, 127, 50, 41, 126, 52, 42, 126, 51, 44, 128, 53, 45, 131, 55, 46, 135, 57, 45, 133, 58, 47, 129, 59, 47, 133, 61, 46, 138, 65, 44, 137, 68, 45, 140, 68, 48, 142, 71, 46, 141, 74, 46, 141, 77, 45, 142, 81, 45, 143, 84, 44, 143, 86, 45, 144, 86, 47, 144, 87, 46, 142, 91, 46, 143, 93, 47, 144, 95, 44, 143, 99, 44, 145, 105, 44, 145, 105, 45, 145, 108, 45, 147, 109, 45, 145, 113, 43, 143, 115, 43, 144, 117, 43, 145, 120, 42, 144, 123, 40, 145, 124, 41, 146, 128, 41, 149, 130, 41, 148, 135, 39, 146, 136, 39, 147, 138, 39, 147, 142, 39, 148, 144, 39, 147, 145, 40, 143, 148, 39, 142, 151, 36, 143, 153, 35, 144, 155, 37, 145, 157, 37, 147, 160, 35, 147, 161, 34, 146, 162, 32, 145, 167, 31, 147, 169, 31, 147, 170, 30, 143, 171, 30, 142, 175, 31, 144, 177, 31, 145, 179, 28, 145, 178, 30, 143, 179, 28, 142, 184, 26, 144, 186, 26, 143, 186, 27, 141, 189, 25, 144, 191, 24, 146, 191, 24, 144, 190, 25, 143, 191, 23, 141, 194, 21, 142, 196, 22, 137, 197, 22, 135, 198, 23, 138, 198, 23, 137, 199, 23, 135, 200, 22, 127, 200, 21, 127, 206, 21, 128, 204, 24, 125, 202, 24, 122, 206, 25, 120, 207, 26, 120, 207, 26, 117, 209, 28, 118, 213, 28, 111, 213, 28, 107, 212, 30, 106, 211, 32, 105, 213, 35, 102, 215, 37, 100, 216, 39, 95, 216, 41, 89, 215, 45, 84, 220, 45, 84, 218, 46, 78, 218, 47, 76, 221, 49, 70, 222, 50, 68, 221, 54, 60, 223, 56, 56, 226, 57, 51, 226, 58, 48, 225, 59, 47, 225, 61, 47, 226, 63, 42, 228, 66, 39, 225, 68, 40, 224, 73, 40, 225, 76, 34, 228, 76, 34, 227, 77, 34, 228, 77, 38, 230, 79, 38, 230, 79, 36, 231, 82, 33, 232, 82, 33, 233, 84, 37, 233, 85, 36, 234, 87, 33, 235, 89, 34, 236, 90, 34, 237, 91, 35, 235, 94, 35, 236, 97, 29, 237, 98, 30, 239, 99, 27, 237, 101, 31, 236, 101, 31, 237, 102, 35, 239, 103, 37, 240, 105, 35, 241, 106, 36, 241, 109, 38, 240, 111, 38, 240, 111, 36, 240, 114, 36, 239, 116, 33, 241, 117, 34, 241, 117, 34, 240, 120, 34, 242, 121, 34, 246, 122, 32, 243, 124, 31, 243, 127, 30, 243, 127, 31, 242, 130, 32, 244, 131, 28, 247, 133, 29, 244, 136, 30, 244, 139, 33, 246, 138, 30, 246, 138, 28, 243, 143, 26, 243, 145, 26, 245, 146, 29, 245, 147, 31, 246, 146, 26, 252, 147, 28, 250, 151, 29, 248, 152, 29, 250, 153, 28, 249, 156, 26, 248, 159, 25, 251, 161, 27, 250, 161, 30, 250, 164, 29, 247, 167, 23, 248, 168, 23, 250, 167, 27, 249, 169, 26, 248, 175, 25, 251, 177, 24, 249, 180, 25, 248, 181, 23, 247, 181, 26, 247, 182, 26, 250, 183, 19, 252, 183, 18, 249, 188, 18, 248, 190, 17, 254, 190, 16, 254, 190, 13, 249, 195, 11, 250, 197, 11, 253, 195, 10, 253, 196, 10, 252, 199, 10, 251, 201, 6, 249, 205, 8, 248, 206, 3, 249, 205, 4, 250, 207, 3, 248, 209, 4, 247, 210, 3, 250, 210, 8, 250, 211, 8, 249, 215, 9, 250, 217, 13, 254, 216, 17, 252, 218, 17, 248, 220, 15, 251, 220, 17, 251, 221, 21, 251, 226, 17, 251, 223, 28, 253, 224, 40, 252, 227, 39, 251, 227, 41, 251, 229, 48, 250, 231, 53, 250, 232, 61, 250, 232, 67, 249, 235, 72, 250, 237, 80, 250, 236, 88, 251, 238, 96, 250, 240, 101, 252, 239, 107, 251, 240, 114, 251, 245, 128, 251, 243, 137, 251, 241, 150, 251, 244, 153, 251, 246, 162, 252, 245, 165, 253, 245, 172, 250, 247, 177, 250, 247, 186, 251, 246, 189, 253, 245, 195, 251, 247, 201, 252, 249, 209, 254, 249, 214, 253, 249, 224, 252, 250, 228, 255, 253, 238 };
-        static double[] colormap_gray = new double[colormap_fusion.Length/3];
+        //static int[] colormap_fusion = new int[] { 17, 18, 48, 11, 14, 33, 13, 16, 39, 15, 18, 44, 16, 19, 46, 18, 19, 53, 19, 20, 57, 21, 21, 62, 20, 22, 63, 16, 23, 72, 18, 24, 77, 23, 21, 79, 27, 24, 85, 30, 28, 94, 30, 30, 97, 41, 38, 118, 40, 37, 119, 41, 40, 124, 40, 41, 123, 41, 42, 126, 46, 40, 126, 50, 41, 127, 50, 41, 126, 52, 42, 126, 51, 44, 128, 53, 45, 131, 55, 46, 135, 57, 45, 133, 58, 47, 129, 59, 47, 133, 61, 46, 138, 65, 44, 137, 68, 45, 140, 68, 48, 142, 71, 46, 141, 74, 46, 141, 77, 45, 142, 81, 45, 143, 84, 44, 143, 86, 45, 144, 86, 47, 144, 87, 46, 142, 91, 46, 143, 93, 47, 144, 95, 44, 143, 99, 44, 145, 105, 44, 145, 105, 45, 145, 108, 45, 147, 109, 45, 145, 113, 43, 143, 115, 43, 144, 117, 43, 145, 120, 42, 144, 123, 40, 145, 124, 41, 146, 128, 41, 149, 130, 41, 148, 135, 39, 146, 136, 39, 147, 138, 39, 147, 142, 39, 148, 144, 39, 147, 145, 40, 143, 148, 39, 142, 151, 36, 143, 153, 35, 144, 155, 37, 145, 157, 37, 147, 160, 35, 147, 161, 34, 146, 162, 32, 145, 167, 31, 147, 169, 31, 147, 170, 30, 143, 171, 30, 142, 175, 31, 144, 177, 31, 145, 179, 28, 145, 178, 30, 143, 179, 28, 142, 184, 26, 144, 186, 26, 143, 186, 27, 141, 189, 25, 144, 191, 24, 146, 191, 24, 144, 190, 25, 143, 191, 23, 141, 194, 21, 142, 196, 22, 137, 197, 22, 135, 198, 23, 138, 198, 23, 137, 199, 23, 135, 200, 22, 127, 200, 21, 127, 206, 21, 128, 204, 24, 125, 202, 24, 122, 206, 25, 120, 207, 26, 120, 207, 26, 117, 209, 28, 118, 213, 28, 111, 213, 28, 107, 212, 30, 106, 211, 32, 105, 213, 35, 102, 215, 37, 100, 216, 39, 95, 216, 41, 89, 215, 45, 84, 220, 45, 84, 218, 46, 78, 218, 47, 76, 221, 49, 70, 222, 50, 68, 221, 54, 60, 223, 56, 56, 226, 57, 51, 226, 58, 48, 225, 59, 47, 225, 61, 47, 226, 63, 42, 228, 66, 39, 225, 68, 40, 224, 73, 40, 225, 76, 34, 228, 76, 34, 227, 77, 34, 228, 77, 38, 230, 79, 38, 230, 79, 36, 231, 82, 33, 232, 82, 33, 233, 84, 37, 233, 85, 36, 234, 87, 33, 235, 89, 34, 236, 90, 34, 237, 91, 35, 235, 94, 35, 236, 97, 29, 237, 98, 30, 239, 99, 27, 237, 101, 31, 236, 101, 31, 237, 102, 35, 239, 103, 37, 240, 105, 35, 241, 106, 36, 241, 109, 38, 240, 111, 38, 240, 111, 36, 240, 114, 36, 239, 116, 33, 241, 117, 34, 241, 117, 34, 240, 120, 34, 242, 121, 34, 246, 122, 32, 243, 124, 31, 243, 127, 30, 243, 127, 31, 242, 130, 32, 244, 131, 28, 247, 133, 29, 244, 136, 30, 244, 139, 33, 246, 138, 30, 246, 138, 28, 243, 143, 26, 243, 145, 26, 245, 146, 29, 245, 147, 31, 246, 146, 26, 252, 147, 28, 250, 151, 29, 248, 152, 29, 250, 153, 28, 249, 156, 26, 248, 159, 25, 251, 161, 27, 250, 161, 30, 250, 164, 29, 247, 167, 23, 248, 168, 23, 250, 167, 27, 249, 169, 26, 248, 175, 25, 251, 177, 24, 249, 180, 25, 248, 181, 23, 247, 181, 26, 247, 182, 26, 250, 183, 19, 252, 183, 18, 249, 188, 18, 248, 190, 17, 254, 190, 16, 254, 190, 13, 249, 195, 11, 250, 197, 11, 253, 195, 10, 253, 196, 10, 252, 199, 10, 251, 201, 6, 249, 205, 8, 248, 206, 3, 249, 205, 4, 250, 207, 3, 248, 209, 4, 247, 210, 3, 250, 210, 8, 250, 211, 8, 249, 215, 9, 250, 217, 13, 254, 216, 17, 252, 218, 17, 248, 220, 15, 251, 220, 17, 251, 221, 21, 251, 226, 17, 251, 223, 28, 253, 224, 40, 252, 227, 39, 251, 227, 41, 251, 229, 48, 250, 231, 53, 250, 232, 61, 250, 232, 67, 249, 235, 72, 250, 237, 80, 250, 236, 88, 251, 238, 96, 250, 240, 101, 252, 239, 107, 251, 240, 114, 251, 245, 128, 251, 243, 137, 251, 241, 150, 251, 244, 153, 251, 246, 162, 252, 245, 165, 253, 245, 172, 250, 247, 177, 250, 247, 186, 251, 246, 189, 253, 245, 195, 251, 247, 201, 252, 249, 209, 254, 249, 214, 253, 249, 224, 252, 250, 228, 255, 253, 238 };
+        //static double[] colormap_gray = new double[colormap_fusion.Length/3];
     }
 
 
