@@ -215,13 +215,7 @@ namespace CameraCOT
             jsonCamerasSettings.MainCameraVideo    =  (string)tempSelectedItem.Content;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)MainPhotoSettings.SelectedItem;
-            jsonCamerasSettings.MainCameraPhoto    =  (string)tempSelectedItem.Content;
-                                                     
-            tempSelectedItem                       =  (ComboBoxItem)MainPreviewSettings.SelectedItem;
-            jsonCamerasSettings.MainCameraPreview  = (string)tempSelectedItem.Content;                      //(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
-
-            //jsonCamerasSettings.MainEncodingProperties = (VideoEncodingProperties)(tempSelectedItem.Tag as StreamResolution).EncodingProperties;
-            //jsonCamerasSettings.MainStreamResolution = new StreamResolution(jsonCamerasSettings.MainEncodingProperties);
+            jsonCamerasSettings.MainCameraPhoto    =  (string)tempSelectedItem.Content;                                                     
 
 
             tempSelectedItem                       =  (ComboBoxItem)EndoCamera.SelectedItem;            
@@ -231,10 +225,7 @@ namespace CameraCOT
             jsonCamerasSettings.EndoCameraVideo    =  (string)tempSelectedItem.Content;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)EndoPhotoSettings.SelectedItem;
-            jsonCamerasSettings.EndoCameraPhoto    =  (string)tempSelectedItem.Content;
-                                                     
-            tempSelectedItem                       =  (ComboBoxItem)EndoPreviewSettings.SelectedItem;
-            jsonCamerasSettings.EndoCameraPreview  =  (string)tempSelectedItem.Content;
+            jsonCamerasSettings.EndoCameraPhoto    =  (string)tempSelectedItem.Content;                                                   
                                                    
                                                    
             tempSelectedItem                       =  (ComboBoxItem)TermoCamera.SelectedItem;            
@@ -244,16 +235,12 @@ namespace CameraCOT
             jsonCamerasSettings.TermoCameraVideo   =  (string)tempSelectedItem.Content;
                                                      
             tempSelectedItem                       =  (ComboBoxItem)TermoPhotoSettings.SelectedItem;
-            jsonCamerasSettings.TermoCameraPhoto   =  (string)tempSelectedItem.Content;
-                                                     
-            tempSelectedItem                       =  (ComboBoxItem)TermoPreviewSettings.SelectedItem;
-            jsonCamerasSettings.TermoCameraPreview =  (string)tempSelectedItem.Content;
+            jsonCamerasSettings.TermoCameraPhoto   =  (string)tempSelectedItem.Content;                                                     
 
 
 
 
             JsonSerializer serializer = new JsonSerializer();
-            //serializer.Converters.Add(new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
             serializer.NullValueHandling = NullValueHandling.Include;
             serializer.TypeNameHandling = TypeNameHandling.Auto;
             serializer.Formatting = Formatting.Indented;
@@ -262,7 +249,7 @@ namespace CameraCOT
             var storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
             var naparnikFolder = (StorageFolder)await storageFolder.TryGetItemAsync("Напарник");
             var file = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
-            //var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(fileJsonName);
+
 
             using (StreamWriter sw = new StreamWriter(file.Path))
             using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
@@ -312,18 +299,15 @@ namespace CameraCOT
 
         //public StreamResolution MainStreamResolution { get { return streamResolution; } set { streamResolution = value; } }
 
-        public string MainCameraName     { get; set; }
-        public string MainCameraPreview  { get; set; }                //IMediaEncodingProperties
+        public string MainCameraName     { get; set; }        
         public string MainCameraPhoto    { get; set; }
         public string MainCameraVideo    { get; set; }
        
         public string EndoCameraName     { get; set; }
-        public string EndoCameraPreview  { get; set; }
         public string EndoCameraPhoto    { get; set; }
         public string EndoCameraVideo    { get; set; }
 
         public string TermoCameraName    { get; set; }
-        public string TermoCameraPreview { get; set; }
         public string TermoCameraPhoto   { get; set; }
         public string TermoCameraVideo   { get; set; }
 

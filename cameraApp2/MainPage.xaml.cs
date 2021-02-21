@@ -199,7 +199,8 @@ namespace CameraCOT
                     naparnikFolder = await storageFolder.CreateFolderAsync("Напарник", CreationCollisionOption.FailIfExists);
                     photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
                     videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
-                    StorageFile configFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                    notesFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                    //configFile = await naparnikFolder.CreateFileAsync("cameraConfig.json");
                 }
                 catch (Exception ex)
                 {
@@ -247,32 +248,56 @@ namespace CameraCOT
 
             cameras = new Camera[3];
 
-            //cameras[(int)camera.mainCamera].setCameraSettings("RecordexUSA");  //RecordexUSA       //rmoncam 8M  //USB Camera //"USB Camera2
-            //cameras[(int)camera.endoCamera].setCameraSettings("HD WEBCAM");
-            //cameras[(int)camera.termoCamera].setCameraSettings("PureThermal (fw:v1.0.0)");
-
+            //  RecordexUSA       //rmoncam 8M  //USB Camera //"USB Camera2
 
 
             //load settings
             configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
             if (configFile == null)
             {
+                configFile = await naparnikFolder.CreateFileAsync("cameraConfig.json");
+                
+
                 jsonCamerasSettings = new JsonCamerasSettings();
 
                 jsonCamerasSettings.MainCameraName = "USB Camera2";
-                jsonCamerasSettings.MainCameraPreview = "1600x1200 [1,33] 30FPS NV12";
                 jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
                 jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
                 jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
-                jsonCamerasSettings.EndoCameraPreview = "1600x1200 [1,33] 30FPS NV12";
                 jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
                 jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
                 jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
-                jsonCamerasSettings.TermoCameraPreview = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
                 jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
                 jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Include;
+                serializer.TypeNameHandling = TypeNameHandling.Auto;
+                serializer.Formatting = Formatting.Indented;
+
+                string temp = "{\n" +
+                          "\"MainCameraName\": \"USB Camera2\",\n" +
+                          "\"MainCameraPhoto\": \"3264x2448 [1,33] 15FPS NV12\",\n" +
+                          "\"MainCameraVideo\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
+                          "\"EndoCameraName\": \"HD WEBCAM\",\n" +
+                          "\"EndoCameraPhoto\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
+                          "\"EndoCameraVideo\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
+                          "\"TermoCameraName\": \"PureThermal (fw:v1.0.0)\",\n" +
+                          "\"TermoCameraPhoto\": \"80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}\",\n" +
+                          "\"TermoCameraVideo\": \"80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}\"\n" +
+                            "}\n";
+
+
+            await FileIO.AppendTextAsync(configFile, temp);
+
+                /*using (StreamWriter sw = new StreamWriter(naparnikFolder.Path))
+                using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
+                {
+                    serializer.Serialize(writer, jsonCamerasSettings, typeof(JsonCamerasSettings));
+                }*/
+
             }                
             else
             {
@@ -1288,8 +1313,6 @@ namespace CameraCOT
 
                             foreach (var property in allStreamProperties)
                             {
-                                if (jsonCamerasSettings.MainCameraPreview == property.GetFriendlyName(true))
-                                    cameras[(int)cameraType.mainCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.MainCameraPhoto == property.GetFriendlyName(true))
                                     cameras[(int)cameraType.mainCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.MainCameraVideo == property.GetFriendlyName(true))
@@ -1323,8 +1346,6 @@ namespace CameraCOT
 
                             foreach (var property in allStreamProperties)
                             {
-                                if (jsonCamerasSettings.EndoCameraPreview == property.GetFriendlyName(true))
-                                    cameras[(int)cameraType.endoCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.EndoCameraPhoto == property.GetFriendlyName(true))
                                     cameras[(int)cameraType.endoCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.EndoCameraVideo == property.GetFriendlyName(true))
@@ -1358,8 +1379,6 @@ namespace CameraCOT
 
                             foreach (var property in allStreamProperties)
                             {
-                                if (jsonCamerasSettings.TermoCameraPreview == property.GetFriendlyName(true))
-                                    cameras[(int)cameraType.termoCamera].PreviewResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.TermoCameraPhoto == property.GetFriendlyName(true))
                                     cameras[(int)cameraType.termoCamera].PhotoResolution = new StreamResolution(property.EncodingProperties);
                                 if (jsonCamerasSettings.TermoCameraVideo == property.GetFriendlyName(true))
@@ -1800,6 +1819,7 @@ namespace CameraCOT
 
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
+            // switch camera resolution
             if (currentCameraType == (int)cameraType.mainCamera)
             {
                 await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
@@ -2523,10 +2543,7 @@ namespace CameraCOT
 
         private async void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
         {
-            //int temp = int.Parse(textBlockNotes.Text);
-            //flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, temp);
-            //videoEffectSettings.commet = "Заметка пользователя длинная длинная 2 длинная длинная 3 длинная 4 длинная 5 длинная 6 длинная 7 длинная 8 длинная 9 длинная 10 длинная 11 длинная 12 длинная ";
-
+           
             if (textBlockNotes.Text == "")
                 indexNoteShow = 0;
 
@@ -2534,7 +2551,7 @@ namespace CameraCOT
             {
                 stringNote.Add(textBlockNotes.Text);
 
-                await FileIO.AppendTextAsync(configFile, "\n" + textBlockNotes.Text);
+                await FileIO.AppendTextAsync(notesFile, "\n" + textBlockNotes.Text);
 
                 //videoEffectSettings.commet = textBlockNotes.Text;
                 
@@ -2595,10 +2612,7 @@ namespace CameraCOT
         }
 
 
-
-
-        //static int[] colormap_fusion = new int[] { 17, 18, 48, 11, 14, 33, 13, 16, 39, 15, 18, 44, 16, 19, 46, 18, 19, 53, 19, 20, 57, 21, 21, 62, 20, 22, 63, 16, 23, 72, 18, 24, 77, 23, 21, 79, 27, 24, 85, 30, 28, 94, 30, 30, 97, 41, 38, 118, 40, 37, 119, 41, 40, 124, 40, 41, 123, 41, 42, 126, 46, 40, 126, 50, 41, 127, 50, 41, 126, 52, 42, 126, 51, 44, 128, 53, 45, 131, 55, 46, 135, 57, 45, 133, 58, 47, 129, 59, 47, 133, 61, 46, 138, 65, 44, 137, 68, 45, 140, 68, 48, 142, 71, 46, 141, 74, 46, 141, 77, 45, 142, 81, 45, 143, 84, 44, 143, 86, 45, 144, 86, 47, 144, 87, 46, 142, 91, 46, 143, 93, 47, 144, 95, 44, 143, 99, 44, 145, 105, 44, 145, 105, 45, 145, 108, 45, 147, 109, 45, 145, 113, 43, 143, 115, 43, 144, 117, 43, 145, 120, 42, 144, 123, 40, 145, 124, 41, 146, 128, 41, 149, 130, 41, 148, 135, 39, 146, 136, 39, 147, 138, 39, 147, 142, 39, 148, 144, 39, 147, 145, 40, 143, 148, 39, 142, 151, 36, 143, 153, 35, 144, 155, 37, 145, 157, 37, 147, 160, 35, 147, 161, 34, 146, 162, 32, 145, 167, 31, 147, 169, 31, 147, 170, 30, 143, 171, 30, 142, 175, 31, 144, 177, 31, 145, 179, 28, 145, 178, 30, 143, 179, 28, 142, 184, 26, 144, 186, 26, 143, 186, 27, 141, 189, 25, 144, 191, 24, 146, 191, 24, 144, 190, 25, 143, 191, 23, 141, 194, 21, 142, 196, 22, 137, 197, 22, 135, 198, 23, 138, 198, 23, 137, 199, 23, 135, 200, 22, 127, 200, 21, 127, 206, 21, 128, 204, 24, 125, 202, 24, 122, 206, 25, 120, 207, 26, 120, 207, 26, 117, 209, 28, 118, 213, 28, 111, 213, 28, 107, 212, 30, 106, 211, 32, 105, 213, 35, 102, 215, 37, 100, 216, 39, 95, 216, 41, 89, 215, 45, 84, 220, 45, 84, 218, 46, 78, 218, 47, 76, 221, 49, 70, 222, 50, 68, 221, 54, 60, 223, 56, 56, 226, 57, 51, 226, 58, 48, 225, 59, 47, 225, 61, 47, 226, 63, 42, 228, 66, 39, 225, 68, 40, 224, 73, 40, 225, 76, 34, 228, 76, 34, 227, 77, 34, 228, 77, 38, 230, 79, 38, 230, 79, 36, 231, 82, 33, 232, 82, 33, 233, 84, 37, 233, 85, 36, 234, 87, 33, 235, 89, 34, 236, 90, 34, 237, 91, 35, 235, 94, 35, 236, 97, 29, 237, 98, 30, 239, 99, 27, 237, 101, 31, 236, 101, 31, 237, 102, 35, 239, 103, 37, 240, 105, 35, 241, 106, 36, 241, 109, 38, 240, 111, 38, 240, 111, 36, 240, 114, 36, 239, 116, 33, 241, 117, 34, 241, 117, 34, 240, 120, 34, 242, 121, 34, 246, 122, 32, 243, 124, 31, 243, 127, 30, 243, 127, 31, 242, 130, 32, 244, 131, 28, 247, 133, 29, 244, 136, 30, 244, 139, 33, 246, 138, 30, 246, 138, 28, 243, 143, 26, 243, 145, 26, 245, 146, 29, 245, 147, 31, 246, 146, 26, 252, 147, 28, 250, 151, 29, 248, 152, 29, 250, 153, 28, 249, 156, 26, 248, 159, 25, 251, 161, 27, 250, 161, 30, 250, 164, 29, 247, 167, 23, 248, 168, 23, 250, 167, 27, 249, 169, 26, 248, 175, 25, 251, 177, 24, 249, 180, 25, 248, 181, 23, 247, 181, 26, 247, 182, 26, 250, 183, 19, 252, 183, 18, 249, 188, 18, 248, 190, 17, 254, 190, 16, 254, 190, 13, 249, 195, 11, 250, 197, 11, 253, 195, 10, 253, 196, 10, 252, 199, 10, 251, 201, 6, 249, 205, 8, 248, 206, 3, 249, 205, 4, 250, 207, 3, 248, 209, 4, 247, 210, 3, 250, 210, 8, 250, 211, 8, 249, 215, 9, 250, 217, 13, 254, 216, 17, 252, 218, 17, 248, 220, 15, 251, 220, 17, 251, 221, 21, 251, 226, 17, 251, 223, 28, 253, 224, 40, 252, 227, 39, 251, 227, 41, 251, 229, 48, 250, 231, 53, 250, 232, 61, 250, 232, 67, 249, 235, 72, 250, 237, 80, 250, 236, 88, 251, 238, 96, 250, 240, 101, 252, 239, 107, 251, 240, 114, 251, 245, 128, 251, 243, 137, 251, 241, 150, 251, 244, 153, 251, 246, 162, 252, 245, 165, 253, 245, 172, 250, 247, 177, 250, 247, 186, 251, 246, 189, 253, 245, 195, 251, 247, 201, 252, 249, 209, 254, 249, 214, 253, 249, 224, 252, 250, 228, 255, 253, 238 };
-        //static double[] colormap_gray = new double[colormap_fusion.Length/3];
+        
     }
 
 
