@@ -716,6 +716,7 @@ namespace CameraCOT
             Debug.WriteLine("Stop flashDelayTimer");
             flashDelayTimer.Stop();
             await MakePhotoAsync();
+            await SwitchLowResolution();
         }
 
         private async void refreshCameraTimer_Tick(object sender, object e)
@@ -1642,17 +1643,14 @@ namespace CameraCOT
 
 
             //------------ add video effect -----------------
-            //if (currentCameraType == (int)cameraType.endoCamera || currentCameraType == (int)cameraType.mainCamera)
-            //{
 
-                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+            var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
 
-                IMediaExtension videoEffect = await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            IMediaExtension videoEffect = await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
             //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
-            
 
-            //}
+            
             //-----------------------------------------------
 
             try
@@ -1815,14 +1813,8 @@ namespace CameraCOT
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
             // switch camera resolution
-            if (currentCameraType == (int)cameraType.mainCamera)
-            {
-                await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
-                await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+            await SwitchHightResolution();
 
-                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
-                await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
-            }
             Debug.WriteLine("Start flashDelayTimer");
             if (_isFlash)
             {
@@ -1834,19 +1826,35 @@ namespace CameraCOT
             else
             {
                 MakePhotoAsync();
-
-                if (currentCameraType == (int)cameraType.mainCamera)
-                {
-                    await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
-                    await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
-
-                    var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
-                    await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
-                }
+                await SwitchLowResolution();
             }
         }
 
-            StorageFile savedFile;
+        private async Task SwitchHightResolution()
+        {
+            if (currentCameraType == (int)cameraType.mainCamera)
+            {
+                await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
+                await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+
+                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+                await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            }
+        }
+
+        private async Task SwitchLowResolution()
+        {
+            if (currentCameraType == (int)cameraType.mainCamera)
+            {
+                await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
+                await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+
+                var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+                await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            }
+        }
+
+        StorageFile savedFile;
         private async Task MakePhotoAsync()
         {
             PreviewControl.Opacity = 0.5;
@@ -2036,6 +2044,7 @@ namespace CameraCOT
 
         private async void endoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            _isFlash = false;
 
             if (_isRecording)
             {
@@ -2076,6 +2085,7 @@ namespace CameraCOT
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            _isFlash = false;
             if (_isRecording)
             {
                 await StopRecordingAsync();
@@ -2189,7 +2199,7 @@ namespace CameraCOT
                 if (currentCameraType == (int)cameraType.termoCamera)
                     _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Wvga), savedFile);
                 else
-                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p), savedFile);
+                    _mediaRecording = await _mediaCapture.PrepareLowLagRecordToStorageFileAsync(MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Auto), savedFile);
                 await _mediaRecording.StartAsync();
                 //_isRecording = true;
             }
