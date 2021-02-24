@@ -144,7 +144,7 @@ namespace CameraCOT
 
         public struct Camera
         {
-            public StreamResolution PreviewResolution, PhotoResolution, VideoResolution;
+            public StreamResolution  PhotoResolution, VideoResolution;
             public string Name;
             public string Id;
             int width;
@@ -316,35 +316,9 @@ namespace CameraCOT
             {
                 Debug.WriteLine("No camera device found!");
                 return;
-            }         
-
-            foreach (DeviceInformation camera in cameraDeviceListOld)
-            {
-                if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
-                {
-                    cameras[(int)cameraType.mainCamera].Id = camera.Id;
-                    _isMainCameraFlag = true;
-                }
-                if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
-                {
-                    cameras[(int)cameraType.endoCamera].Id = camera.Id;
-                    _isEndoCameraFlag = true;
-                }
-                if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
-                {
-                    cameras[(int)cameraType.termoCamera].Id = camera.Id;
-                    _isTermoCameraFlag = true;
-                }
             }
 
-            
-
-            if(_isMainCameraFlag)
-                currentCameraType = (int)cameraType.mainCamera;
-            else if(_isEndoCameraFlag)
-                currentCameraType = (int)cameraType.endoCamera;
-            else
-                currentCameraType = (int)cameraType.termoCamera;
+            CameraDefineLogic();
 
 
             await DefineCameraResolutionAsync();
@@ -750,11 +724,12 @@ namespace CameraCOT
 
             if (cameraDeviceList.Count != cameraDeviceListOld.Count)
             {
-                //_isEndoCameraFlag = cameraDeviceList.Count > cameraDeviceListOld.Count ? true : false;
+
+                await CleanupCameraAsync();
 
                 cameraDeviceListOld = cameraDeviceList;
-                _isMainCameraFlag  = false;
-                _isEndoCameraFlag  = false;
+                _isMainCameraFlag = false;
+                _isEndoCameraFlag = false;
                 _isTermoCameraFlag = false;
 
                 foreach (DeviceInformation camera in cameraDeviceList)
@@ -767,7 +742,7 @@ namespace CameraCOT
                     if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
                     {
                         cameras[(int)cameraType.endoCamera].Id = camera.Id;
-                        _isEndoCameraFlag = true;                        
+                        _isEndoCameraFlag = true;
 
                     }
                     if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
@@ -777,7 +752,13 @@ namespace CameraCOT
                     }
                 }
 
-             
+
+                _isUIActive = false;
+                CameraDefineLogic();
+
+                await DefineCameraResolutionAsync();
+                await SetUpBasedOnStateAsync();
+
                 UpdateUIControls();
             }
 
@@ -803,6 +784,36 @@ namespace CameraCOT
 
         }
 
+        private void CameraDefineLogic()
+        {
+            foreach (DeviceInformation camera in cameraDeviceListOld)
+            {
+                if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
+                {
+                    cameras[(int)cameraType.mainCamera].Id = camera.Id;
+                    _isMainCameraFlag = true;
+                }
+                if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
+                {
+                    cameras[(int)cameraType.endoCamera].Id = camera.Id;
+                    _isEndoCameraFlag = true;
+                }
+                if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
+                {
+                    cameras[(int)cameraType.termoCamera].Id = camera.Id;
+                    _isTermoCameraFlag = true;
+                }
+            }
+
+
+
+            if (_isMainCameraFlag)
+                currentCameraType = (int)cameraType.mainCamera;
+            else if (_isEndoCameraFlag)
+                currentCameraType = (int)cameraType.endoCamera;
+            else
+                currentCameraType = (int)cameraType.termoCamera;
+        }
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -1419,36 +1430,20 @@ namespace CameraCOT
                 _mediaCapture = new MediaCapture();
                 _mediaCapture.Failed += MediaCaptureFiled;             
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameras[currentCameraType].Id };
-                //settings.PhotoCaptureSource = Windows.Media.Capture.PhotoCaptureSource.VideoPreview;
                                 
                 try
                 {
                     await _mediaCapture.InitializeAsync(settings);
-                    if (currentCameraType == (int)cameraType.mainCamera)
-                    {
-                       //await Task.Delay(300);
-                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.mainCamera].PreviewResolution.EncodingProperties);                                              
 
-                       await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
+                    if (currentCameraType == (int)cameraType.mainCamera)                   
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
-
-                    }
-                    if (currentCameraType == (int)cameraType.endoCamera)
-                    {
-                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.endoCamera].PreviewResolution.EncodingProperties);
-                        //await Task.Delay(20);                       
+                    
+                    if (currentCameraType == (int)cameraType.endoCamera)                      
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
-                        await Task.Delay(20);
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.endoCamera].PhotoResolution.EncodingProperties);
-                    }
+
                     if (currentCameraType == (int)cameraType.termoCamera)
-                    {
-                        //await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoPreview, cameras[(int)cameraType.termoCamera].PreviewResolution.EncodingProperties);
-                        //await Task.Delay(20);
-                        await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.termoCamera].PhotoResolution.EncodingProperties);
-                        await Task.Delay(20);
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
-                    }
+                    
                     _isInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
