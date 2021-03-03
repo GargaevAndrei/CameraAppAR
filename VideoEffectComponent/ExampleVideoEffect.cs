@@ -47,6 +47,10 @@ namespace VideoEffectComponent
         public static double Tmin;
         public static double Tmax;
         public static double temperature;
+        public static int XRect;
+        public static int YRect;
+        public static int widthRect;
+        public static int heightRect;
     }
     //public static double temperature;
     public sealed class ExampleVideoEffect : IBasicVideoEffect
@@ -176,6 +180,10 @@ namespace VideoEffectComponent
                     //buf[9437] = 255;
                     //buf[9438] = 0;
 
+                    // Линейная интерполяция пикселей--------------
+
+                    //---------------------------------------------
+
                     //var Y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
 
                     //inputBitmap.SetPixelBytes(buf);
@@ -199,8 +207,7 @@ namespace VideoEffectComponent
 
                     videoEffectSettings.temperature = (videoEffectSettings.Tmax - videoEffectSettings.Tmin) / 255 * indexMin + videoEffectSettings.Tmin;
 
-                    //ds.DrawLine(40, 26, 40, 34, Colors.Black, 1);
-                    //ds.DrawLine(36, 30, 44, 30, Colors.Black, 1);
+
                 }
 
                 if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
@@ -230,11 +237,11 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.commet != null)
                 {
-                    Rect rect = new Rect(50, 1000 , 3250, 200);  // 2100    //1000
+                    Rect rect = new Rect(videoEffectSettings.XRect, videoEffectSettings.YRect, videoEffectSettings.widthRect, 200);  // 2100    //1000
                     //ds.DrawText(videoEffectSettings.commet, 50, 2200, Colors.Cyan, new CanvasTextFormat
                     ds.DrawText(videoEffectSettings.commet, rect, Colors.Cyan, new CanvasTextFormat
                     {
-                        FontSize = 44,    //88   //44
+                        FontSize = videoEffectSettings.FontSize,    //88   //44
 
                     });
                 }

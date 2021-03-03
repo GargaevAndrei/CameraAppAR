@@ -84,6 +84,7 @@ namespace CameraCOT
 
         DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
+        DispatcherTimer serialCommandDelayTimer;
         DispatcherTimer refreshCameraTimer;
         DispatcherTimer histogramStatisticTimer;
         DispatcherTimer opacityTimer;
@@ -104,6 +105,7 @@ namespace CameraCOT
         bool _isFail;
         bool _isNotes;
         bool _isNotFirstStart;
+        bool _isHelpCommands;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -112,6 +114,7 @@ namespace CameraCOT
         private bool _isRecording;
         private bool _findLenghtZero = false;
         private bool _isDouble;
+        private bool _isVoice;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
         private bool _isUIActive;
@@ -338,6 +341,10 @@ namespace CameraCOT
             //for (int i = 0, j = 0; i < colormap_fusion.Length - 2; i += 3, j++)
             //    colormap_gray[j] = 0.2126 * colormap_fusion[i] + 0.7152 * colormap_fusion[i + 1] + 0.0722 * colormap_fusion[i + 2];
 
+            videoEffectSettings.XRect = 50;
+            videoEffectSettings.YRect = 520;
+            videoEffectSettings.FontSize = 34;
+            videoEffectSettings.widthRect = 1250;
 
             EnumerateHidDevices();
 
@@ -348,6 +355,10 @@ namespace CameraCOT
             flashDelayTimer = new DispatcherTimer();
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
             flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
+
+            serialCommandDelayTimer = new DispatcherTimer();
+            serialCommandDelayTimer.Tick += serialCommandDelayTimer_Tick;
+            serialCommandDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
 
             refreshCameraTimer = new DispatcherTimer();
             refreshCameraTimer.Tick += refreshCameraTimer_Tick;
@@ -387,15 +398,15 @@ namespace CameraCOT
                 try
                 {
                     serialPortFlash.Open();
-                    serialPortFlash.ReadTimeout = 500;
-                    serialPortFlash.WriteTimeout = 500;
+                    serialPortFlash.ReadTimeout = 3000;
+                    serialPortFlash.WriteTimeout = 3000;
                     serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
                     textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
                 }
                 catch(Exception e)
                 {
                     Debug.WriteLine(e.Message);
-                    textBoxInfo.Text = e.Message;
+                    //textBoxInfo.Text = e.Message;
                 }
             }
 
@@ -424,14 +435,15 @@ namespace CameraCOT
 
         }
 
+        
         public  void OutputsData()
         {
             this.textBoxTmax.Text = maxT.ToString("0.0");
             this.textBoxTmin.Text = minT.ToString("0.0");
             textBoxTpoint.Text = videoEffectSettings.temperature.ToString("0.0");
-            this.textBoxInfo.Text += strTemp + "\n";
+            //this.textBoxInfo.Text += strTemp + "\n";
 
-            serialPortLepton.DiscardInBuffer();
+            //serialPortLepton.DiscardInBuffer();
             //histogramStatisticTimer.Start();
         }
 
@@ -439,7 +451,38 @@ namespace CameraCOT
         {
             try
             {
-                strTemp = response;
+                strTemp = response;               
+
+                string[] substr = strTemp.Split(' ');
+                if (substr[0] == "voice")
+                {
+                    _isVoice = true;
+
+                    switch (substr[1])
+                    {
+                        case "1": if(_isMainCameraFlag) 
+                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
+                        case "2": if(_isEndoCameraFlag)
+                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
+                        case "3": if(_isTermoCameraFlag)
+                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
+                        case "4":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
+                        case "5":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                        case "6":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                        case "7": if(_isRecording) 
+                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
+                        case "8":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
+                        case "9":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
+                        case "10":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
+                        case "11":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
+                        case "12":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
+                        case "13":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
+                    }
+                                            
+                }
+                else
+                    _isVoice = false;
+
             }
             catch (Exception ex)
             {
@@ -447,54 +490,56 @@ namespace CameraCOT
                 textBoxInfo.Text += ex.Message;
             }
 
-            try
-            {
-                var index1 = response.IndexOf(":");
-                var index2 = response.LastIndexOf(":");
-                strMinT = response.Substring(0, index1);
-                strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
-                //strPointT = response.Substring(index2 + 1);
-                strPointT = videoEffectSettings.temperature.ToString("0.0");
+            //if (!_isVoice)
+            //{
+                try
+                {
+                    var index1 = response.IndexOf(":");
+                    var index2 = response.LastIndexOf(":");
+                    strMinT = response.Substring(0, index1);
+                    strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
+                    //strPointT = response.Substring(index2 + 1);
+                    strPointT = videoEffectSettings.temperature.ToString("0.0");
 
-                //strTemp = response;
+                    //strTemp = response;
 
-                minT = Convert.ToDouble(strMinT);
-                maxT = Convert.ToDouble(strMaxT);
+                    minT = Convert.ToDouble(strMinT);
+                    maxT = Convert.ToDouble(strMaxT);
 
-                videoEffectSettings.Tmax = maxT;
-                videoEffectSettings.Tmin = minT;
-                
-                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
+                    videoEffectSettings.Tmax = maxT;
+                    videoEffectSettings.Tmin = minT;
+
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
 
 
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                textBoxInfo.Text += ex.Message;
-            }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    textBoxInfo.Text += ex.Message;
+                }
+            //}
+
+            serialPortLepton.DiscardInBuffer();
         }
 
         private async  void SerialPortLepton_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var serialPort = (SerialPort)sender;
-            //byte[] data = new byte[256];
-            //serialPort.Read(data, 0, 8);
             try
             {
                 var response = serialPort.ReadLine();
+
                 ProcessData(response);
 
-                //var response = serialPort.BaseStream.ReadAsync();
             }
             catch(Exception ex)
             {
                 textBoxInfo.Text +=  ex.Message;
             }
-            //textBoxInfo.Text += response;
 
-            //await Task.Delay(500);
-            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
+            if(!_isVoice)
+                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
            
 
         }
@@ -706,8 +751,64 @@ namespace CameraCOT
         //    ws.ConnectAsync();
         //}
 
+
+        private async void serialCommandDelayTimer_Tick(object sender, object e)
+        {
+            serialCommandDelayTimer.Stop();
+            if (serialCommand == 49)
+            {
+                if(currentCameraType == (int)cameraType.mainCamera)
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null));
+                if (currentCameraType == (int)cameraType.endoCamera)
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButtonEndo_Click(null, null));
+            }
+            if (serialCommand == 50)
+            {
+                if (currentCameraType == (int)cameraType.mainCamera)
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null));
+                if (currentCameraType == (int)cameraType.endoCamera)
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButtonEndo_Click(null, null));
+            }
+            if (serialCommand == 52)
+            {
+                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null));
+            }
+        }
+
+        int serialCommand = 0;
         private void SerialPortFlash_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
+            //if(serialCommandDelayTimer.IsEnabled)
+            //    serialCommandDelayTimer.Start();
+
+
+            try
+            {
+                byte[] data = new byte[2];
+                serialPortFlash.Read(data, 0, 2);
+
+                if (data[0] == 65)
+                {
+                    serialCommand = data[1];
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High, () => serialCommandDelayTimer.Start());                    
+                }
+
+
+                /*if (data[1] == 49)
+                {                                       
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null));
+                }
+                if(data[1] == 50)
+                {
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null));
+                }*/
+            }
+            catch (Exception ex)
+            {
+                //textBoxInfo.Text += ex.Message;
+                Debug.WriteLine(ex.Message);
+            }
+
             
         }
 
@@ -1812,8 +1913,16 @@ namespace CameraCOT
 
         private async void PhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            // switch camera resolution
-            await SwitchHightResolution();
+            if (currentCameraType == (int)cameraType.termoCamera)
+            {
+                await MakePhotoAsync();
+                return;
+            }
+
+                // switch camera resolution
+                if (currentCameraType == (int)cameraType.mainCamera)
+                await SwitchHightResolution();
+            await Task.Delay(200);
 
             Debug.WriteLine("Start flashDelayTimer");
             if (_isFlash)
@@ -1825,13 +1934,19 @@ namespace CameraCOT
             }
             else
             {
-                MakePhotoAsync();
-                await SwitchLowResolution();
+                flashDelayTimer.Start();
+                //await MakePhotoAsync();
+                //await SwitchLowResolution();
             }
         }
 
         private async Task SwitchHightResolution()
         {
+            videoEffectSettings.XRect = 100;
+            videoEffectSettings.YRect = 2100;
+            videoEffectSettings.FontSize = 82;
+            videoEffectSettings.widthRect = 3250;
+            //videoEffectSettings.heightRect = 1000;
             if (currentCameraType == (int)cameraType.mainCamera)
             {
                 await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
@@ -1839,11 +1954,26 @@ namespace CameraCOT
 
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
                 await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+
+                // задать координаты
             }
         }
 
         private async Task SwitchLowResolution()
         {
+            videoEffectSettings.XRect = 50;
+            videoEffectSettings.YRect = 1000;
+            videoEffectSettings.FontSize = 44;
+            videoEffectSettings.widthRect = 1250;
+            if(currentCameraType == (int)cameraType.mainCamera)
+            {
+                videoEffectSettings.XRect = 50;
+                videoEffectSettings.YRect = 520;
+                //videoEffectSettings.YRect = cameras[cameraType.mainCamera].;
+                videoEffectSettings.FontSize = 34;
+                videoEffectSettings.widthRect = 1250;
+            }
+
             if (currentCameraType == (int)cameraType.mainCamera)
             {
                 await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
@@ -1851,6 +1981,8 @@ namespace CameraCOT
 
                 var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
                 await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+
+                // задать координаты
             }
         }
 
@@ -2038,7 +2170,12 @@ namespace CameraCOT
 
             //streamSocket.Dispose();
             histogramStatisticTimer.Stop();
-            
+
+            videoEffectSettings.XRect = 50;
+            videoEffectSettings.YRect = 520;
+            videoEffectSettings.FontSize = 34;
+            videoEffectSettings.widthRect = 1250;
+
             UpdateUIControls();
         }
 
@@ -2075,6 +2212,11 @@ namespace CameraCOT
             }
             videoEffectSettings.getLenghtFlag = true;
             videoEffectSettings.termo = false;
+
+            videoEffectSettings.XRect = 50;
+            videoEffectSettings.YRect = 1000;
+            videoEffectSettings.FontSize = 44;
+            videoEffectSettings.widthRect = 1550;
 
             //runMeasure.Visibility = Visibility.Visible;
 
@@ -2380,9 +2522,9 @@ namespace CameraCOT
             //videoEffectSettings.Y = cameras[_cntCamera].Y;
             //videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
 
-            videoEffectSettings.X = 750;
-            videoEffectSettings.Y = 600;
-            videoEffectSettings.FontSize = 90;
+            //videoEffectSettings.X = 750;
+            //videoEffectSettings.Y = 600;
+            //videoEffectSettings.FontSize = 90;
 
            
 
@@ -2616,7 +2758,32 @@ namespace CameraCOT
             //videoEffectSettings.commet = "Заметка" + ++temp1;
         }
 
-
+        private void OutputHelpCommand()
+        {
+            _isHelpCommands = !_isHelpCommands;
+            if(_isHelpCommands)
+            {
+                textBoxInfo.Visibility = Visibility.Visible;
+                textBoxInfo.Text = "Кам     -  главная камера\n" +
+                                   "Эндо    -  камера эндоскопа\n" +
+                                   "Термо   -  камера тепловизора\n" +
+                                   "Фото    -  режим фотографирования\n" +
+                                   "Запись  -  режим видео записи\n" +
+                                   "Стоп    -  остановка видео записи\n" +
+                                   "Пауза   -  пауза видео записи\n" +
+                                   "Вспышка -  включить/выключить вспышку\n" +
+                                   "Плюс    -  увеличить яркость вспышки\n" +
+                                   "Минус   -  уменьшить яркость вспышки\n" +
+                                   "Метка   -  режим заметок\n" +
+                                   "Альбом  -  открыть альбом\n" +
+                                   "Помощь  -  вывести список голосовых команд\n";            }
+            else
+            {
+                textBoxInfo.Visibility = Visibility.Collapsed;
+                textBoxInfo.Text = "";
+            }
+            
+        }
         
     }
 
