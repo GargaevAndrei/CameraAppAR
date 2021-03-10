@@ -51,6 +51,14 @@ namespace VideoEffectComponent
         public static int YRect;
         public static int widthRect;
         public static int heightRect;
+
+        /*public void SetParamNotes(int _x, int _y, int _fontSize, int _widthRect)
+        {
+            X = _x;
+            Y = _y;
+            FontSize = _fontSize;
+            widthRect = _widthRect;
+        }*/
     }
     //public static double temperature;
     public sealed class ExampleVideoEffect : IBasicVideoEffect

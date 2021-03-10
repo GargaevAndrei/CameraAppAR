@@ -329,6 +329,18 @@ namespace CameraCOT
             await SetUpBasedOnStateAsync();
             UpdateUIControls();
             _isNotFirstStart = true;
+
+
+            SetParamNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
+        }
+
+        public void SetParamNotes(int _x, int _y, int _fontSize, int _widthRect)
+        {
+            videoEffectSettings.XRect = _x;
+            videoEffectSettings.YRect = _y;
+            videoEffectSettings.FontSize = _fontSize;
+            videoEffectSettings.widthRect = _widthRect;
+
         }
 
         public MainPage()
@@ -341,10 +353,7 @@ namespace CameraCOT
             //for (int i = 0, j = 0; i < colormap_fusion.Length - 2; i += 3, j++)
             //    colormap_gray[j] = 0.2126 * colormap_fusion[i] + 0.7152 * colormap_fusion[i + 1] + 0.0722 * colormap_fusion[i + 2];
 
-            videoEffectSettings.XRect = 50;
-            videoEffectSettings.YRect = 520;
-            videoEffectSettings.FontSize = 34;
-            videoEffectSettings.widthRect = 1250;
+            
 
             EnumerateHidDevices();
 
@@ -1942,11 +1951,8 @@ namespace CameraCOT
 
         private async Task SwitchHightResolution()
         {
-            videoEffectSettings.XRect = 100;
-            videoEffectSettings.YRect = 2100;
-            videoEffectSettings.FontSize = 82;
-            videoEffectSettings.widthRect = 3250;
-            //videoEffectSettings.heightRect = 1000;
+            SetParamNotes(100, 2100, 82, 3250);
+
             if (currentCameraType == (int)cameraType.mainCamera)
             {
                 await _mediaCapture.ClearEffectsAsync(MediaStreamType.VideoPreview);
@@ -1961,18 +1967,11 @@ namespace CameraCOT
 
         private async Task SwitchLowResolution()
         {
-            videoEffectSettings.XRect = 50;
-            videoEffectSettings.YRect = 1000;
-            videoEffectSettings.FontSize = 44;
-            videoEffectSettings.widthRect = 1250;
-            if(currentCameraType == (int)cameraType.mainCamera)
-            {
-                videoEffectSettings.XRect = 50;
-                videoEffectSettings.YRect = 520;
-                //videoEffectSettings.YRect = cameras[cameraType.mainCamera].;
-                videoEffectSettings.FontSize = 34;
-                videoEffectSettings.widthRect = 1250;
-            }
+
+            SetParamNotes(50, 1000, 40, 1250);
+            if (currentCameraType == (int)cameraType.mainCamera)            
+                SetParamNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
+            
 
             if (currentCameraType == (int)cameraType.mainCamera)
             {
@@ -2169,12 +2168,9 @@ namespace CameraCOT
             }
 
             //streamSocket.Dispose();
-            histogramStatisticTimer.Stop();
+            histogramStatisticTimer.Stop();            
 
-            videoEffectSettings.XRect = 50;
-            videoEffectSettings.YRect = 520;
-            videoEffectSettings.FontSize = 34;
-            videoEffectSettings.widthRect = 1250;
+            SetParamNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
             UpdateUIControls();
         }
@@ -2213,11 +2209,7 @@ namespace CameraCOT
             videoEffectSettings.getLenghtFlag = true;
             videoEffectSettings.termo = false;
 
-            videoEffectSettings.XRect = 50;
-            videoEffectSettings.YRect = 1000;
-            videoEffectSettings.FontSize = 44;
-            videoEffectSettings.widthRect = 1550;
-
+            SetParamNotes(50, 1000, 40, 1550);
             //runMeasure.Visibility = Visibility.Visible;
 
             histogramStatisticTimer.Stop();
