@@ -17,16 +17,8 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <ListBox x:Name="clientListBox" Margin="184,256,828,250"/>
+        <ListBox x:Name="clientListBox" Margin="184,256,828,250" Visibility="Collapsed"/>
 
-        <!--<canvas:CanvasControl x:Name="canvas" Margin="689,0,105,581" CreateResources="canvas_CreateResources"/>-->
-        <!--<Grid>
-            <FontIcon x:Name="CenterIcon"  Width="40" Glyph="&#xE711;" RenderTransformOrigin="0.5,0.5" Foreground="Black">
-                <FontIcon.RenderTransform>
-                    <CompositeTransform ScaleX="2" ScaleY="2"/>
-                </FontIcon.RenderTransform>
-            </FontIcon>
-        </Grid>-->
         <StackPanel x:Name="CenterIcon1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" Height="0" Width="0" >
             <FontIcon x:Name="CenterIcon"  Width="40" Glyph="&#xE711;" RenderTransformOrigin="0.5,0.5" Foreground="Black">
                 <FontIcon.RenderTransform>
@@ -38,9 +30,13 @@
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
-        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" Stretch="Uniform" Margin="160,0,0,0" HorizontalAlignment="Left" Width="640" Height="0"  />
-        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" Stretch="Uniform" Margin="640,0,0,0" HorizontalAlignment="Left" Width="640" Height="0" />
+        <!--<CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" Stretch="Uniform" Margin="160,0,0,0" HorizontalAlignment="Left" Width="640" Height="0"  />
+        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" Stretch="Uniform" Margin="640,0,0,0" HorizontalAlignment="Left" Width="640" Height="0" />-->
 
+        <!--<Image x:Name="img" Width="500" Height="300"></Image>-->
+
+        <CaptureElement x:Name="PreviewControlDouble1"  VerticalAlignment="Center" HorizontalAlignment="Right" Stretch="Uniform" Margin="0,0,640,0"  />
+        <CaptureElement x:Name="PreviewControlDouble2"  VerticalAlignment="Center" HorizontalAlignment="Left" Stretch="Uniform" Margin="640,0,0,0"  />
 
         <Image x:Name="imageElement" Margin="18,24,104,18" />
         <Image x:Name="imageElementNote" Margin="671,189,147,27" />
@@ -185,7 +181,7 @@
             <Image Source="Assets/cursor.png" Height="50" Width="50"  />
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Center" Height="440" Width="90">
+        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Top" Height="440" Width="90" Margin="0,0,0,0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -203,7 +199,7 @@
 
             <Button x:Name="termoCameraButton" Content="TERM" Click="termoCameraButton_Click"  MaxHeight="40" MaxWidth="40"/>
 
-            <Button x:Name="doubleCameraButton" Content="DOUBL" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Collapsed" />
+            <Button x:Name="doubleCameraButton" Content="DOUBL" Click="doubleCameraButton_Click"  MaxHeight="40" MaxWidth="40" Visibility="Visible" />
 
 
         </StackPanel>
@@ -340,7 +336,10 @@
         <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="184,117,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
         <!--<Frame x:Name="ScenarioFrame" Margin="264,360,640,140" Grid.RowSpan="2"/>-->
 
-        <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="90" Height="90" VerticalAlignment="Bottom"/>
+        <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="80" Height="80" VerticalAlignment="Bottom"/>
+        <!--<Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="583" Height="240" VerticalAlignment="Bottom"/>-->
+
+
 
         <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,666,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">

@@ -31,7 +31,7 @@
       </Struct>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>UkJ0JZ+ei8GWQHJynxTJfgfkz4LiDEiUFjlETrSrYZM=</HashCode>
+      <HashCode>UkZ0JZ+ei8G2YHJynxTJfgfkz4LiDEi0Fj1FTrarYZM=</HashCode>
       <FileName>MainPage.xaml.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.549" Collapsed="true" />
@@ -47,7 +47,7 @@
   <Class Name="CameraCOT.JsonCamerasSettings">
     <Position X="3.5" Y="0.5" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAIAIAAAACAAEAAgAAAAAAAAEgAAAAAAEAAAIggQAAA=</HashCode>
+      <HashCode>AAAAIAAAACAAEAAgAAAAAAAAEAAAAAAAEAAAAggQAAA=</HashCode>
       <FileName>SettingsPage.xaml.cs</FileName>
     </TypeIdentifier>
   </Class>
