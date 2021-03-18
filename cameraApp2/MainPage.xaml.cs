@@ -103,7 +103,7 @@ namespace CameraCOT
         bool _isPause = false;
         bool _isFlashEndo = true;
         bool firstDistanceFlag = true;
-       
+
         bool _isMainCameraFlag;
         bool _isEndoCameraFlag;
         bool _isTermoCameraFlag;
@@ -133,7 +133,7 @@ namespace CameraCOT
 
         double minT, maxT, pointT;
 
-        List<string> stringNote = new List<string> (new string[] { "" });
+        List<string> stringNote = new List<string>(new string[] { "" });
         int indexNoteShow;
 
 
@@ -142,17 +142,17 @@ namespace CameraCOT
             StatusMessage,
             ErrorMessage
         };
-        public enum cameraType 
+        public enum cameraType
         {
-            mainCamera, 
-            endoCamera, 
-            termoCamera, 
+            mainCamera,
+            endoCamera,
+            termoCamera,
             doubleCamera
         }
 
         public struct Camera
         {
-            public StreamResolution  PhotoResolution, VideoResolution;
+            public StreamResolution PhotoResolution, VideoResolution;
             public string Name;
             public string Id;
             int width;
@@ -170,11 +170,11 @@ namespace CameraCOT
             public void setCameraSettings(string _Name, IMediaEncodingProperties EncodingProperties)
             {
                 this.Name = _Name;
-                this._properties = EncodingProperties;                
-            }            
+                this._properties = EncodingProperties;
+            }
 
-            public int Width {  get { return width; }   set { width = value; }  }
-            public int Height { get { return height; }  set { height = value; } }
+            public int Width { get { return width; } set { width = value; } }
+            public int Height { get { return height; } set { height = value; } }
             public int X { get { return x; } set { x = value; } }
             public int Y { get { return y; } set { y = value; } }
 
@@ -221,8 +221,8 @@ namespace CameraCOT
                 if (photoFolder == null)
                 {
                     try
-                    {                        
-                        photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);                       
+                    {
+                        photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
                     }
                     catch (Exception ex)
                     {
@@ -243,16 +243,16 @@ namespace CameraCOT
                 }
 
                 notesFile = (StorageFile)await naparnikFolder.TryGetItemAsync("Заметки.txt");
-                if(notesFile == null)
+                if (notesFile == null)
                     notesFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
                 else
                 {
-                    IList<string> data = await FileIO.ReadLinesAsync(notesFile);                                          
+                    IList<string> data = await FileIO.ReadLinesAsync(notesFile);
                     stringNote = data.ToList();
                 }
             }
 
-           
+
 
             cameras = new Camera[3];
 
@@ -264,7 +264,7 @@ namespace CameraCOT
             if (configFile == null)
             {
                 configFile = await naparnikFolder.CreateFileAsync("cameraConfig.json");
-                
+
 
                 jsonCamerasSettings = new JsonCamerasSettings();
 
@@ -298,7 +298,7 @@ namespace CameraCOT
                             "}\n";
 
 
-            await FileIO.AppendTextAsync(configFile, temp);
+                await FileIO.AppendTextAsync(configFile, temp);
 
                 /*using (StreamWriter sw = new StreamWriter(naparnikFolder.Path))
                 using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
@@ -306,7 +306,7 @@ namespace CameraCOT
                     serializer.Serialize(writer, jsonCamerasSettings, typeof(JsonCamerasSettings));
                 }*/
 
-            }                
+            }
             else
             {
                 jsonCamerasSettings = await readFileSettings();
@@ -350,10 +350,10 @@ namespace CameraCOT
 
         public MainPage()
         {
-           
+
             this.InitializeComponent();
             Current = this;
-            
+
 
             EnumerateHidDevices();
 
@@ -372,7 +372,7 @@ namespace CameraCOT
             refreshCameraTimer = new DispatcherTimer();
             refreshCameraTimer.Tick += refreshCameraTimer_Tick;
             refreshCameraTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
-            
+
 
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
@@ -412,7 +412,7 @@ namespace CameraCOT
                     serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
                     textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Debug.WriteLine(e.Message);
                     //textBoxInfo.Text = e.Message;
@@ -444,8 +444,8 @@ namespace CameraCOT
 
         }
 
-        
-        public  void OutputsData()
+
+        public void OutputsData()
         {
             this.textBoxTmax.Text = maxT.ToString("0.0");
             this.textBoxTmin.Text = minT.ToString("0.0");
@@ -460,7 +460,7 @@ namespace CameraCOT
         {
             try
             {
-                strTemp = response;               
+                strTemp = response;
 
                 string[] substr = strTemp.Split(' ');
                 if (substr[0] == "voice")
@@ -469,25 +469,29 @@ namespace CameraCOT
 
                     switch (substr[1])
                     {
-                        case "1": if(_isMainCameraFlag) 
-                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
-                        case "2": if(_isEndoCameraFlag)
-                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
-                        case "3": if(_isTermoCameraFlag)
-                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
-                        case "4":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
-                        case "5":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                        case "6":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                        case "7": if(_isRecording) 
-                                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
-                        case "8":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
-                        case "9":   await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
-                        case "10":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
-                        case "11":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
-                        case "12":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
-                        case "13":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
+                        case "1":
+                            if (_isMainCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
+                        case "2":
+                            if (_isEndoCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
+                        case "3":
+                            if (_isTermoCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
+                        case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
+                        case "5": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                        case "6": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                        case "7":
+                            if (_isRecording)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
+                        case "8": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
+                        case "9": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
+                        case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
+                        case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
+                        case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
+                        case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
                     }
-                                            
+
                 }
                 else
                     _isVoice = false;
@@ -501,38 +505,38 @@ namespace CameraCOT
 
             //if (!_isVoice)
             //{
-                try
-                {
-                    var index1 = response.IndexOf(":");
-                    var index2 = response.LastIndexOf(":");
-                    strMinT = response.Substring(0, index1);
-                    strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
-                    //strPointT = response.Substring(index2 + 1);
-                    strPointT = videoEffectSettings.temperature.ToString("0.0");
+            try
+            {
+                var index1 = response.IndexOf(":");
+                var index2 = response.LastIndexOf(":");
+                strMinT = response.Substring(0, index1);
+                strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
+                //strPointT = response.Substring(index2 + 1);
+                strPointT = videoEffectSettings.temperature.ToString("0.0");
 
-                    //strTemp = response;
+                //strTemp = response;
 
-                    minT = Convert.ToDouble(strMinT);
-                    maxT = Convert.ToDouble(strMaxT);
+                minT = Convert.ToDouble(strMinT);
+                maxT = Convert.ToDouble(strMaxT);
 
-                    videoEffectSettings.Tmax = maxT;
-                    videoEffectSettings.Tmin = minT;
+                videoEffectSettings.Tmax = maxT;
+                videoEffectSettings.Tmin = minT;
 
-                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
+                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
 
 
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    textBoxInfo.Text += ex.Message;
-                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                textBoxInfo.Text += ex.Message;
+            }
             //}
 
             serialPortLepton.DiscardInBuffer();
         }
 
-        private async  void SerialPortLepton_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        private async void SerialPortLepton_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var serialPort = (SerialPort)sender;
             try
@@ -542,14 +546,14 @@ namespace CameraCOT
                 ProcessData(response);
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                textBoxInfo.Text +=  ex.Message;
+                textBoxInfo.Text += ex.Message;
             }
 
-            if(!_isVoice)
+            if (!_isVoice)
                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
-           
+
 
         }
 
@@ -571,7 +575,7 @@ namespace CameraCOT
             //recordTimeTextBox.Text = deltaTime.ToString(@"hh\:mm\:ss");
 
             recordTimeTextBox.Text = stopWatch.Elapsed.ToString(@"hh\:mm\:ss");
-        } 
+        }
 
         private void opacityTimer_Tick(object sender, object e)
         {
@@ -588,7 +592,7 @@ namespace CameraCOT
 
 
         static int index;
-        
+
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
             //textBoxInfo.Text += ++index + "\n";
@@ -597,7 +601,7 @@ namespace CameraCOT
             {
                 serialPortLepton.WriteLine("request");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 textBoxInfo.Text += ex.Message;
             }
@@ -769,7 +773,7 @@ namespace CameraCOT
             serialCommandDelayTimer.Stop();
             if (serialCommand == 49)
             {
-                if(currentCameraType == (int)cameraType.mainCamera)
+                if (currentCameraType == (int)cameraType.mainCamera)
                     await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null));
                 if (currentCameraType == (int)cameraType.endoCamera)
                     await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButtonEndo_Click(null, null));
@@ -802,7 +806,7 @@ namespace CameraCOT
                 if (data[0] == 65)
                 {
                     serialCommand = data[1];
-                    Dispatcher.RunAsync(CoreDispatcherPriority.High, () => serialCommandDelayTimer.Start());                    
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High, () => serialCommandDelayTimer.Start());
                 }
 
 
@@ -821,7 +825,7 @@ namespace CameraCOT
                 Debug.WriteLine(ex.Message);
             }
 
-            
+
         }
 
         private async void FlashDelayTimer_Tick(object sender, object e)
@@ -831,7 +835,7 @@ namespace CameraCOT
 
             if (currentCameraType == (int)cameraType.doubleCamera)
                 await MakePhotoDoubleAsync();
-            else 
+            else
             {
                 await MakePhotoAsync();
                 await SwitchLowResolution();
@@ -941,9 +945,9 @@ namespace CameraCOT
             byte[] data = new byte[8];
             serialPort.Read(data, 0, 8);
 
-            short Xaccel = (short)  (  (  (  (short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
-            short Yaccel = (short)  (  (  (  (short)(data[3]) << 2 | (short)(data[2]) >> 6)) << 6);
-            short Zaccel = (short)  (  (  (  (short)(data[5]) << 2 | (short)(data[4]) >> 6)) << 6);
+            short Xaccel = (short)((((short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
+            short Yaccel = (short)((((short)(data[3]) << 2 | (short)(data[2]) >> 6)) << 6);
+            short Zaccel = (short)((((short)(data[5]) << 2 | (short)(data[4]) >> 6)) << 6);
 
             double Xf1 = (double)Xaccel / 4096;
             double Yf1 = (double)Yaccel / 4096;
@@ -974,10 +978,10 @@ namespace CameraCOT
         private async void EnumerateHidDevices()
         {
             // Microsoft Input Configuration Device.
-            ushort vendorId  = 0x0483;      // 0x045E;
+            ushort vendorId = 0x0483;      // 0x045E;
             ushort productId = 0x5750;      // 0x07CD;
             ushort usagePage = 0xff00;      // 0x000D;
-            ushort usageId   = 0x0001;
+            ushort usageId = 0x0001;
 
             // Create the selector.
             string selector = HidDevice.GetDeviceSelector(usagePage, usageId, vendorId, productId);
@@ -990,7 +994,7 @@ namespace CameraCOT
                 // At this point the device is available to communicate with
                 // So we can send/receive HID reports from it or 
                 // query it for control descriptions.
-                
+
                 textBoxInfo.Text += "\nHID devices found: " + devices.Count + Environment.NewLine;
 
                 // Open the target HID device.
@@ -1006,7 +1010,7 @@ namespace CameraCOT
             }
         }
 
-        private  void sendOutReport(DataWriter dataWriter)
+        private void sendOutReport(DataWriter dataWriter)
         {
             HidOutputReport outReport = device.CreateOutputReport(0x00);
             outReport.Data = dataWriter.DetachBuffer();
@@ -1018,7 +1022,7 @@ namespace CameraCOT
             {
                 HidInputReport inputReport = args.Report;
                 IBuffer buffer = inputReport.Data;
-              
+
                 byte[] ByteArray;
                 CryptographicBuffer.CopyToByteArray(buffer, out ByteArray);
 
@@ -1030,7 +1034,7 @@ namespace CameraCOT
 
                     count++;
 
-                    if(ByteArray[5] == 28)    // GET_DISTANCE
+                    if (ByteArray[5] == 28)    // GET_DISTANCE
                     {
                         byte[] bytes = new byte[4];
 
@@ -1051,7 +1055,7 @@ namespace CameraCOT
                         videoEffectSettings.lenght = "L = " + lenght.ToString("0.0") + " м";
                         videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
 
-                        
+
                     }
 
                     if (ByteArray[5] == 25)     // AMP_FIND_SUCCESS
@@ -1087,10 +1091,10 @@ namespace CameraCOT
                     if (ByteArray[5] == 32)     // MSG_GET_ACCEL_DATA
                     {
                         //byte[] data = new byte[8];
-                        
 
-                        short Xaccel = (short)((((short)(ByteArray[7]) << 2  | (short)(ByteArray[6])  >> 6)) << 6);
-                        short Yaccel = (short)((((short)(ByteArray[9]) << 2  | (short)(ByteArray[8])  >> 6)) << 6);
+
+                        short Xaccel = (short)((((short)(ByteArray[7]) << 2 | (short)(ByteArray[6]) >> 6)) << 6);
+                        short Yaccel = (short)((((short)(ByteArray[9]) << 2 | (short)(ByteArray[8]) >> 6)) << 6);
                         short Zaccel = (short)((((short)(ByteArray[11]) << 2 | (short)(ByteArray[10]) >> 6)) << 6);
 
                         double Xf1 = (double)Xaccel / 4096;
@@ -1115,13 +1119,13 @@ namespace CameraCOT
                 }));
             };
         }
-        
-        private  void readHid()
+
+        private void readHid()
         {
             if (device != null)
             {
                 // construct a HID output report to send to the device
-                
+
 
                 /// Initialize the data buffer and fill it in
                 byte[] bufferTx = new byte[65];
@@ -1140,7 +1144,7 @@ namespace CameraCOT
             }
         }
 
-        private  void startMeasure()
+        private void startMeasure()
         {
             if (device != null)
             {
@@ -1165,7 +1169,7 @@ namespace CameraCOT
             }
         }
 
-        private  void stopMeasure()
+        private void stopMeasure()
         {
             if (device != null)
             {
@@ -1190,7 +1194,7 @@ namespace CameraCOT
             }
         }
 
-        private  void getDistance()
+        private void getDistance()
         {
             if (device != null)
             {
@@ -1289,15 +1293,15 @@ namespace CameraCOT
             stopMeasure();
             firstDistanceFlag = false;
             //if (cameraType == (int)camera.endoCamera)
-                videoEffectSettings.getLenghtFlag = false;
+            videoEffectSettings.getLenghtFlag = false;
         }
 
         private void getDistanse_Click(object sender, RoutedEventArgs e)
         {
             //getDistance();
             lenghtMeterTimer.Start();
-            if(currentCameraType == (int)cameraType.endoCamera)
-                videoEffectSettings.getLenghtFlag = true;          
+            if (currentCameraType == (int)cameraType.endoCamera)
+                videoEffectSettings.getLenghtFlag = true;
         }
 
         public static async Task<DeviceInformationCollection> FindCameraDeviceAsync()
@@ -1389,9 +1393,9 @@ namespace CameraCOT
         }
 
         private async void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
-        {            
+        {
 
-            if(_isNotFirstStart)
+            if (_isNotFirstStart)
                 await SetUpBasedOnStateAsync();
             //UpdateCaptureControls();
         }
@@ -1535,7 +1539,7 @@ namespace CameraCOT
 
                 await CleanupCameraAsync();
 
-                            
+
             }
         }
 
@@ -1545,25 +1549,25 @@ namespace CameraCOT
             Debug.WriteLine("InitializeCameraAsync");
 
             if (_mediaCapture == null)
-            {                
+            {
 
                 _mediaCapture = new MediaCapture();
-                _mediaCapture.Failed += MediaCaptureFiled;             
+                _mediaCapture.Failed += MediaCaptureFiled;
                 var settings = new MediaCaptureInitializationSettings { VideoDeviceId = cameras[currentCameraType].Id };
-                                
+
                 try
                 {
                     await _mediaCapture.InitializeAsync(settings);
 
-                    if (currentCameraType == (int)cameraType.mainCamera)                   
+                    if (currentCameraType == (int)cameraType.mainCamera)
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
-                    
-                    if (currentCameraType == (int)cameraType.endoCamera)                      
+
+                    if (currentCameraType == (int)cameraType.endoCamera)
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.endoCamera].VideoResolution.EncodingProperties);
 
                     if (currentCameraType == (int)cameraType.termoCamera)
                         await _mediaCapture.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
-                    
+
                     _isInitialized = true;
                 }
                 catch (UnauthorizedAccessException)
@@ -1576,7 +1580,7 @@ namespace CameraCOT
 
                     await StartPreviewAsync();
                 }
-               
+
 
             }
         }
@@ -1585,8 +1589,8 @@ namespace CameraCOT
         #region frame reader --------------------------
         //----------------------------------------------------
         private SoftwareBitmap backBuffer;
-        private  byte[] imageBuffer;
-        
+        private byte[] imageBuffer;
+
 
         private async void GetFrame_Click()
         {
@@ -1677,12 +1681,12 @@ namespace CameraCOT
                 // Swap the processed frame to _backBuffer and dispose of the unused image.
                 softwareBitmap = Interlocked.Exchange(ref backBuffer, softwareBitmap);
 
-                imageBuffer = new byte[backBuffer.PixelWidth*backBuffer.PixelHeight*4];
+                imageBuffer = new byte[backBuffer.PixelWidth * backBuffer.PixelHeight * 4];
                 backBuffer.CopyToBuffer(imageBuffer.AsBuffer());
 
 
                 softwareBitmap?.Dispose();
-                
+
             }
 
             //mediaFrameReference.Dispose();
@@ -1734,6 +1738,9 @@ namespace CameraCOT
                     await _mediaCaptureDouble1.InitializeAsync(settings1);
                     await _mediaCaptureDouble2.InitializeAsync(settings2);
 
+                   // await _mediaCaptureDouble1.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+                    await _mediaCaptureDouble2.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
+
 
                     _isInitialized = true;
                 }
@@ -1744,7 +1751,7 @@ namespace CameraCOT
 
                 if (_isInitialized)
                 {
-                    
+
                     await StartPreviewDoubleAsync();
 
                 }
@@ -1764,12 +1771,8 @@ namespace CameraCOT
             //------------ add video effect -----------------
 
             var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
-
             IMediaExtension videoEffect = await _mediaCapture.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
-            //videoEffect.SetProperties(new PropertySet() { { "LenghtValue", Lenght } });
-
-            
             //-----------------------------------------------
 
             try
@@ -1777,7 +1780,7 @@ namespace CameraCOT
                 await _mediaCapture.StartPreviewAsync();
                 _isPreviewing = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine("error preview " + e.Message);
             }
@@ -1787,41 +1790,49 @@ namespace CameraCOT
         private async Task StartPreviewDoubleAsync()
         {
             displayRequest.RequestActive();
-          
+
             PreviewControlDouble1.Source = _mediaCaptureDouble1;
             PreviewControlDouble2.Source = _mediaCaptureDouble2;
 
 
             //------------ add video effect -----------------
 
-            //var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
-            //IMediaExtension videoEffect = await _mediaCaptureDouble2.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect");
+            //await _mediaCaptureDouble1.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
+            await _mediaCaptureDouble2.AddVideoEffectAsync(videoEffectDefinition, MediaStreamType.VideoPreview);
 
 
 
             var temp = mainGrid.ActualSize;
-            PreviewControlDouble1.Margin = new Thickness(0, 0, temp.X/2, 0);
-            PreviewControlDouble2.Margin = new Thickness(temp.X/2, 0, 0, 0);
+            PreviewControlDouble1.Margin = new Thickness(0, 0, temp.X / 2, 0);
+            PreviewControlDouble2.Margin = new Thickness(temp.X / 2, 0, 0, 0);
 
-            await _mediaCaptureDouble1.StartPreviewAsync();
-            await _mediaCaptureDouble2.StartPreviewAsync();
-            _isPreviewing = true;
-            
+            try
+            {
+                await _mediaCaptureDouble2.StartPreviewAsync();
+                await _mediaCaptureDouble1.StartPreviewAsync();
+                _isPreviewing = true;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("error preview " + e.Message);
+            }
+
         }
-        
+
         private async Task StopPreviewAsync()
         {
             try
             {
                 await _mediaCapture.StopPreviewAsync();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine("error stop preview" + e.Message);
                 _isFail = true;
             }
             _isPreviewing = false;
-            
+
             await Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
             {
                 PreviewControl.Source = null;
@@ -1877,8 +1888,8 @@ namespace CameraCOT
                 _mediaCaptureDouble2.Failed -= MediaCaptureFiled;
                 _mediaCaptureDouble2.Dispose();
                 _mediaCaptureDouble2 = null;
-            }            
-            
+            }
+
         }
 
         private async void MediaCaptureFiled(MediaCapture sender, MediaCaptureFailedEventArgs errorEventArgs)
@@ -1889,7 +1900,7 @@ namespace CameraCOT
             {
                 await CleanupCameraAsync();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine("error cleanupCamera" + e.Message);
             }
@@ -1904,7 +1915,7 @@ namespace CameraCOT
                 await _setupTask;
             }
 
-            bool wantUIActive = _isActivePage  && Window.Current.Visible && !_isSuspending;    //
+            bool wantUIActive = _isActivePage && Window.Current.Visible && !_isSuspending;    //
 
             if (_isUIActive != wantUIActive)
             {
@@ -1949,12 +1960,6 @@ namespace CameraCOT
                 return;
             }
 
-            //if(currentCameraType == (int)cameraType.doubleCamera)
-            //{
-            //    await MakePhotoDoubleAsync();
-            //    return;
-            //}
-
             // switch camera resolution
             if (currentCameraType == (int)cameraType.mainCamera)
             {
@@ -1998,9 +2003,9 @@ namespace CameraCOT
         {
 
             SetCoordinateNotes(50, 1000, 40, 1250);
-            if (currentCameraType == (int)cameraType.mainCamera)            
+            if (currentCameraType == (int)cameraType.mainCamera)
                 SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
-            
+
 
             if (currentCameraType == (int)cameraType.mainCamera)
             {
@@ -2033,13 +2038,13 @@ namespace CameraCOT
 
                 var temp = " Tcenter=" + strPointT + " ";
 
-                if ((currentCameraType == (int)cameraType.termoCamera))                
-                    savedFile = await photoFolder.CreateFileAsync("Camera " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);                
-                else        
+                if ((currentCameraType == (int)cameraType.termoCamera))
+                    savedFile = await photoFolder.CreateFileAsync("Camera " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                else
                     savedFile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
 
-                
-                await SavePhotoAsync(stream, savedFile);               
+
+                await SavePhotoAsync(stream, savedFile);
 
 
                 Debug.WriteLine("Photo saved in" + savedFile.Path);
@@ -2053,7 +2058,7 @@ namespace CameraCOT
             {
                 //BitmapImage bitmapImage = new BitmapImage();
                 //await bitmapImage.SetSourceAsync(stream);
-                
+
                 BitmapImage bitmapPreviewImage = await StorageFileToBitmapImage(savedFile);
                 imageControlPreview.Source = bitmapPreviewImage;
             }
@@ -2080,21 +2085,6 @@ namespace CameraCOT
             await _mediaCaptureDouble1.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream1);
             await _mediaCaptureDouble2.CapturePhotoToStreamAsync(ImageEncodingProperties.CreateJpeg(), stream2);
 
-            try
-            {
-                //var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " ";
-                //savedFile1 = await photoFolder.CreateFileAsync("Camera1 " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
-                //savedFile2 = await photoFolder.CreateFileAsync("Camera2 " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
-
-                //await SavePhotoAsync(stream1, savedFile1);
-                //await SavePhotoAsync(stream2, savedFile2);
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Exception while making photo " + ex.Message.ToString());
-            }
-
             await CombineTwoPhoto(stream1, stream2);
 
         }
@@ -2102,47 +2092,48 @@ namespace CameraCOT
         private async Task CombineTwoPhoto(InMemoryRandomAccessStream _photoStream1, InMemoryRandomAccessStream _photoStream2)
         {
             using (InMemoryRandomAccessStream photoStream1 = _photoStream1,
-                                              photoStream2 = _photoStream2, 
+                                              photoStream2 = _photoStream2,
                                               photoStream2Transform = new InMemoryRandomAccessStream(),
-                                              fileStream = new InMemoryRandomAccessStream())          
+                                              fileStream = new InMemoryRandomAccessStream())
             {
                 try
-                {                
-                        var decoder = await BitmapDecoder.CreateAsync(photoStream2);
-                        var encoder = await BitmapEncoder.CreateForTranscodingAsync(photoStream2Transform, decoder);
-                        if ((decoder.OrientedPixelWidth == 80) && (decoder.OrientedPixelHeight == 60))
-                        {
-                            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
-                            encoder.BitmapTransform.ScaledHeight = 480;
-                            encoder.BitmapTransform.ScaledWidth = 640;
-                        }
+                {
+                    var decoder = await BitmapDecoder.CreateAsync(photoStream2);
+                    var encoder = await BitmapEncoder.CreateForTranscodingAsync(photoStream2Transform, decoder);
+                    if ((decoder.OrientedPixelWidth == 80) && (decoder.OrientedPixelHeight == 60))
+                    {
+                        encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
+                        encoder.BitmapTransform.ScaledHeight = 480;
+                        encoder.BitmapTransform.ScaledWidth = 640;
+                    }
 
-                        await encoder.FlushAsync();
+                    await encoder.FlushAsync();
 
-                        CanvasBitmap cbi1, cbi2;
-                        CanvasDevice device = CanvasDevice.GetSharedDevice();
-                        CanvasRenderTarget offscreen = new CanvasRenderTarget(device, 1280, 480, 96);
-                        cbi1 = await CanvasBitmap.LoadAsync(device, photoStream1);
-                        cbi2 = await CanvasBitmap.LoadAsync(device, photoStream2Transform);
+                    CanvasBitmap cbi1, cbi2;
+                    CanvasDevice device = CanvasDevice.GetSharedDevice();
+                    CanvasRenderTarget offscreen = new CanvasRenderTarget(device, 1280, 480, 96);
+                    cbi1 = await CanvasBitmap.LoadAsync(device, photoStream1);
+                    cbi2 = await CanvasBitmap.LoadAsync(device, photoStream2Transform);
 
-                        using (var ds = offscreen.CreateDrawingSession())
-                        {
-                            ds.DrawImage(cbi1, 0, 0);
-                            ds.DrawImage(cbi2, 640, 0);
-                        }
+                    using (var ds = offscreen.CreateDrawingSession())
+                    {
+                        ds.DrawImage(cbi1, 0, 0);
+                        ds.DrawImage(cbi2, 640, 0);
+                    }
 
 
-                        
-                            fileStream.Seek(0);
-                            await offscreen.SaveAsync(fileStream, CanvasBitmapFileFormat.Png);
 
-                            BitmapImage image = new BitmapImage();
-                            image.SetSource(fileStream);
-                            imageControlPreview.Source = image;
+                    fileStream.Seek(0);
+                    await offscreen.SaveAsync(fileStream, CanvasBitmapFileFormat.Png);
 
-                            savedFile = await photoFolder.CreateFileAsync("CameraDouble " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
-                            await SavePhotoAsync(fileStream, savedFile);
-                       
+                    BitmapImage image = new BitmapImage();
+                    image.SetSource(fileStream);
+                    imageControlPreview.Source = image;
+
+                    var temp = " Tcenter=" + strPointT + " ";
+                    savedFile = await photoFolder.CreateFileAsync("CameraDouble " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                    await SavePhotoAsync(fileStream, savedFile);
+
 
 
                 }
@@ -2181,7 +2172,7 @@ namespace CameraCOT
                         encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
                         encoder.BitmapTransform.ScaledHeight = 480;
                         encoder.BitmapTransform.ScaledWidth = 640;
-                        
+
                     }
 
 
@@ -2191,7 +2182,7 @@ namespace CameraCOT
 
 
         }
-               
+
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
 
@@ -2210,7 +2201,7 @@ namespace CameraCOT
             firstDistanceFlag = false;
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
-            videoEffectSettings.termo = false;            
+            videoEffectSettings.termo = false;
 
             currentCameraType = (int)cameraType.mainCamera;
             try
@@ -2227,7 +2218,7 @@ namespace CameraCOT
             }
 
             _isDouble = false;
-            histogramStatisticTimer.Stop();            
+            histogramStatisticTimer.Stop();
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
@@ -2247,11 +2238,11 @@ namespace CameraCOT
                 recordTimer.Stop();
             }
 
-               
+
             currentCameraType = (int)cameraType.endoCamera;
 
             try
-            {               
+            {
                 await CleanupCameraAsync();
 
                 _isDouble = false;
@@ -2297,7 +2288,7 @@ namespace CameraCOT
 
                 await SetUpBasedOnStateAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine("error termo camera button" + ex.Message);
             }
@@ -2310,7 +2301,7 @@ namespace CameraCOT
             videoEffectSettings.termo = true;
 
             UpdateUIControls();
-            
+
 
             histogramStatisticTimer.Start();
         }
@@ -2319,7 +2310,7 @@ namespace CameraCOT
         {
             Debug.WriteLine("SwitchCamera on double");
             _isUIActive = false;
-            
+
 
             currentCameraType = (int)cameraType.doubleCamera;
             try
@@ -2339,11 +2330,13 @@ namespace CameraCOT
 
             videoEffectSettings.termo = true;
 
+            //SetCoordinateNotes(150, 300, 34, 1250);
+
             UpdateUIControls();
 
             histogramStatisticTimer.Start();
 
-                      
+
 
         }
 
@@ -2367,18 +2360,18 @@ namespace CameraCOT
 
                 await StopRecordingAsync();
                 recordTimeTextBox.Text = "";
-                stopWatch.Reset();               
+                stopWatch.Reset();
                 recordTimer.Stop();
 
             }
-            
+
         }
 
         private async Task StartRecordingAsync()
         {
             Debug.WriteLine("StartRecord");
 
-             savedFile = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+            savedFile = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
                 if (currentCameraType == (int)cameraType.termoCamera)
@@ -2413,7 +2406,7 @@ namespace CameraCOT
             _isRecording = false;
             await _mediaCapture.StopRecordAsync();
 
-            
+
 
             Debug.WriteLine("Stopped recording!");
         }
@@ -2424,14 +2417,17 @@ namespace CameraCOT
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
+            termoPanelDot.Margin = _isDouble ? new Thickness(0, 232, 245, 0) : new Thickness(0, 232, 490, 0);
+            termoPanel1.Margin = _isDouble ? new Thickness(0, 0, 235, 0) : new Thickness(0, 0, 470, 0);
+
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
-            
-            panelNotes.Visibility = _isNotes && (currentCameraType != (int)cameraType.termoCamera) && !_isDouble? Visibility.Visible : Visibility.Collapsed;  //
+
+            panelNotes.Visibility = _isNotes && (currentCameraType != (int)cameraType.termoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;  //
 
 
             PauseVideoButton.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
-            PauseIcon.Visibility  = _isPause ? Visibility.Collapsed : Visibility.Visible;
+            PauseIcon.Visibility = _isPause ? Visibility.Collapsed : Visibility.Visible;
             ResumeIcon.Visibility = _isPause ? Visibility.Visible : Visibility.Collapsed;
 
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
@@ -2456,36 +2452,36 @@ namespace CameraCOT
 
             // Update recording button to show "Stop" icon instead of red "Record" icon
             StartRecordingIcon.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
-            StopRecordingIcon.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
-            Rec.Visibility                = _isRecording  ? Visibility.Visible  : Visibility.Collapsed;    //&& !_isPause
-            recordTimeTextBox.Visibility  = _isRecording ? Visibility.Visible   : Visibility.Collapsed;
+            StopRecordingIcon.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+            Rec.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;    //&& !_isPause
+            recordTimeTextBox.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
 
             // Update flash button
-            NotFlashIcon.Visibility     = _isFlash ? Visibility.Collapsed : Visibility.Visible;
+            NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
             NotFlashIcon1.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
-            FlashIcon.Visibility        = _isFlash ? Visibility.Visible   : Visibility.Collapsed;
-            plusFlashButton.Visibility  = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
-            minusFlashButton.Visibility = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
-            pbFlashPower.Visibility     = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
-            buttonFlash.Visibility      = (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible   : Visibility.Collapsed;
+            FlashIcon.Visibility = _isFlash ? Visibility.Visible : Visibility.Collapsed;
+            plusFlashButton.Visibility = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible : Visibility.Collapsed;
+            minusFlashButton.Visibility = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible : Visibility.Collapsed;
+            pbFlashPower.Visibility = _isFlash && (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible : Visibility.Collapsed;
+            buttonFlash.Visibility = (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Visible : Visibility.Collapsed;
 
             // Update flash button Endo
             //NotFlashIconEndo.Visibility      = _isFlashEndo ? Visibility.Collapsed : Visibility.Visible;
             //FlashIconEndo.Visibility         = _isFlashEndo ? Visibility.Visible   : Visibility.Collapsed;
-            plusFlashButtonEndo.Visibility   = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
-            minusFlashButtonEndo.Visibility  = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
-            pbFlashPowerEndo.Visibility      = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
+            plusFlashButtonEndo.Visibility = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
+            minusFlashButtonEndo.Visibility = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
+            pbFlashPowerEndo.Visibility = _isFlashEndo && (currentCameraType == (int)cameraType.endoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
             //buttonFlashEndo.Visibility       = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
 
             // Update lenght meter controls            
             //runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            
-            if(_findLenghtZero)
+
+            if (_findLenghtZero)
             {
                 progressRing.Visibility = Visibility.Visible;
                 progressRing.IsActive = true;
                 textInfo.Text = "Подождите, идет калибровка";
-                textInfo.Visibility = Visibility.Visible;                
+                textInfo.Visibility = Visibility.Visible;
             }
             else
             {
@@ -2500,13 +2496,13 @@ namespace CameraCOT
             color.B = 0;
             color.G = 0;
             color.R = 0;
-            
+
 
             switch (currentCameraType)
             {
                 case (int)cameraType.mainCamera:
                     //mainCameraButton.Background.Opacity = 10;
-                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);                   
+                    mainCameraButton.Background = new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
                     endoCameraButton.Background = new SolidColorBrush(color);
                     termoCameraButton.Background = new SolidColorBrush(color);
                     doubleCameraButton.Background = new SolidColorBrush(color);
@@ -2533,10 +2529,10 @@ namespace CameraCOT
 
             notesButton.Background = !_isNotes ? new SolidColorBrush(color) : new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
 
-            buttonFlash.Visibility      = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            plusFlashButton.Visibility  = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            buttonFlash.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            plusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
             minusFlashButton.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            pbFlashPower.Visibility     = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            pbFlashPower.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
 
             //buttonFlashEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
             plusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
@@ -2553,7 +2549,7 @@ namespace CameraCOT
             //videoEffectSettings.X = 750;
             //videoEffectSettings.Y = 600;
             //videoEffectSettings.FontSize = 90;
-          
+
         }
 
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
@@ -2581,8 +2577,8 @@ namespace CameraCOT
             byte[] data = new byte[1];
             byte[] flashByte = new byte[2];
 
-            flashByte[0] = (byte)(  (int)(1199 - pbFlashPower.Value) & 0x00FF);
-            flashByte[1] = (byte)(  (int)(1199 - pbFlashPower.Value) >> 8);
+            flashByte[0] = (byte)((int)(1199 - pbFlashPower.Value) & 0x00FF);
+            flashByte[1] = (byte)((int)(1199 - pbFlashPower.Value) >> 8);
             try
             {
                 data[0] = 0x55;
@@ -2605,10 +2601,10 @@ namespace CameraCOT
         private void FlashCMDEndo()
         {
             Debug.WriteLine("Send flash Endo");
-            textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;            
+            textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;
 
             int litgh = (int)(pbFlashPowerEndo.Value);
-            
+
             try
             {
                 setFlashingLight(litgh);
@@ -2623,7 +2619,7 @@ namespace CameraCOT
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 100;
-        
+
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
         {
@@ -2649,7 +2645,7 @@ namespace CameraCOT
         {
             pbFlashPowerEndo.Value = pbFlashPowerEndo.Value - StepFlashPower;
             FlashCMDEndo();
-        }        
+        }
 
         //private async void PreviewSettings_Changed(object sender, SelectionChangedEventArgs e)
         //{
@@ -2694,8 +2690,8 @@ namespace CameraCOT
                 indexNoteShow = indexNoteShow + 1;
                 videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
                 textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
-            }                    
-            
+            }
+
         }
 
         private void buttonDownNotes_Click(object sender, RoutedEventArgs e)
@@ -2705,8 +2701,8 @@ namespace CameraCOT
                 indexNoteShow = indexNoteShow - 1;
                 videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
                 textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
-            }                       
-                       
+            }
+
         }
 
         private void ButtonClearNotes_Click(object sender, RoutedEventArgs e)
@@ -2716,7 +2712,7 @@ namespace CameraCOT
 
         private async void ButtonSetNotes_Click(object sender, RoutedEventArgs e)
         {
-           
+
             if (textBlockNotes.Text == "")
                 indexNoteShow = 0;
 
@@ -2727,7 +2723,7 @@ namespace CameraCOT
                 await FileIO.AppendTextAsync(notesFile, "\n" + textBlockNotes.Text);
 
                 //videoEffectSettings.commet = textBlockNotes.Text;
-                
+
             }
             videoEffectSettings.commet = textBlockNotes.Text;
             //videoEffectSettings.commet = stringNote[indexNoteShow];
@@ -2737,7 +2733,7 @@ namespace CameraCOT
         private async void imageControlPreview_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
 
-            
+
             StorageFolder dlFolder = await savedFile.GetParentAsync();
             await Windows.System.Launcher.LaunchFolderAsync(dlFolder);
 
@@ -2774,20 +2770,20 @@ namespace CameraCOT
         static int temp1 = 0;
         private void NotesButton_Click(object sender, RoutedEventArgs e)
         {
-           // StartUdpClient();
+            // StartUdpClient();
 
             indexNoteShow = stringNote.Count - 1;
             _isNotes = !_isNotes;
             UpdateUIControls();
 
-           
+
             //videoEffectSettings.commet = "Заметка" + ++temp1;
         }
 
         private void OutputHelpCommand()
         {
             _isHelpCommands = !_isHelpCommands;
-            if(_isHelpCommands)
+            if (_isHelpCommands)
             {
                 textBoxInfo.Visibility = Visibility.Visible;
                 textBoxInfo.Text = "Кам     -  главная камера\n" +
@@ -2802,15 +2798,16 @@ namespace CameraCOT
                                    "Минус   -  уменьшить яркость вспышки\n" +
                                    "Метка   -  режим заметок\n" +
                                    "Альбом  -  открыть альбом\n" +
-                                   "Помощь  -  вывести список голосовых команд\n";            }
+                                   "Помощь  -  вывести список голосовых команд\n";
+            }
             else
             {
                 textBoxInfo.Visibility = Visibility.Collapsed;
                 textBoxInfo.Text = "";
             }
-            
+
         }
-        
+
     }
 
 
