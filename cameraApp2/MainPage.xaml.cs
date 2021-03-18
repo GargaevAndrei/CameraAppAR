@@ -1410,7 +1410,6 @@ namespace CameraCOT
 
         public static DeviceInformationCollection cameraDeviceList;
         public static DeviceInformationCollection cameraDeviceListOld;
-        //StreamResolution MainPreview, MainPhoto, MainVideo;
 
 
         private async Task DefineCameraResolutionAsync()
@@ -1738,7 +1737,7 @@ namespace CameraCOT
                     await _mediaCaptureDouble1.InitializeAsync(settings1);
                     await _mediaCaptureDouble2.InitializeAsync(settings2);
 
-                   // await _mediaCaptureDouble1.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
+                    // await _mediaCaptureDouble1.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
                     await _mediaCaptureDouble2.VideoDeviceController.SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.termoCamera].VideoResolution.EncodingProperties);
 
 
@@ -2033,18 +2032,67 @@ namespace CameraCOT
 
             try
             {
-                //var temp = String.Format("Tmax={0}_Tmin={1}", name, DateTime.Now);
-                //var temp = "Tmax=" + strMaxT + " Tmin=" + strMinT + " Tcenter=" + strPointT + " ";
-
                 var temp = " Tcenter=" + strPointT + " ";
 
                 if ((currentCameraType == (int)cameraType.termoCamera))
+                {
                     savedFile = await photoFolder.CreateFileAsync("Camera " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+
+
+                    using (InMemoryRandomAccessStream photoStream2 = stream,
+                                                      photoStream2Transform = new InMemoryRandomAccessStream(),
+                                                      fileStream = new InMemoryRandomAccessStream())
+                    {
+                        try
+                        {
+                            var decoder = await BitmapDecoder.CreateAsync(photoStream2);
+                            var encoder = await BitmapEncoder.CreateForTranscodingAsync(photoStream2Transform, decoder);
+                            if ((decoder.OrientedPixelWidth == 80) && (decoder.OrientedPixelHeight == 60))
+                            {
+                                encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Cubic;
+                                encoder.BitmapTransform.ScaledHeight = 480;
+                                encoder.BitmapTransform.ScaledWidth = 640;
+                            }
+
+                            await encoder.FlushAsync();
+
+                            CanvasBitmap cbi;
+                            CanvasDevice device = CanvasDevice.GetSharedDevice();
+                            CanvasRenderTarget offscreen = new CanvasRenderTarget(device, 640, 480, 96);
+                            cbi = await CanvasBitmap.LoadAsync(device, photoStream2Transform);
+
+                            using (var ds = offscreen.CreateDrawingSession())
+                            {
+                                ds.DrawImage(cbi, 0, 0);
+
+                                ds.DrawText("Tcenter = " + strPointT, 10, 10, Colors.PaleTurquoise, new CanvasTextFormat
+                                {
+                                    FontSize = 24,
+                                    FontWeight = Windows.UI.Text.FontWeights.Bold
+                                });
+                                ds.DrawLine(320, 230, 320, 250, Colors.Black);
+                                ds.DrawLine(310, 240, 330, 240, Colors.Black);
+
+                            }
+
+                            fileStream.Seek(0);
+                            await offscreen.SaveAsync(fileStream, CanvasBitmapFileFormat.Png);
+                            await SavePhotoAsync(fileStream, savedFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine("Exception while making preview " + ex.Message.ToString());
+                        }
+                    }
+
+
+
+                }
                 else
+                {
                     savedFile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
-
-
-                await SavePhotoAsync(stream, savedFile);
+                    await SavePhotoAsync(stream, savedFile);
+                }
 
 
                 Debug.WriteLine("Photo saved in" + savedFile.Path);
@@ -2056,9 +2104,6 @@ namespace CameraCOT
 
             try
             {
-                //BitmapImage bitmapImage = new BitmapImage();
-                //await bitmapImage.SetSourceAsync(stream);
-
                 BitmapImage bitmapPreviewImage = await StorageFileToBitmapImage(savedFile);
                 imageControlPreview.Source = bitmapPreviewImage;
             }
@@ -2070,7 +2115,6 @@ namespace CameraCOT
         }
 
 
-        //StorageFile savedFile1, savedFile2;
         private async Task MakePhotoDoubleAsync()
         {
             PreviewControlDouble1.Opacity = 0.5;
@@ -2119,6 +2163,14 @@ namespace CameraCOT
                     {
                         ds.DrawImage(cbi1, 0, 0);
                         ds.DrawImage(cbi2, 640, 0);
+                        ds.DrawText("Tcenter = " + strPointT, 650, 10, Colors.PaleTurquoise, new CanvasTextFormat
+                        {
+                            FontSize = 24,
+                            FontWeight = Windows.UI.Text.FontWeights.Bold
+                        });
+                        ds.DrawLine(960, 230, 960, 250, Colors.Black);
+                        ds.DrawLine(950, 240, 970, 240, Colors.Black);
+
                     }
 
 
