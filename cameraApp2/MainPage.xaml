@@ -46,7 +46,7 @@
 
 
 
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Height="486" Width="93">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Height="580" Width="93">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -61,6 +61,22 @@
 
             <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"/>
 
+            <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="40" Height="50" Visibility="Visible">
+                <Grid>
+                    <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="MicOff" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Height="20" Glyph="&#xF781;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+            
+            
             <Button x:Name="plusFlashButton" Click="plusFlashButton_Click" Width="40">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE948;" RenderTransformOrigin="0.5,0.5" >
                     <FontIcon.RenderTransform>

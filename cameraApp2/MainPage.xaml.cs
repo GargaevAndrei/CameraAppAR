@@ -99,6 +99,8 @@ namespace CameraCOT
         SerialPort serialPortFlash;
         SerialPort serialPortLepton;
 
+        bool _isMicrophone = false;
+        bool _isVoice = false;
         bool _isFlash = true;
         bool _isPause = false;
         bool _isFlashEndo = true;
@@ -119,7 +121,6 @@ namespace CameraCOT
         private bool _isRecording;
         private bool _findLenghtZero = false;
         private bool _isDouble;
-        private bool _isVoice;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
         private bool _isUIActive;
@@ -456,65 +457,16 @@ namespace CameraCOT
             //histogramStatisticTimer.Start();
         }
 
-        public async Task ProcessData(string response)
+        public async Task ParseTemperature(string response)
         {
-            try
-            {
-                strTemp = response;
-
-                string[] substr = strTemp.Split(' ');
-                if (substr[0] == "voice")
-                {
-                    _isVoice = true;
-
-                    switch (substr[1])
-                    {
-                        case "1":
-                            if (_isMainCameraFlag)
-                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
-                        case "2":
-                            if (_isEndoCameraFlag)
-                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
-                        case "3":
-                            if (_isTermoCameraFlag)
-                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
-                        case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
-                        case "5": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                        case "6": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                        case "7":
-                            if (_isRecording)
-                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
-                        case "8": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
-                        case "9": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
-                        case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
-                        case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
-                        case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
-                        case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
-                    }
-
-                }
-                else
-                    _isVoice = false;
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                textBoxInfo.Text += ex.Message;
-            }
-
-            //if (!_isVoice)
-            //{
             try
             {
                 var index1 = response.IndexOf(":");
                 var index2 = response.LastIndexOf(":");
                 strMinT = response.Substring(0, index1);
                 strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
-                //strPointT = response.Substring(index2 + 1);
-                strPointT = videoEffectSettings.temperature.ToString("0.0");
 
-                //strTemp = response;
+                strPointT = videoEffectSettings.temperature.ToString("0.0");
 
                 minT = Convert.ToDouble(strMinT);
                 maxT = Convert.ToDouble(strMaxT);
@@ -524,6 +476,50 @@ namespace CameraCOT
 
                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputsData());
 
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                textBoxInfo.Text += ex.Message;
+            }
+
+            serialPortLepton.DiscardInBuffer();
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
+        }
+
+        private async Task RunVoiceCommand(string response)
+        {
+            strTemp = response;
+
+            try
+            {
+                string[] substr = strTemp.Split(' ');
+
+                switch (substr[1])
+                {
+                    case "1":
+                        if (_isMainCameraFlag)
+                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
+                    case "2":
+                        if (_isEndoCameraFlag)
+                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
+                    case "3":
+                        if (_isTermoCameraFlag)
+                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
+                    case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
+                    case "5": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                    case "6": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                    case "7":
+                        if (_isRecording)
+                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
+                    case "8": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
+                    case "9": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
+                    case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
+                    case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
+                    case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
+                    case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
+                    case "14": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => doubleCameraButton_Click(null, null)); break;
+                }
 
             }
             catch (Exception ex)
@@ -531,9 +527,6 @@ namespace CameraCOT
                 Debug.WriteLine(ex.Message);
                 textBoxInfo.Text += ex.Message;
             }
-            //}
-
-            serialPortLepton.DiscardInBuffer();
         }
 
         private async void SerialPortLepton_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -543,7 +536,28 @@ namespace CameraCOT
             {
                 var response = serialPort.ReadLine();
 
-                ProcessData(response);
+                if (response.IndexOf("on") >= 0)
+                {
+                    _isMicrophone = true;
+                    return;
+                }
+                if (response.IndexOf("off") >= 0)
+                {
+                    _isMicrophone = false;
+                    return;
+                }
+                if (response.IndexOf("voice") >= 0)
+                {
+                    await RunVoiceCommand(response);
+                    return;
+                }
+                if (response.IndexOf("temperature") >= 0)
+                {
+                    await ParseTemperature(response);
+                    return;
+                }
+                
+
 
             }
             catch (Exception ex)
@@ -551,8 +565,7 @@ namespace CameraCOT
                 textBoxInfo.Text += ex.Message;
             }
 
-            if (!_isVoice)
-                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
+            //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
 
 
         }
@@ -605,167 +618,10 @@ namespace CameraCOT
             {
                 textBoxInfo.Text += ex.Message;
             }
-            histogramStatisticTimer.Stop();
+
+            if(currentCameraType != (int)cameraType.termoCamera && currentCameraType != (int)cameraType.doubleCamera)
+                histogramStatisticTimer.Stop();
         }
-
-        /*
-        StreamSocket streamSocket;
-        private async void StartClient()
-        {
-            //IPAddress address = IPAddress.Parse(serverAddress);
-
-            //HostName localHostName = new HostName("127.0.0.1");
-            //HostName remoteHostName = new HostName("127.0.0.1");
-            //EndpointPair address = new EndpointPair(localHostName, "61112", remoteHostName, "61111");
-            
-            CancellationTokenSource cts = new CancellationTokenSource();
-            //textBoxInfo.Text += "start client \n";
-
-            try
-            {
-                using ( streamSocket = new StreamSocket())
-                {
-                   // textBoxInfo.Text += "create streamSocket \n";
-                    var hostName = new Windows.Networking.HostName(serverAddress);
-                    //textBoxInfo.Text += "create hostName \n";
-
-                    try
-                    {
-                        cts.CancelAfter(1000);
-                        //textBoxInfo.Text += hostName + " \n";
-                        //textBoxInfo.Text += "before streamSocket.ConnectAsync \n";
-                        await streamSocket.ConnectAsync(hostName, serverPort).AsTask(cts.Token);
-                        //await streamSocket.ConnectAsync(address).AsTask(cts.Token);
-                        //textBoxInfo.Text += "after streamSocket.ConnectAsync \n";
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        //reamSocket.Close();
-                        // Debug.WriteLine("Operation was cancelled.");
-                        textBoxInfo.Text += "Operation was cancelled. \n";
-                    }
-                    catch (Exception ex)
-                    {
-                        textBoxInfo.Text += "connect async error " + ex.Message + "\n";
-                    }
-
-                    //textBoxInfo.Text += streamSocket.Information.LocalAddress + " " +
-                                       // streamSocket.Information.LocalPort + " " +
-                                       // streamSocket.Information.RemoteAddress + " " +
-                                       // streamSocket.Information.RemotePort + "\n";
-
-                    //string request = "request!";
-                    //using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
-                    //{
-                    //    using (var streamWriter = new StreamWriter(outputStream))
-                    //    {
-                    //        await streamWriter.WriteLineAsync(request);
-                    //        await streamWriter.FlushAsync();
-
-                    //        //streamWriter.writ
-
-                    //    }
-                    //}
-
-                    //await Task.Delay(100);
-
-                    string response;
-                    using (Stream inputStream = streamSocket.InputStream.AsStreamForRead())
-                    {
-                        using (StreamReader streamReader = new StreamReader(inputStream))
-                        {
-                            response = await streamReader.ReadLineAsync();
-                        }
-                    }
-
-                    if (response != null)
-                    {
-                        try
-                        {
-                            var index1 = response.IndexOf(":");
-                            var index2 = response.LastIndexOf(":");
-                            strMinT = response.Substring(0, index1);
-                            strMaxT = response.Substring(index1 + 1, index2 - index1 - 1);
-                            strPointT = response.Substring(index2 + 1);
-                            minT = Convert.ToDouble(strMinT);
-                            maxT = Convert.ToDouble(strMaxT);
-                            pointT = Convert.ToDouble(strPointT);
-
-                            textBoxTmax.Text = maxT.ToString("0.0");
-                            textBoxTmin.Text = minT.ToString("0.0");
-                            textBoxTpoint.Text = pointT.ToString("0.0");
-                            //this.clientListBox.Text = (string.Format("minT = {0} maxT = {1} ", minT, maxT));
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
-                //this.clientListBox.Text += "error " + ex.Message;
-                textBoxInfo.Text += "error " + ex.Message;
-            }
-        }
-
-        static string ClientPortNumber = "61111";
-        static string ServerPortNumber = "61112";
-        private async void StartUdpClient()
-        {
-            try
-            {
-                var clientDatagramSocket = new Windows.Networking.Sockets.DatagramSocket();
-
-            clientDatagramSocket.MessageReceived += ClientDatagramSocket_MessageReceived;
-
-            // The server hostname that we will be establishing a connection to. In this example, the server and client are in the same process.
-            var hostName = new Windows.Networking.HostName("127.0.0.1");
-
-            this.clientListBox.Items.Add("client is about to bind...");
-
-            await clientDatagramSocket.BindServiceNameAsync(ClientPortNumber);
-                string request = "Hello, World!";
-                using (var serverDatagramSocket = new Windows.Networking.Sockets.DatagramSocket())
-                {
-                    using (Stream outputStream = (await serverDatagramSocket.GetOutputStreamAsync(hostName, ServerPortNumber)).AsStreamForWrite())
-                    {
-                        using (var streamWriter = new StreamWriter(outputStream))
-                        {
-                            await streamWriter.WriteLineAsync(request);
-                            await streamWriter.FlushAsync();
-                        }
-                    }
-                }
-
-                this.clientListBox.Items.Add(string.Format("client sent the request: \"{0}\"", request));
-            }
-            catch (Exception ex)
-            {
-                Windows.Networking.Sockets.SocketErrorStatus webErrorStatus = Windows.Networking.Sockets.SocketError.GetStatus(ex.GetBaseException().HResult);
-                this.clientListBox.Items.Add(webErrorStatus.ToString() != "Unknown" ? webErrorStatus.ToString() : ex.Message);
-            }
-        }
-
-        private async void ClientDatagramSocket_MessageReceived(DatagramSocket sender, DatagramSocketMessageReceivedEventArgs args)
-        {
-            string response;
-            using (DataReader dataReader = args.GetDataReader())
-            {
-                response = dataReader.ReadString(dataReader.UnconsumedBufferLength).Trim();
-            }
-
-            await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => this.clientListBox.Items.Add(string.Format("client received the response: \"{0}\"", response)));
-
-            sender.Dispose();
-
-            await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => this.clientListBox.Items.Add("client closed its socket"));
-        }
-        */
-
 
 
         private async void serialCommandDelayTimer_Tick(object sender, object e)
@@ -2270,7 +2126,9 @@ namespace CameraCOT
             }
 
             _isDouble = false;
-            histogramStatisticTimer.Stop();
+
+            while(histogramStatisticTimer.IsEnabled)
+                histogramStatisticTimer.Stop();
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
@@ -2311,7 +2169,8 @@ namespace CameraCOT
             SetCoordinateNotes(50, 1000, 40, 1550);
             //runMeasure.Visibility = Visibility.Visible;
 
-            histogramStatisticTimer.Stop();
+            while (histogramStatisticTimer.IsEnabled)
+                histogramStatisticTimer.Stop();
 
             UpdateUIControls();
         }
@@ -2400,20 +2259,26 @@ namespace CameraCOT
                 _isRecording = true;
                 UpdateUIControls();
 
-                await StartRecordingAsync();
+                if (currentCameraType != (int)cameraType.doubleCamera)
+                {
+                    await StartRecordingAsync();
 
-                recordTimer.Start();
-                stopWatch.Start();
+                    recordTimer.Start();
+                    stopWatch.Start();
+                }
             }
             else
             {
                 _isRecording = false;
                 UpdateUIControls();
 
-                await StopRecordingAsync();
-                recordTimeTextBox.Text = "";
-                stopWatch.Reset();
-                recordTimer.Stop();
+                if (currentCameraType != (int)cameraType.doubleCamera)
+                {
+                    await StopRecordingAsync();
+                    recordTimeTextBox.Text = "";
+                    stopWatch.Reset();
+                    recordTimer.Stop();
+                }
 
             }
 
@@ -2507,6 +2372,10 @@ namespace CameraCOT
             StopRecordingIcon.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
             Rec.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;    //&& !_isPause
             recordTimeTextBox.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+
+            // Update microphone button 
+            MicOff.Visibility = _isMicrophone ? Visibility.Collapsed : Visibility.Visible;
+            MicOn.Visibility = _isMicrophone ? Visibility.Visible : Visibility.Collapsed;
 
             // Update flash button
             NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -2792,6 +2661,7 @@ namespace CameraCOT
             //await Windows.System.Launcher.LaunchFileAsync(savedFile);
         }
 
+
         private async void PauseVideoButton_Click(object sender, RoutedEventArgs e)
         {
             _isPause = !_isPause;
@@ -2838,9 +2708,11 @@ namespace CameraCOT
             if (_isHelpCommands)
             {
                 textBoxInfo.Visibility = Visibility.Visible;
-                textBoxInfo.Text = "Кам     -  главная камера\n" +
+                textBoxInfo.Text = "Список доступных голосовых команд:\n + " +
+                                   "Главная     -  главная камера\n" +
                                    "Эндо    -  камера эндоскопа\n" +
                                    "Термо   -  камера тепловизора\n" +
+                                   "Двойной -  главная камера и камера тепловизора\n" +
                                    "Фото    -  режим фотографирования\n" +
                                    "Запись  -  режим видео записи\n" +
                                    "Стоп    -  остановка видео записи\n" +
@@ -2848,7 +2720,7 @@ namespace CameraCOT
                                    "Вспышка -  включить/выключить вспышку\n" +
                                    "Плюс    -  увеличить яркость вспышки\n" +
                                    "Минус   -  уменьшить яркость вспышки\n" +
-                                   "Метка   -  режим заметок\n" +
+                                   "Заметка   -  режим заметок\n" +
                                    "Альбом  -  открыть альбом\n" +
                                    "Помощь  -  вывести список голосовых команд\n";
             }
@@ -2858,6 +2730,58 @@ namespace CameraCOT
                 textBoxInfo.Text = "";
             }
 
+        }
+
+        private void MicrophoneButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isMicrophone)
+            {
+                _isMicrophone = true;
+                MicrophoneOn();
+            }
+            else
+            {
+                _isMicrophone = false;
+                MicrophoneOff();
+            }
+
+            UpdateUIControls();
+        }
+
+        private void MicrophoneOn()
+        {
+            if (serialPortLepton.IsOpen)
+            {
+                try
+                {
+                    serialPortLepton.DiscardInBuffer();
+                    serialPortLepton.Write("on\n");
+
+                    Debug.WriteLine("serialPortLepton open");
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+            }
+        }
+
+        private void MicrophoneOff()
+        {
+            if (serialPortLepton.IsOpen)
+            {
+                try
+                {
+                    serialPortLepton.DiscardInBuffer();
+                    serialPortLepton.Write("off\n");
+
+                    Debug.WriteLine("serialPortLepton open");
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+            }
         }
 
     }
