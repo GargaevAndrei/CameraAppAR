@@ -27,6 +27,21 @@
             </FontIcon>
         </StackPanel>
 
+        <StackPanel x:Name="StartingTextBox" Orientation="Horizontal"   VerticalAlignment="Top" HorizontalAlignment="Center"  Visibility="Collapsed" Margin="0,200,0,0">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="5,5"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="MinWidth" Value="80"/>
+                    <Setter Property="MinHeight" Value="80"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button  Content="Ожидайте"  FontSize="40"  Width="240" Height="70"/>
+        </StackPanel>
+
 
         <CaptureElement x:Name="PreviewControl" Stretch="Uniform"/>
 
@@ -46,10 +61,10 @@
 
 
 
-        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Height="580" Width="93">
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Height="550" Width="93">
             <StackPanel.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="10,20"/>
+                    <Setter Property="Margin" Value="10,17"/>
                     <Setter Property="HorizontalAlignment" Value="Center"/>
                     <!--<Setter Property="MinWidth" Value="80"/>
                     <Setter Property="MinHeight" Value="80"/>-->
@@ -61,7 +76,7 @@
 
             <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"/>
 
-            <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="40" Height="50" Visibility="Visible">
+            <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="40" Height="50" Visibility="Visible" ToolTipService.ToolTip="Для получения списка голосовых команд скажите 'Помощь'">
                 <Grid>
                     <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
                         <FontIcon.RenderTransform>
@@ -75,8 +90,8 @@
                     </FontIcon>
                 </Grid>
             </Button>
-            
-            
+
+
             <Button x:Name="plusFlashButton" Click="plusFlashButton_Click" Width="40">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE948;" RenderTransformOrigin="0.5,0.5" >
                     <FontIcon.RenderTransform>
@@ -197,10 +212,10 @@
             <Image Source="Assets/cursor.png" Height="50" Width="50"  />
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Top" Height="440" Width="90" Margin="0,0,0,0">
+        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Top" Height="440" Width="90" Margin="0,3,0,0">
             <StackPanel.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="10,20"/>
+                    <Setter Property="Margin" Value="10,17"/>
                     <Setter Property="MinWidth" Value="70"/>
                     <Setter Property="MinHeight" Value="70"/>
                     <Setter Property="Foreground" Value="White"/>
@@ -349,7 +364,7 @@
 
         </StackPanel>
 
-        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="184,117,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="331" Width="315" Visibility="Collapsed"/>
+        <TextBox x:Name="textBoxInfo" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="184,111,0,0" Text="Diagnostic information" TextWrapping="Wrap" VerticalAlignment="Top" Height="405" Width="450" Visibility="Collapsed"/>
         <!--<Frame x:Name="ScenarioFrame" Margin="264,360,640,140" Grid.RowSpan="2"/>-->
 
         <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="80" Height="80" VerticalAlignment="Bottom"/>
@@ -364,6 +379,8 @@
         </Button>
         <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Visible" Margin="0,10,310,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150" Foreground="Red" Height="37"/>
         <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,240,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="90" Height="37"/>
+        <!--<TextBlock x:Name="StartingTextBox" Text="Processing" TextWrapping="Wrap" FontSize="58" TextAlignment="Center" Visibility="Visible"  VerticalAlignment="Center" HorizontalAlignment="Center" Width="290" Height="90"/>-->
+        <ProgressRing x:Name="progressRingStart" Width="200" Height="200" RequestedTheme="Dark" Visibility="Visible" IsActive="True"/>
 
 
     </Grid>

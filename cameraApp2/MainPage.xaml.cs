@@ -127,9 +127,6 @@ namespace CameraCOT
         public int _cntCamera;  //was private
         private StorageFolder _captureFolder = null;
 
-        static string serverPort = "61111";
-        static string serverAddress = "127.0.0.1"; // адрес сервера
-
         string strMinT, strMaxT, strPointT, strTemp;
 
         double minT, maxT, pointT;
@@ -197,6 +194,11 @@ namespace CameraCOT
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            //StartingTextBox.Visibility = Visibility.Collapsed;
+            //progressRing.Visibility = Visibility.Collapsed;
+            //progressRing.IsActive = false;
+
+
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
             storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
 
@@ -338,6 +340,9 @@ namespace CameraCOT
 
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
+
+            progressRingStart.Visibility = Visibility.Collapsed;
+            progressRingStart.IsActive = false;
         }
 
         public void SetCoordinateNotes(int _x, int _y, int _fontSize, int _widthRect)
@@ -351,10 +356,9 @@ namespace CameraCOT
 
         public MainPage()
         {
-
+            
             this.InitializeComponent();
             Current = this;
-
 
             EnumerateHidDevices();
 
@@ -497,28 +501,28 @@ namespace CameraCOT
 
                 switch (substr[1])
                 {
-                    case "1":
-                        if (_isMainCameraFlag)
-                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
-                    case "2":
-                        if (_isEndoCameraFlag)
-                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
-                    case "3":
-                        if (_isTermoCameraFlag)
-                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
+                    case "1": if (_isMainCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
+                    case "2": if (_isEndoCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
+                    case "3": if (_isTermoCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
                     case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
-                    case "5": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                    case "6": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
-                    case "7":
-                        if (_isRecording)
-                            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
-                    case "8": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
-                    case "9": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
+                    case "5": if (!_isRecording && currentCameraType != (int)cameraType.doubleCamera) 
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                    case "6": if (_isRecording && currentCameraType != (int)cameraType.doubleCamera)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
+                    case "7": if (_isRecording && currentCameraType != (int)cameraType.doubleCamera)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
+                    case "8":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
+                    case "9":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
                     case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
                     case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
                     case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
                     case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
                     case "14": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => doubleCameraButton_Click(null, null)); break;
+                    case "15": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
+                    case "16": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => doubleCameraButton_Click(null, null)); break;
                 }
 
             }
@@ -2093,6 +2097,8 @@ namespace CameraCOT
 
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            progressRingStart.Visibility = Visibility.Visible;
+            progressRingStart.IsActive = true;
 
             _isUIActive = false;
             _isFlash = true;
@@ -2132,11 +2138,18 @@ namespace CameraCOT
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
+
+            progressRingStart.Visibility = Visibility.Collapsed;
+            progressRingStart.IsActive = false;
+
             UpdateUIControls();
         }
 
         private async void endoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            progressRingStart.Visibility = Visibility.Visible;
+            progressRingStart.IsActive = true;
+
             _isFlash = false;
             _isUIActive = false;
 
@@ -2172,11 +2185,17 @@ namespace CameraCOT
             while (histogramStatisticTimer.IsEnabled)
                 histogramStatisticTimer.Stop();
 
+            progressRingStart.Visibility = Visibility.Collapsed;
+            progressRingStart.IsActive = false;
+
             UpdateUIControls();
         }
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            progressRingStart.Visibility = Visibility.Visible;
+            progressRingStart.IsActive = true;
+
             _isFlash = false;
             _isUIActive = false;
 
@@ -2210,15 +2229,20 @@ namespace CameraCOT
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
             videoEffectSettings.termo = true;
-
+            
             UpdateUIControls();
 
-
             histogramStatisticTimer.Start();
+
+            progressRingStart.Visibility = Visibility.Collapsed;
+            progressRingStart.IsActive = false;
         }
 
         private async void doubleCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            progressRingStart.Visibility = Visibility.Visible;
+            progressRingStart.IsActive = true;
+
             Debug.WriteLine("SwitchCamera on double");
             _isUIActive = false;
 
@@ -2243,6 +2267,9 @@ namespace CameraCOT
 
             //SetCoordinateNotes(150, 300, 34, 1250);
 
+            progressRingStart.Visibility = Visibility.Collapsed;
+            progressRingStart.IsActive = false;
+
             UpdateUIControls();
 
             histogramStatisticTimer.Start();
@@ -2259,7 +2286,7 @@ namespace CameraCOT
                 _isRecording = true;
                 UpdateUIControls();
 
-                if (currentCameraType != (int)cameraType.doubleCamera)
+                if (currentCameraType != (int)cameraType.doubleCamera)  // can't record video in double mode
                 {
                     await StartRecordingAsync();
 
@@ -2654,9 +2681,15 @@ namespace CameraCOT
         private async void imageControlPreview_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
 
-
-            StorageFolder dlFolder = await savedFile.GetParentAsync();
-            await Windows.System.Launcher.LaunchFolderAsync(dlFolder);
+            try
+            {
+                StorageFolder dlFolder = await savedFile.GetParentAsync();
+                await Windows.System.Launcher.LaunchFolderAsync(dlFolder);
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
 
             //await Windows.System.Launcher.LaunchFileAsync(savedFile);
         }
@@ -2708,21 +2741,21 @@ namespace CameraCOT
             if (_isHelpCommands)
             {
                 textBoxInfo.Visibility = Visibility.Visible;
-                textBoxInfo.Text = "Список доступных голосовых команд:\n + " +
+                textBoxInfo.Text = "Список доступных голосовых команд:\n" +
                                    "Главная     -  главная камера\n" +
-                                   "Эндо    -  камера эндоскопа\n" +
-                                   "Термо   -  камера тепловизора\n" +
-                                   "Двойной -  главная камера и камера тепловизора\n" +
-                                   "Фото    -  режим фотографирования\n" +
-                                   "Запись  -  режим видео записи\n" +
-                                   "Стоп    -  остановка видео записи\n" +
-                                   "Пауза   -  пауза видео записи\n" +
-                                   "Вспышка -  включить/выключить вспышку\n" +
-                                   "Плюс    -  увеличить яркость вспышки\n" +
-                                   "Минус   -  уменьшить яркость вспышки\n" +
-                                   "Заметка   -  режим заметок\n" +
-                                   "Альбом  -  открыть альбом\n" +
-                                   "Помощь  -  вывести список голосовых команд\n";
+                                   "Эндо        -  камера эндоскопа\n" +
+                                   "Термо       -  камера тепловизора\n" +
+                                   "Двойной     -  главная камера и камера тепловизора\n" +
+                                   "Фотография  -  режим фотографирования\n" +
+                                   "Запись      -  режим видео записи\n" +
+                                   "Стоп        -  остановка видео записи\n" +
+                                   "Пауза       -  пауза видео записи\n" +
+                                   "Вспышка     -  включить/выключить вспышку\n" +
+                                   "Плюс        -  увеличить яркость вспышки\n" +
+                                   "Минус       -  уменьшить яркость вспышки\n" +
+                                   "Заметка     -  режим заметок\n" +
+                                   "Альбом      -  открыть альбом\n" +
+                                   "Помощь      -  вывести/скрыть список голосовых команд\n";
             }
             else
             {
