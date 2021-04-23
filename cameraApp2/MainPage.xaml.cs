@@ -501,28 +501,32 @@ namespace CameraCOT
 
                 switch (substr[1])
                 {
-                    case "1": if (_isMainCameraFlag)
+                    case "1":
+                    case "17": if (_isMainCameraFlag)
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => mainCameraButton_Click(null, null)); break;
                     case "2": if (_isEndoCameraFlag)
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => endoCameraButton_Click(null, null)); break;
                     case "3": if (_isTermoCameraFlag)
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => termoCameraButton_Click(null, null)); break;
-                    case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
+                    case "4": await Dispatcher.RunAsync(CoreDispatcherPriority.High,   () => PhotoButton_Click(null, null)); break;
                     case "5": if (!_isRecording && currentCameraType != (int)cameraType.doubleCamera) 
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
                     case "6": if (_isRecording && currentCameraType != (int)cameraType.doubleCamera)
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => VideoButton_Click(null, null)); break;
                     case "7": if (_isRecording && currentCameraType != (int)cameraType.doubleCamera)
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PauseVideoButton_Click(null, null)); break;
-                    case "8":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => plusFlashButton_Click(null, null)); break;
-                    case "9":  await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => minusFlashButton_Click(null, null)); break;
-                    case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => NotesButton_Click(null, null)); break;
-                    case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => imageControlPreview_Tapped(null, null)); break;
-                    case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => OutputHelpCommand()); break;
-                    case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => buttonFlash_Click(null, null)); break;
-                    case "14": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => doubleCameraButton_Click(null, null)); break;
-                    case "15": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => PhotoButton_Click(null, null)); break;
-                    case "16": await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => doubleCameraButton_Click(null, null)); break;
+                    case "8":  await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => plusFlashButton_Click(null, null)); break;
+                    case "9":  await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => minusFlashButton_Click(null, null)); break;
+                    case "10": await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => NotesButton_Click(null, null)); break;
+                    case "11": await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => imageControlPreview_Tapped(null, null)); break;
+                    case "12": await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => OutputHelpCommand()); break;
+                    case "13": await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => buttonFlash_Click(null, null)); break;
+                    case "14":
+                    case "16": if (_isMainCameraFlag && _isTermoCameraFlag)
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.High,  () => doubleCameraButton_Click(null, null)); break;
+                    case "15": await Dispatcher.RunAsync(CoreDispatcherPriority.High,   () => PhotoButton_Click(null, null)); break;
+                    
+                    
                 }
 
             }
@@ -580,9 +584,7 @@ namespace CameraCOT
             //deltaTimePause = currentTime - timePause;
         }
 
-        //TimeSpan deltaTimePause;
-        //DateTime timePause;
-        //DateTime timeStartRecord;
+
         Stopwatch stopWatch = new Stopwatch();
         private void recordTimer_Tick(object sender, object e)
         {
@@ -608,7 +610,7 @@ namespace CameraCOT
         }
 
 
-        static int index;
+        //static int index;
 
         private void histogramStatisticTimer_Tick(object sender, object e)
         {
@@ -716,25 +718,7 @@ namespace CameraCOT
                 _isEndoCameraFlag = false;
                 _isTermoCameraFlag = false;
 
-                foreach (DeviceInformation camera in cameraDeviceList)
-                {
-                    if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
-                    {
-                        cameras[(int)cameraType.mainCamera].Id = camera.Id;
-                        _isMainCameraFlag = true;
-                    }
-                    if (camera.Name == cameras[(int)cameraType.endoCamera].Name)
-                    {
-                        cameras[(int)cameraType.endoCamera].Id = camera.Id;
-                        _isEndoCameraFlag = true;
-
-                    }
-                    if (camera.Name == cameras[(int)cameraType.termoCamera].Name)
-                    {
-                        cameras[(int)cameraType.termoCamera].Id = camera.Id;
-                        _isTermoCameraFlag = true;
-                    }
-                }
+                СhekCamera();
 
 
                 _isUIActive = false;
@@ -770,6 +754,18 @@ namespace CameraCOT
 
         private void CameraDefineLogic()
         {
+            СhekCamera();
+
+            if (_isEndoCameraFlag)
+                currentCameraType = (int)cameraType.endoCamera;
+            else if (_isMainCameraFlag)
+                currentCameraType = (int)cameraType.mainCamera;
+            else
+                currentCameraType = (int)cameraType.termoCamera;
+        }
+
+        private void СhekCamera()
+        {
             foreach (DeviceInformation camera in cameraDeviceListOld)
             {
                 if (camera.Name == cameras[(int)cameraType.mainCamera].Name)
@@ -788,15 +784,6 @@ namespace CameraCOT
                     _isTermoCameraFlag = true;
                 }
             }
-
-
-
-            if (_isEndoCameraFlag)
-                currentCameraType = (int)cameraType.endoCamera;
-            else if (_isMainCameraFlag)
-                currentCameraType = (int)cameraType.mainCamera;
-            else
-                currentCameraType = (int)cameraType.termoCamera;
         }
 
         private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
