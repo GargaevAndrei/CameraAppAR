@@ -80,12 +80,10 @@ namespace CameraCOT
         string Lenght;
         double initialLenght = 0;
         double lenght = 0;
-        double X;
-        double Y;
-        double Z;
-        double Xf;
-        double Yf;
-        double Zf;
+      
+        double Xf, Yf, Zf;
+
+
 
         DispatcherTimer lenghtMeterTimer;
         DispatcherTimer flashDelayTimer;
@@ -95,9 +93,11 @@ namespace CameraCOT
         DispatcherTimer opacityTimer;
         DispatcherTimer recordTimer;
         DispatcherTimer recordTimerPause;
+        DispatcherTimer endoTimer;
 
         SerialPort serialPortFlash;
         SerialPort serialPortLepton;
+        SerialPort serialPortEndo;
 
         bool _isMicrophone = false;
         bool _isVoice = false;
@@ -113,6 +113,7 @@ namespace CameraCOT
         bool _isNotes;
         bool _isNotFirstStart;
         bool _isHelpCommands;
+        bool bCalibration;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -197,6 +198,7 @@ namespace CameraCOT
             //StartingTextBox.Visibility = Visibility.Collapsed;
             //progressRing.Visibility = Visibility.Collapsed;
             //progressRing.IsActive = false;
+            videoEffectSettings.indexBadPixel = 4;
 
 
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
@@ -208,9 +210,9 @@ namespace CameraCOT
                 try
                 {
                     naparnikFolder = await storageFolder.CreateFolderAsync("Напарник", CreationCollisionOption.FailIfExists);
-                    photoFolder = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
-                    videoFolder = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
-                    notesFile = await naparnikFolder.CreateFileAsync("Заметки.txt");
+                    photoFolder    = await naparnikFolder.CreateFolderAsync("Фото", CreationCollisionOption.FailIfExists);
+                    videoFolder    = await naparnikFolder.CreateFolderAsync("Видео", CreationCollisionOption.FailIfExists);
+                    notesFile      = await naparnikFolder.CreateFileAsync("Заметки.txt");
                     //configFile = await naparnikFolder.CreateFileAsync("cameraConfig.json");
                 }
                 catch (Exception ex)
@@ -396,14 +398,25 @@ namespace CameraCOT
             recordTimerPause.Tick += recordTimerPause_Tick;
             recordTimerPause.Interval = new TimeSpan(0, 0, 0, 0, 100);
 
+            endoTimer = new DispatcherTimer();
+            endoTimer.Tick += endoTimer_Tick;
+            endoTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
 
-            /*serialPortEndo = new SerialPort("COM5", 9600, Parity.None, 8, StopBits.One);
+
+            serialPortEndo = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
             
             if(serialPortEndo != null)
             {
-                serialPortEndo.Open();
-                serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
-            }*/
+                try
+                {
+                    serialPortEndo.Open();
+                    serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+            }
 
             serialPortFlash = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
 
@@ -449,6 +462,25 @@ namespace CameraCOT
 
         }
 
+        private void endoTimer_Tick(object sender, object e)
+        {
+            if (serialPortEndo != null)
+            {
+                try
+                {                                    
+                    if (!serialPortEndo.IsOpen)
+                        serialPortEndo.Open();
+                    else
+                        serialPortEndo.Write("BAAZ");
+                                        
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    textBoxInfo.Text += ex.Message;
+                }
+            }
+        }
 
         public void OutputsData()
         {
@@ -488,6 +520,7 @@ namespace CameraCOT
             }
 
             serialPortLepton.DiscardInBuffer();
+          
             await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => histogramStatisticTimer.Start());
         }
 
@@ -718,7 +751,7 @@ namespace CameraCOT
                 _isEndoCameraFlag = false;
                 _isTermoCameraFlag = false;
 
-                СhekCamera();
+                СheckCamera();
 
 
                 _isUIActive = false;
@@ -754,7 +787,7 @@ namespace CameraCOT
 
         private void CameraDefineLogic()
         {
-            СhekCamera();
+            СheckCamera();
 
             if (_isEndoCameraFlag)
                 currentCameraType = (int)cameraType.endoCamera;
@@ -764,7 +797,7 @@ namespace CameraCOT
                 currentCameraType = (int)cameraType.termoCamera;
         }
 
-        private void СhekCamera()
+        private void СheckCamera()
         {
             foreach (DeviceInformation camera in cameraDeviceListOld)
             {
@@ -802,6 +835,13 @@ namespace CameraCOT
 
             double k = 0.2;
 
+            if (bCalibration)   // true
+            {
+                bCalibration = false;
+                videoEffectSettings.coordinate_zero = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+                //TimerEndo.Enabled := True;
+            }
+
             //Xf = Xf1 * k - (1 - k) * Xf;
             //Yf = Yf1 * k - (1 - k) * Yf;
             //Zf = Zf1 * k - (1 - k) * Zf;
@@ -810,6 +850,9 @@ namespace CameraCOT
             Yf = Yf1;
             Zf = Zf1;
 
+            //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => textBoxInfo.Text = String.Format("x = {0} y = {1} z = {2}", Xf, Yf, Zf) );
+            //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+            videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
         }
 
         private void LenghtMeterTimer_Tick(object sender, object e)
@@ -2710,6 +2753,54 @@ namespace CameraCOT
         }
 
         static int temp1 = 0;
+
+        private void leftPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if(videoEffectSettings.indexBadPixel>8)
+                videoEffectSettings.indexBadPixel -= 4;
+
+            endoTimer.Stop();
+        }
+
+        private void rightPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if (videoEffectSettings.indexBadPixel < 19192)
+                videoEffectSettings.indexBadPixel += 4;
+
+            endoTimer.Start();
+        }
+
+        private void upPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if (videoEffectSettings.indexBadPixel > 8)
+                videoEffectSettings.indexBadPixel -= 320;
+
+            //Считать калибровку
+            bCalibration = true;
+            if (serialPortEndo != null)
+            {
+                try
+                {
+                    if (!serialPortEndo.IsOpen)
+                        serialPortEndo.Open();
+                    else                    
+                        serialPortEndo.Write("GAAZ");
+                    
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    textBoxInfo.Text += ex.Message;
+                }
+            }
+        }
+
+        private void downPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if (videoEffectSettings.indexBadPixel < 19192)
+                videoEffectSettings.indexBadPixel += 320;
+        }
+
         private void NotesButton_Click(object sender, RoutedEventArgs e)
         {
             // StartUdpClient();

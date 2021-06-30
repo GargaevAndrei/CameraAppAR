@@ -235,7 +235,7 @@
 
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,0,0,0" Height="110" Width="170">
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="150,0,0,0" Height="110" Width="650">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10,20"/>
@@ -247,7 +247,7 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Collapsed">
+            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Visible">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
@@ -258,6 +258,8 @@
                     <SymbolIcon Symbol="Read"/>
                 </Viewbox>
             </Button>
+
+            
 
             <Button x:Name="notesButton" Click="NotesButton_Click">
                 <Grid>
@@ -272,7 +274,7 @@
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
-            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Collapsed"/>
+            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Visible"/>
 
         </StackPanel>
 
@@ -370,9 +372,28 @@
         <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="80" Height="80" VerticalAlignment="Bottom"/>
         <!--<Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="583" Height="240" VerticalAlignment="Bottom"/>-->
 
+        <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Visible" Margin="0,520,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Viewbox MaxHeight="35" MaxWidth="35">
+                <SymbolIcon Symbol="Back"/>
+            </Viewbox>
+        </Button>
+        <Button x:Name="rightPixel" Click="rightPixel_Click" Visibility="Visible" Margin="0,520,150,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Viewbox MaxHeight="35" MaxWidth="35">
+                <SymbolIcon Symbol="Forward"/>
+            </Viewbox>
+        </Button>
+        <Button x:Name="upPixel" Click="upPixel_Click" Visibility="Visible" Margin="0,480,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Viewbox MaxHeight="35" MaxWidth="35">
+                <SymbolIcon Symbol="Up"/>
+            </Viewbox>
+        </Button>
+        <Button x:Name="downPixel" Click="downPixel_Click" Visibility="Visible" Margin="0,560,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Viewbox MaxHeight="35" MaxWidth="35">
+                <SymbolIcon Symbol="Download"/>
+            </Viewbox>
+        </Button>
 
-
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,666,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,665,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

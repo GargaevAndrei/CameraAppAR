@@ -38,6 +38,7 @@ namespace VideoEffectComponent
     {
         public static string lenght;
         public static string coordinate;
+        public static string coordinate_zero;
         public static string commet;
         public static int X;
         public static int Y;
@@ -51,6 +52,7 @@ namespace VideoEffectComponent
         public static int YRect;
         public static int widthRect;
         public static int heightRect;
+        public static int indexBadPixel;
 
         /*public void SetParamNotes(int _x, int _y, int _fontSize, int _widthRect)
         {
@@ -60,6 +62,15 @@ namespace VideoEffectComponent
             widthRect = _widthRect;
         }*/
     }
+
+    static class ImageForVector
+    {
+        public static int x = 200;
+        public static int y = 800;
+        public static int widtch = 200;
+        public static int height = 200;
+    }
+
     //public static double temperature;
     public sealed class ExampleVideoEffect : IBasicVideoEffect
     {
@@ -68,6 +79,23 @@ namespace VideoEffectComponent
         int indexMin = 0;
         
         double err, errMin = 100000;
+
+        int indexBadPixel;
+        string[] coordinateXYZ = new string[3];
+        string[] coordinateXYZ_zero = new string[3];
+        double X, Y, Z;
+        double xf, yf, zf;
+        int x1, y1, z1, R, x2;
+        int x1_s, x2_s, y1_s, y2_s;
+        int x_k, y_k, z_k;
+        double x_zero, y_zero, z_zero, alpha_zero;
+        double R1xy, R1yz, R1xz;
+        double alpha, l_strelka, alpha_s;
+        bool bOne, bHorizont = false;
+
+        
+        
+
 
         public void Close(MediaEffectClosedReason reason)
         {
@@ -171,10 +199,9 @@ namespace VideoEffectComponent
             using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))
             using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
             {
-                ds.DrawImage(inputBitmap);
+                ds.DrawImage(inputBitmap);          
 
-
-                if (videoEffectSettings.termo)
+                if (videoEffectSettings.termo)  //
                 {
                     //for (int i = 0, j = 0; i < colormap_fusion.Length - 2; i += 3, j++)
                     //    colormap_gray[j] = 0.2126 * colormap_fusion[i] + 0.7152 * colormap_fusion[i + 1] + 0.0722 * colormap_fusion[i + 2];
@@ -188,14 +215,28 @@ namespace VideoEffectComponent
                     //buf[9437] = 255;
                     //buf[9438] = 0;
 
+                    indexBadPixel = videoEffectSettings.indexBadPixel;
+
+                    buf[indexBadPixel + 0] = 255;
+                    buf[indexBadPixel + 1] = 255;
+                    buf[indexBadPixel + 2] = 255;
+
+                    buf[indexBadPixel + 8 + 0] = (byte)((buf[indexBadPixel + 4 + 0] + buf[indexBadPixel + 12 + 0])/2);
+                    buf[indexBadPixel + 8 + 1] = (byte)((buf[indexBadPixel + 4 + 1] + buf[indexBadPixel + 12 + 1])/2);
+                    buf[indexBadPixel + 8 + 2] = (byte)((buf[indexBadPixel + 4 + 2] + buf[indexBadPixel + 12 + 2])/2);
+
+                    buf[indexBadPixel + 16 + 0] = 255;
+                    buf[indexBadPixel + 16 + 1] = 255;
+                    buf[indexBadPixel + 16 + 2] = 255;
+
                     // Линейная интерполяция пикселей--------------
 
                     //---------------------------------------------
 
                     //var Y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
 
-                    //inputBitmap.SetPixelBytes(buf);
-                    //ds.DrawImage(inputBitmap);
+                    inputBitmap.SetPixelBytes(buf);
+                    ds.DrawImage(inputBitmap);
 
                     indexMin = 0;
                     errMin = 1000000;
@@ -233,6 +274,14 @@ namespace VideoEffectComponent
                 //    FontWeight = Windows.UI.Text.FontWeights.Bold
                 //});
 
+                if (videoEffectSettings.coordinate_zero != null && !bOne)
+                {
+                    bOne = true;
+                    coordinateXYZ_zero = videoEffectSettings.coordinate_zero.Split(';');
+                    x_zero = Convert.ToDouble(coordinateXYZ_zero[0]);
+                    y_zero = Convert.ToDouble(coordinateXYZ_zero[1]);
+                    z_zero = Convert.ToDouble(coordinateXYZ_zero[2]);
+                }
 
                 if (videoEffectSettings.coordinate != null)
                 {
@@ -241,6 +290,178 @@ namespace VideoEffectComponent
                         FontSize = 44,
                         FontWeight = Windows.UI.Text.FontWeights.Bold
                     });
+
+                 
+                    coordinateXYZ = videoEffectSettings.coordinate.Split(';');
+                    X = Convert.ToDouble(coordinateXYZ[0]);
+                    Y = Convert.ToDouble(coordinateXYZ[1]);
+                    Z = Convert.ToDouble(coordinateXYZ[2]);
+
+                    xf = X;
+                    yf = Y;
+                    zf = Z;
+
+
+                    Rect rec = new Rect(ImageForVector.x, ImageForVector.y, ImageForVector.widtch, ImageForVector.height);
+                    ds.DrawRectangle(rec, Colors.Beige);
+                    ds.DrawLine(ImageForVector.x, ImageForVector.y + ImageForVector.height/2, 
+                                ImageForVector.x + ImageForVector.widtch, ImageForVector.y + ImageForVector.height / 2, Colors.Beige);
+                    ds.DrawLine(ImageForVector.x + ImageForVector.widtch/2, ImageForVector.y ,
+                                ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height, Colors.Beige);
+
+
+
+
+
+                    R = 40;
+                    alpha_s = Math.PI / 4;
+                    l_strelka = 10;
+                    //alpha_zero := -2.0196094001943;
+
+                    if (y_zero != 0)
+                    {
+
+                        if (y_zero < 0)
+                            alpha_zero = Math.PI / 2 + Math.Atan(z_zero / (-y_zero));
+
+                        if (y_zero > 0)
+                            alpha_zero = -Math.PI / 2 + Math.Atan(z_zero / (-y_zero));
+                        
+                    }
+
+
+                    if (yf != 0)
+                    {
+                        if (yf < 0)
+                            alpha = Math.Atan(zf / (-yf)) - alpha_zero;
+                        if (yf > 0)
+                            alpha = Math.Atan(zf / (-yf)) + Math.PI - alpha_zero;
+
+                        y_k = (int)Math.Round(R * 0.7 * Math.Cos(alpha));
+                        z_k = (int)Math.Round(R * 0.7 * Math.Sin(alpha));
+
+                        if (bHorizont)
+                        {
+                            x1_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s));
+                            x2_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s - Math.PI / 2));
+                            y1_s = (int)Math.Round(l_strelka *  Math.Sin(alpha + alpha_s));
+                            y2_s = (int)Math.Round(l_strelka *  Math.Sin(alpha + alpha_s - Math.PI / 2));
+                        }
+                        else
+                        {
+                            x1_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s + alpha_zero));
+                            x2_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s + alpha_zero - Math.PI / 2));
+                            y1_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s + alpha_zero));
+                            y2_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s + alpha_zero - Math.PI / 2));
+                        }
+
+                    }
+
+
+                    if (bHorizont)    
+                    {
+                        x1 = (int)Math.Round((X - x_zero) * 10);
+                        y1 = (int)Math.Round((Y) * 10);
+                        z1 = (int)Math.Round((Z) * 10);
+                        R = (int)Math.Round(Math.Sqrt(y1 * y1 + z1 * z1));
+
+                        if (x1 < 0)
+                        {
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2,
+                                        ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        Colors.Red, 4);
+
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 - x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
+                                        Colors.Red, 4);
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 - x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
+                                        Colors.Red, 4);
+
+                        }
+                        else
+                        {
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2,
+                                        ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        Colors.Yellow, 4);
+
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 + x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
+                                        Colors.Yellow, 4);
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 + x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
+                                        Colors.Yellow, 4);
+                        }
+                    }
+                    else
+                    {
+
+
+
+                    R1xz = Math.Sqrt(zf * zf + xf * xf);
+                        if (R1xz != 0)
+                        {
+                            x2 = (int)(R * ((xf - x_zero) / R1xz));
+                            x1 = (int)Math.Round(x2 * 0.7);
+                            z1 = (int)Math.Round(R * 0.7 * Math.Cos(alpha + Math.PI / 2));
+                            y1 = (int)Math.Round(R * 0.7 * Math.Sin(alpha + Math.PI / 2));
+
+
+                            if (x1 < 0)
+                            {
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + y1,
+                                            Colors.Yellow, 4);
+
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 - y1,
+                                            Colors.Yellow, 4);
+
+
+                                // перпендикуляр
+
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                            Colors.Yellow, 4);
+                                // стрелка
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k + x1_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y1_s,
+                                            Colors.Yellow, 4);
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                           ImageForVector.x + ImageForVector.widtch / 2 - y_k + x2_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y2_s,
+                                           Colors.Yellow, 4);
+
+                            }
+                            else
+                            {
+
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + y1,
+                                            Colors.Yellow, 4);
+
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 - y1,
+                                            Colors.Yellow, 4);
+
+
+                                // перпендикуляр
+
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                            Colors.Yellow, 4);
+                                // стрелка
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k + x1_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y1_s,
+                                            Colors.Yellow, 4);
+                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                           ImageForVector.x + ImageForVector.widtch / 2 - y_k + x2_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y2_s,
+                                           Colors.Yellow, 4);
+
+                            }
+                        }
+
+                    }
+
                 }
 
                 if (videoEffectSettings.commet != null)
