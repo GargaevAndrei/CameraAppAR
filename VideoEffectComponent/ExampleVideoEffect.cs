@@ -330,9 +330,9 @@ namespace VideoEffectComponent
                     }
 
 
-                    if (yf != 0)
+                    if (yf != 0) 
                     {
-                        if (yf < 0)
+                        if (yf < 0) 
                             alpha = Math.Atan(zf / (-yf)) - alpha_zero;
                         if (yf > 0)
                             alpha = Math.Atan(zf / (-yf)) + Math.PI - alpha_zero;
