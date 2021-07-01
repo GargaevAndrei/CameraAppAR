@@ -285,11 +285,11 @@ namespace VideoEffectComponent
 
                 if (videoEffectSettings.coordinate != null)
                 {
-                    ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.PaleTurquoise, new CanvasTextFormat
-                    {
-                        FontSize = 44,
-                        FontWeight = Windows.UI.Text.FontWeights.Bold
-                    });
+                    //ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.PaleTurquoise, new CanvasTextFormat
+                    //{
+                    //    FontSize = 44,
+                    //    FontWeight = Windows.UI.Text.FontWeights.Bold
+                    //});
 
                  
                     coordinateXYZ = videoEffectSettings.coordinate.Split(';');
@@ -396,9 +396,7 @@ namespace VideoEffectComponent
                     else
                     {
 
-
-
-                    R1xz = Math.Sqrt(zf * zf + xf * xf);
+                        R1xz = Math.Sqrt(zf * zf + xf * xf);
                         if (R1xz != 0)
                         {
                             x2 = (int)(R * ((xf - x_zero) / R1xz));
@@ -410,11 +408,11 @@ namespace VideoEffectComponent
                             if (x1 < 0)
                             {
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + y1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + x1 + y1,
                                             Colors.Yellow, 4);
 
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 - y1,
+                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 + x1 - y1,
                                             Colors.Yellow, 4);
 
 
@@ -436,26 +434,26 @@ namespace VideoEffectComponent
                             {
 
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + y1,
-                                            Colors.Yellow, 4);
+                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + x1 + y1,
+                                            Colors.Cyan, 4);
 
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 - y1,
-                                            Colors.Yellow, 4);
+                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 + x1 - y1,
+                                            Colors.Cyan, 4);
 
 
                                 // перпендикуляр
 
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
                                             ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
-                                            Colors.Yellow, 4);
+                                            Colors.Cyan, 4);
                                 // стрелка
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
                                             ImageForVector.x + ImageForVector.widtch / 2 - y_k + x1_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y1_s,
-                                            Colors.Yellow, 4);
+                                            Colors.Cyan, 4);
                                 ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k + x2_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y2_s,
-                                           Colors.Yellow, 4);
+                                           Colors.Cyan, 4);
 
                             }
                         }

@@ -824,6 +824,7 @@ namespace CameraCOT
             var serialPort = (SerialPort)sender;
             byte[] data = new byte[8];
             serialPort.Read(data, 0, 8);
+            double x, y, z;
 
             short Xaccel = (short)((((short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
             short Yaccel = (short)((((short)(data[3]) << 2 | (short)(data[2]) >> 6)) << 6);
@@ -832,6 +833,10 @@ namespace CameraCOT
             double Xf1 = (double)Xaccel / 4096;
             double Yf1 = (double)Yaccel / 4096;
             double Zf1 = (double)Zaccel / 4096;
+
+            x = Xf1;
+            y = Yf1;
+            z = Zf1;
 
             double k = 0.2;
 
@@ -846,9 +851,13 @@ namespace CameraCOT
             //Yf = Yf1 * k - (1 - k) * Yf;
             //Zf = Zf1 * k - (1 - k) * Zf;
 
-            Xf = Xf1;
-            Yf = Yf1;
-            Zf = Zf1;
+            Xf = k * x + (1 - k) * Xf;
+            Yf = k * y + (1 - k) * Yf;
+            Zf = k * z + (1 - k) * Zf;
+
+            //Xf = Xf1;
+            //Yf = Yf1;
+            //Zf = Zf1;
 
             //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => textBoxInfo.Text = String.Format("x = {0} y = {1} z = {2}", Xf, Yf, Zf) );
             //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
