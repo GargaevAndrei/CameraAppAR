@@ -199,6 +199,7 @@ namespace CameraCOT
             //progressRing.Visibility = Visibility.Collapsed;
             //progressRing.IsActive = false;
             videoEffectSettings.indexBadPixel = 4;
+            videoEffectSettings.bHorizont = true;
 
 
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
@@ -364,6 +365,8 @@ namespace CameraCOT
 
             EnumerateHidDevices();
 
+            bCalibration = true;
+
             lenghtMeterTimer = new DispatcherTimer();
             lenghtMeterTimer.Tick += LenghtMeterTimer_Tick;
             lenghtMeterTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
@@ -404,13 +407,13 @@ namespace CameraCOT
 
 
             serialPortEndo = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
-            
-            if(serialPortEndo != null)
+            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+
+            if (serialPortEndo != null)
             {
                 try
                 {
-                    serialPortEndo.Open();
-                    serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+                    serialPortEndo.Open();                   
                 }
                 catch (Exception e)
                 {
@@ -795,6 +798,51 @@ namespace CameraCOT
                 currentCameraType = (int)cameraType.mainCamera;
             else
                 currentCameraType = (int)cameraType.termoCamera;
+
+            if (_isEndoCameraFlag)
+            {
+                if (serialPortEndo != null)
+                {
+                    if(serialPortEndo.IsOpen)
+                    {
+                        serialPortEndo.Close();
+                    }
+                   //if (!serialPortEndo.IsOpen)
+                    //{
+                        try
+                        {
+                            serialPortEndo.Open();
+                            //serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+                    //}
+                    endoTimer.Start();
+                    videoEffectSettings.getCoordinateFlag = true;
+                }
+            }
+            else
+            {
+                if (serialPortEndo != null)
+                {
+                    if (serialPortEndo.IsOpen)
+                    {
+                        try
+                        {
+                            serialPortEndo.Close();
+                            serialPortEndo.DataReceived -= SerialPortEndo_DataReceived;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+                    }
+                    endoTimer.Stop();
+                    videoEffectSettings.getCoordinateFlag = false;
+                }
+            }
         }
 
         private void СheckCamera()
@@ -823,7 +871,15 @@ namespace CameraCOT
         {
             var serialPort = (SerialPort)sender;
             byte[] data = new byte[8];
-            serialPort.Read(data, 0, 8);
+            try
+            {
+                serialPort.Read(data, 0, 8);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message); 
+            }
+            
             double x, y, z;
 
             short Xaccel = (short)((((short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
@@ -1170,8 +1226,32 @@ namespace CameraCOT
                 sendOutReport(dataWriter);
 
             }
-        }
 
+            try
+            {
+                //byte[] s = new byte[1];
+                //s[0] = 0x41;
+                //serialPortEndo.Write(s, 0, 1);
+                //s[0] = (byte)((light >> 8) & 0xff);
+                //serialPortEndo.Write(s, 0, 1);
+                //s[0] = (byte)((light) & 0xff);
+                //serialPortEndo.Write(s, 0, 1);
+                //s[0] = 0x5A;
+                //serialPortEndo.Write(s, 0, 1);
+
+                char[] s = new char[4];
+                s[0] = 'A';
+                s[1] = (char)((light >> 8) & 0xff);                
+                s[2] = (char)((light) & 0xff);
+                s[3] = 'Z';
+                serialPortEndo.Write(s, 0, 4);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
         //private void inReportRead_Click(object sender, RoutedEventArgs e)
         //{
         //    readHid();
@@ -2136,6 +2216,9 @@ namespace CameraCOT
 
         private async void mainCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            endoTimer.Stop();
+            videoEffectSettings.getCoordinateFlag = false;
+
             progressRingStart.Visibility = Visibility.Visible;
             progressRingStart.IsActive = true;
 
@@ -2228,10 +2311,32 @@ namespace CameraCOT
             progressRingStart.IsActive = false;
 
             UpdateUIControls();
+
+
+            if (serialPortEndo != null)
+            {
+                if (!serialPortEndo.IsOpen)
+                {
+                    try
+                    {
+                        serialPortEndo.Open();
+                        serialPortEndo.DataReceived += SerialPortEndo_DataReceived;                     
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
+                }
+                endoTimer.Start();
+                videoEffectSettings.getCoordinateFlag = true;
+            }
         }
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            endoTimer.Stop();
+            videoEffectSettings.getCoordinateFlag = false;
+
             progressRingStart.Visibility = Visibility.Visible;
             progressRingStart.IsActive = true;
 
@@ -2279,6 +2384,9 @@ namespace CameraCOT
 
         private async void doubleCameraButton_Click(object sender, RoutedEventArgs e)
         {
+            endoTimer.Stop();
+            videoEffectSettings.getCoordinateFlag = false;
+
             progressRingStart.Visibility = Visibility.Visible;
             progressRingStart.IsActive = true;
 
@@ -2399,6 +2507,15 @@ namespace CameraCOT
         {
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
+
+
+            EndoOrientationButton.Visibility  = (currentCameraType != (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            EndoEnableVectorButton.Visibility = (currentCameraType != (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            HorizontIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Collapsed : Visibility.Visible;
+            VerticalIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Visible : Visibility.Collapsed;
+            EnableVectorIcon.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Collapsed : Visibility.Visible;
+            DisableVectorIcon.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Visible : Visibility.Collapsed;
+
 
             termoPanelDot.Margin = _isDouble ? new Thickness(0, 232, 245, 0) : new Thickness(0, 232, 490, 0);
             termoPanel1.Margin = _isDouble ? new Thickness(0, 0, 235, 0) : new Thickness(0, 0, 470, 0);
@@ -2777,6 +2894,18 @@ namespace CameraCOT
                 videoEffectSettings.indexBadPixel += 4;
 
             endoTimer.Start();
+        }
+
+        private void EndoOrientationButton_Click(object sender, RoutedEventArgs e)
+        {
+            videoEffectSettings.bHorizont = !videoEffectSettings.bHorizont;
+            UpdateUIControls();
+        }
+
+        private void EndoEnableVectorButton_Click(object sender, RoutedEventArgs e)
+        {
+            videoEffectSettings.getCoordinateFlag = !videoEffectSettings.getCoordinateFlag;
+            UpdateUIControls();
         }
 
         private void upPixel_Click(object sender, RoutedEventArgs e)

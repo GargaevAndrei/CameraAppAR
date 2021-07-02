@@ -247,7 +247,7 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Visible">
+            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Collapsed">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
@@ -271,10 +271,42 @@
                 </Grid>
             </Button>
 
+            <Button x:Name="EndoOrientationButton" Click="EndoOrientationButton_Click" Width="40" Height="40" Visibility="Collapsed">
+                <Grid>
+
+                    <FontIcon x:Name="HorizontIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xE74A;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="VerticalIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xE72A;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
+            <Button x:Name="EndoEnableVectorButton" Click="EndoEnableVectorButton_Click" Width="40" Height="40" Visibility="Collapsed">
+                <Grid>
+
+                    <FontIcon x:Name="EnableVectorIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="40" Glyph="&#xECCA;" RenderTransformOrigin="0.5,0.5" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="DisableVectorIcon" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Width="40" Height="40" Glyph="&#xECE4;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
-            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Visible"/>
+            <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="188" FontSize="24" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Collapsed"/>
 
         </StackPanel>
 
@@ -372,22 +404,22 @@
         <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="80" Height="80" VerticalAlignment="Bottom"/>
         <!--<Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="583" Height="240" VerticalAlignment="Bottom"/>-->
 
-        <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Visible" Margin="0,520,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+        <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Collapsed" Margin="0,520,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
             <Viewbox MaxHeight="35" MaxWidth="35">
                 <SymbolIcon Symbol="Back"/>
             </Viewbox>
         </Button>
-        <Button x:Name="rightPixel" Click="rightPixel_Click" Visibility="Visible" Margin="0,520,150,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+        <Button x:Name="rightPixel" Click="rightPixel_Click" Visibility="Collapsed" Margin="0,520,150,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
             <Viewbox MaxHeight="35" MaxWidth="35">
                 <SymbolIcon Symbol="Forward"/>
             </Viewbox>
         </Button>
-        <Button x:Name="upPixel" Click="upPixel_Click" Visibility="Visible" Margin="0,480,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+        <Button x:Name="upPixel" Click="upPixel_Click" Visibility="Collapsed" Margin="0,480,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
             <Viewbox MaxHeight="35" MaxWidth="35">
                 <SymbolIcon Symbol="Up"/>
             </Viewbox>
         </Button>
-        <Button x:Name="downPixel" Click="downPixel_Click" Visibility="Visible" Margin="0,560,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+        <Button x:Name="downPixel" Click="downPixel_Click" Visibility="Collapsed" Margin="0,560,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
             <Viewbox MaxHeight="35" MaxWidth="35">
                 <SymbolIcon Symbol="Download"/>
             </Viewbox>

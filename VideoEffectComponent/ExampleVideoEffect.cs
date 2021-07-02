@@ -44,6 +44,7 @@ namespace VideoEffectComponent
         public static int Y;
         public static int FontSize;
         public static bool getLenghtFlag;
+        public static bool getCoordinateFlag;
         public static bool termo;
         public static double Tmin;
         public static double Tmax;
@@ -53,6 +54,7 @@ namespace VideoEffectComponent
         public static int widthRect;
         public static int heightRect;
         public static int indexBadPixel;
+        public static bool bHorizont;
 
         /*public void SetParamNotes(int _x, int _y, int _fontSize, int _widthRect)
         {
@@ -65,7 +67,7 @@ namespace VideoEffectComponent
 
     static class ImageForVector
     {
-        public static int x = 200;
+        public static int x = 10;
         public static int y = 800;
         public static int widtch = 200;
         public static int height = 200;
@@ -91,7 +93,8 @@ namespace VideoEffectComponent
         double x_zero, y_zero, z_zero, alpha_zero;
         double R1xy, R1yz, R1xz;
         double alpha, l_strelka, alpha_s;
-        bool bOne, bHorizont = false;
+        bool bOne;
+        //bool bHorizont = false;
 
         
         
@@ -215,7 +218,7 @@ namespace VideoEffectComponent
                     //buf[9437] = 255;
                     //buf[9438] = 0;
 
-                    indexBadPixel = videoEffectSettings.indexBadPixel;
+                    /*indexBadPixel = videoEffectSettings.indexBadPixel;
 
                     buf[indexBadPixel + 0] = 255;
                     buf[indexBadPixel + 1] = 255;
@@ -227,7 +230,7 @@ namespace VideoEffectComponent
 
                     buf[indexBadPixel + 16 + 0] = 255;
                     buf[indexBadPixel + 16 + 1] = 255;
-                    buf[indexBadPixel + 16 + 2] = 255;
+                    buf[indexBadPixel + 16 + 2] = 255;*/
 
                     // Линейная интерполяция пикселей--------------
 
@@ -281,9 +284,10 @@ namespace VideoEffectComponent
                     x_zero = Convert.ToDouble(coordinateXYZ_zero[0]);
                     y_zero = Convert.ToDouble(coordinateXYZ_zero[1]);
                     z_zero = Convert.ToDouble(coordinateXYZ_zero[2]);
+                    videoEffectSettings.coordinate_zero = null;
                 }
 
-                if (videoEffectSettings.coordinate != null)
+                if (videoEffectSettings.coordinate != null && videoEffectSettings.getCoordinateFlag)
                 {
                     //ds.DrawText(videoEffectSettings.coordinate, 200, 200, Colors.PaleTurquoise, new CanvasTextFormat
                     //{
@@ -313,9 +317,9 @@ namespace VideoEffectComponent
 
 
 
-                    R = 40;
+                    R = 60;
                     alpha_s = Math.PI / 4;
-                    l_strelka = 10;
+                    l_strelka = 15;
                     //alpha_zero := -2.0196094001943;
 
                     if (y_zero != 0)
@@ -340,7 +344,7 @@ namespace VideoEffectComponent
                         y_k = (int)Math.Round(R * 0.7 * Math.Cos(alpha));
                         z_k = (int)Math.Round(R * 0.7 * Math.Sin(alpha));
 
-                        if (bHorizont)
+                        if (videoEffectSettings.bHorizont)
                         {
                             x1_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s));
                             x2_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s - Math.PI / 2));
@@ -358,12 +362,12 @@ namespace VideoEffectComponent
                     }
 
 
-                    if (bHorizont)    
+                    if (!videoEffectSettings.bHorizont)    
                     {
-                        x1 = (int)Math.Round((X - x_zero) * 10);
-                        y1 = (int)Math.Round((Y) * 10);
-                        z1 = (int)Math.Round((Z) * 10);
-                        R = (int)Math.Round(Math.Sqrt(y1 * y1 + z1 * z1));
+                        x1 = (int)Math.Round((X - x_zero) * 15);
+                        y1 = (int)Math.Round((Y) * 15);
+                        z1 = (int)Math.Round((Z) * 15);
+                        R =  (int)Math.Round(Math.Sqrt(y1 * y1 + z1 * z1));
 
                         if (x1 < 0)
                         {
