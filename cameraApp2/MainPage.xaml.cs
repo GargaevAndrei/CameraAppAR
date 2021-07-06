@@ -82,7 +82,7 @@ namespace CameraCOT
         double lenght = 0;
       
         double Xf, Yf, Zf;
-
+        int litgh;
 
 
         DispatcherTimer lenghtMeterTimer;
@@ -843,6 +843,7 @@ namespace CameraCOT
                     videoEffectSettings.getCoordinateFlag = false;
                 }
             }
+            //UpdateUIControls();
         }
 
         private void СheckCamera()
@@ -1239,11 +1240,11 @@ namespace CameraCOT
                 //s[0] = 0x5A;
                 //serialPortEndo.Write(s, 0, 1);
 
-                char[] s = new char[4];
-                s[0] = 'A';
-                s[1] = (char)((light >> 8) & 0xff);                
-                s[2] = (char)((light) & 0xff);
-                s[3] = 'Z';
+                byte[] s = new byte[4];
+                s[0] = 65; //'A';     //65
+                s[1] = (byte)((light >> 8) & 0xff);                
+                s[2] = (byte)((light) & 0xff);
+                s[3] = 90; // 'Z';     //90
                 serialPortEndo.Write(s, 0, 4);
 
             }
@@ -2509,8 +2510,11 @@ namespace CameraCOT
             textBoxInfo.Visibility = Visibility.Collapsed;
 
 
-            EndoOrientationButton.Visibility  = (currentCameraType != (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
-            EndoEnableVectorButton.Visibility = (currentCameraType != (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
+            EndoOrientationButton.Visibility  = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            EndoEnableVectorButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            if(_isEndoCameraFlag)
+                SetCoordinateNotes(50, 1000, 40, 1550);
+
             HorizontIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Collapsed : Visibility.Visible;
             VerticalIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Visible : Visibility.Collapsed;
             EnableVectorIcon.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Collapsed : Visibility.Visible;
@@ -2707,7 +2711,8 @@ namespace CameraCOT
             Debug.WriteLine("Send flash Endo");
             textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;
 
-            int litgh = (int)(pbFlashPowerEndo.Value);
+     
+            litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
 
             try
             {
@@ -2722,7 +2727,7 @@ namespace CameraCOT
         //short flashValue = 600;
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
-        short StepFlashPower = 100;
+        short StepFlashPower = 2;
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
