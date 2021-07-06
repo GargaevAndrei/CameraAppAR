@@ -2510,8 +2510,8 @@ namespace CameraCOT
             textBoxInfo.Visibility = Visibility.Collapsed;
 
 
-            EndoOrientationButton.Visibility  = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
-            EndoEnableVectorButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             if(_isEndoCameraFlag)
                 SetCoordinateNotes(50, 1000, 40, 1550);
 
@@ -2727,7 +2727,8 @@ namespace CameraCOT
         //short flashValue = 600;
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
-        short StepFlashPower = 2;
+        short StepFlashPower = 40;
+        short StepFlashPowerEndo = 2;
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
@@ -2746,13 +2747,13 @@ namespace CameraCOT
 
         private void plusFlashButtonEndo_Click(object sender, RoutedEventArgs e)
         {
-            pbFlashPowerEndo.Value = pbFlashPowerEndo.Value + StepFlashPower;
+            pbFlashPowerEndo.Value = pbFlashPowerEndo.Value + StepFlashPowerEndo;
             FlashCMDEndo();
         }
 
         private void minusFlashButtonEndo_Click(object sender, RoutedEventArgs e)
         {
-            pbFlashPowerEndo.Value = pbFlashPowerEndo.Value - StepFlashPower;
+            pbFlashPowerEndo.Value = pbFlashPowerEndo.Value - StepFlashPowerEndo;
             FlashCMDEndo();
         }
 
