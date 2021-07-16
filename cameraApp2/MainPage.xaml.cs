@@ -60,6 +60,7 @@ namespace CameraCOT
         // Object to manage access to camera devices
         //private MediaCapturePreviewer _previewer = null;
 
+       
 
         MediaFrameReader mediaFrameReader;
 
@@ -366,6 +367,7 @@ namespace CameraCOT
             EnumerateHidDevices();
 
             bCalibration = true;
+            
 
             lenghtMeterTimer = new DispatcherTimer();
             lenghtMeterTimer.Tick += LenghtMeterTimer_Tick;
@@ -803,22 +805,20 @@ namespace CameraCOT
             {
                 if (serialPortEndo != null)
                 {
-                    if(serialPortEndo.IsOpen)
-                    {
-                        serialPortEndo.Close();
-                    }
-                   //if (!serialPortEndo.IsOpen)
-                    //{
+                    
+                    serialPortEndo.Close();
+                    
+                   if (!serialPortEndo.IsOpen)
+                   {
                         try
                         {
                             serialPortEndo.Open();
-                            //serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
                         }
                         catch (Exception ex)
                         {
                             Debug.WriteLine(ex.Message);
                         }
-                    //}
+                   }
                     endoTimer.Start();
                     videoEffectSettings.getCoordinateFlag = true;
                 }
@@ -826,19 +826,17 @@ namespace CameraCOT
             else
             {
                 if (serialPortEndo != null)
-                {
-                    if (serialPortEndo.IsOpen)
+                {                    
+                    try
                     {
-                        try
-                        {
-                            serialPortEndo.Close();
-                            serialPortEndo.DataReceived -= SerialPortEndo_DataReceived;
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
+                        serialPortEndo.Close();
+                        serialPortEndo.DiscardInBuffer();
                     }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
+                    
                     endoTimer.Stop();
                     videoEffectSettings.getCoordinateFlag = false;
                 }
@@ -1571,8 +1569,20 @@ namespace CameraCOT
         private byte[] imageBuffer;
 
 
-        private async void GetFrame_Click()
+        private async void runTransparentButton_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                await CleanupCameraAsync();
+
+                _isDouble = false;
+
+                await SetUpBasedOnStateAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("error " + ex.Message);
+            }
 
             var frameSourceGroups = await MediaFrameSourceGroup.FindAllAsync();
 
@@ -1583,16 +1593,16 @@ namespace CameraCOT
             {
                 foreach (var sourceInfo in sourceGroup.SourceInfos)
                 {
-                    if (sourceInfo.MediaStreamType == MediaStreamType.VideoRecord && sourceInfo.SourceKind == MediaFrameSourceKind.Color)
-                    {
+                    //if (sourceInfo.MediaStreamType == MediaStreamType.VideoRecord && sourceInfo.SourceKind == MediaFrameSourceKind.Color)
+                    //{
                         colorSourceInfo = sourceInfo;
-                        break;
-                    }
+                        //break;
+                    //}
                 }
                 if (colorSourceInfo != null)
                 {
                     selectedGroup = sourceGroup;
-                    break;
+                    //break;
                 }
             }
 
@@ -2156,6 +2166,7 @@ namespace CameraCOT
 
 
                     fileStream.Seek(0);
+
                     await offscreen.SaveAsync(fileStream, CanvasBitmapFileFormat.Png);
 
                     BitmapImage image = new BitmapImage();
@@ -2321,7 +2332,7 @@ namespace CameraCOT
                     try
                     {
                         serialPortEndo.Open();
-                        serialPortEndo.DataReceived += SerialPortEndo_DataReceived;                     
+                        //serialPortEndo.DataReceived += SerialPortEndo_DataReceived;                     
                     }
                     catch (Exception ex)
                     {
@@ -2885,23 +2896,6 @@ namespace CameraCOT
         }
 
         static int temp1 = 0;
-
-        private void leftPixel_Click(object sender, RoutedEventArgs e)
-        {
-            if(videoEffectSettings.indexBadPixel>8)
-                videoEffectSettings.indexBadPixel -= 4;
-
-            endoTimer.Stop();
-        }
-
-        private void rightPixel_Click(object sender, RoutedEventArgs e)
-        {
-            if (videoEffectSettings.indexBadPixel < 19192)
-                videoEffectSettings.indexBadPixel += 4;
-
-            endoTimer.Start();
-        }
-
         private void EndoOrientationButton_Click(object sender, RoutedEventArgs e)
         {
             videoEffectSettings.bHorizont = !videoEffectSettings.bHorizont;
@@ -2914,34 +2908,37 @@ namespace CameraCOT
             UpdateUIControls();
         }
 
+        private void leftPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if(videoEffectSettings.indexBadPixel>8)
+                videoEffectSettings.indexBadPixel -= 4;
+       
+        }
+
+        private void rightPixel_Click(object sender, RoutedEventArgs e)
+        {
+            if (videoEffectSettings.indexBadPixel < 19192)
+                videoEffectSettings.indexBadPixel += 4;
+
+        }
+
+        private void correctPixel_Click(object sender, RoutedEventArgs e)
+        {
+            //videoEffectSettings.badPixel.Add(videoEffectSettings.indexBadPixel);
+            //useFullConnainer.badPixel.Add(videoEffectSettings.indexBadPixel);
+            BadPixelContainer.RecordBadPixel(videoEffectSettings.indexBadPixel);
+        }
+
         private void upPixel_Click(object sender, RoutedEventArgs e)
         {
-            if (videoEffectSettings.indexBadPixel > 8)
+            if (videoEffectSettings.indexBadPixel > 320)
                 videoEffectSettings.indexBadPixel -= 320;
-
-            //Считать калибровку
-            bCalibration = true;
-            if (serialPortEndo != null)
-            {
-                try
-                {
-                    if (!serialPortEndo.IsOpen)
-                        serialPortEndo.Open();
-                    else                    
-                        serialPortEndo.Write("GAAZ");
-                    
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    textBoxInfo.Text += ex.Message;
-                }
-            }
+          
         }
 
         private void downPixel_Click(object sender, RoutedEventArgs e)
         {
-            if (videoEffectSettings.indexBadPixel < 19192)
+            if (videoEffectSettings.indexBadPixel < 18880)
                 videoEffectSettings.indexBadPixel += 320;
         }
 

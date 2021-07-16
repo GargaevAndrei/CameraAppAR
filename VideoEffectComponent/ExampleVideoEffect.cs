@@ -34,6 +34,7 @@ unsafe interface IMemoryBufferByteAccess
 namespace VideoEffectComponent
 {
 
+    
     public struct videoEffectSettings
     {
         public static string lenght;
@@ -54,6 +55,7 @@ namespace VideoEffectComponent
         public static int widthRect;
         public static int heightRect;
         public static int indexBadPixel;
+        //public UseFullConnainer useFullConnainer1;
         public static bool bHorizont;
 
         /*public void SetParamNotes(int _x, int _y, int _fontSize, int _widthRect)
@@ -95,9 +97,9 @@ namespace VideoEffectComponent
         double alpha, l_strelka, alpha_s;
         bool bOne;
         //bool bHorizont = false;
+  
 
-        
-        
+
 
 
         public void Close(MediaEffectClosedReason reason)
@@ -218,19 +220,29 @@ namespace VideoEffectComponent
                     //buf[9437] = 255;
                     //buf[9438] = 0;
 
-                    /*indexBadPixel = videoEffectSettings.indexBadPixel;
+                    indexBadPixel = videoEffectSettings.indexBadPixel;
+                    //UseFullConnainer useFullConnainer = videoEffectSettings.useFullConnainer1;
+                    
 
                     buf[indexBadPixel + 0] = 255;
                     buf[indexBadPixel + 1] = 255;
                     buf[indexBadPixel + 2] = 255;
 
-                    buf[indexBadPixel + 8 + 0] = (byte)((buf[indexBadPixel + 4 + 0] + buf[indexBadPixel + 12 + 0])/2);
-                    buf[indexBadPixel + 8 + 1] = (byte)((buf[indexBadPixel + 4 + 1] + buf[indexBadPixel + 12 + 1])/2);
-                    buf[indexBadPixel + 8 + 2] = (byte)((buf[indexBadPixel + 4 + 2] + buf[indexBadPixel + 12 + 2])/2);
+                    if (BadPixelContainer.CountBadPixel() > 0)
+                    {
+                        var tempList = BadPixelContainer.GetBadPixels();
+                        foreach(int bP in tempList)
+                        {
+                            buf[bP + 0] = (byte)((buf[bP - 4 + 0] + buf[bP + 4 + 0]) / 2);
+                            buf[bP + 1] = (byte)((buf[bP - 4 + 1] + buf[bP + 4 + 1]) / 2);
+                            buf[bP + 2] = (byte)((buf[bP - 4 + 2] + buf[bP + 4 + 2]) / 2);
+                        }
 
-                    buf[indexBadPixel + 16 + 0] = 255;
-                    buf[indexBadPixel + 16 + 1] = 255;
-                    buf[indexBadPixel + 16 + 2] = 255;*/
+                        //buf[indexBadPixel + 0] = (byte)((buf[indexBadPixel - 4 + 0] + buf[indexBadPixel + 4 + 0]) / 2);
+                        //buf[indexBadPixel + 1] = (byte)((buf[indexBadPixel - 4 + 1] + buf[indexBadPixel + 4 + 1]) / 2);
+                        //buf[indexBadPixel + 2] = (byte)((buf[indexBadPixel - 4 + 2] + buf[indexBadPixel + 4 + 2]) / 2);
+                    }
+                    
 
                     // Линейная интерполяция пикселей--------------
 
