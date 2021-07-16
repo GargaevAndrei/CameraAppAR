@@ -184,6 +184,7 @@ namespace CameraCOT
 
         public static Camera[] cameras;
         JsonCamerasSettings jsonCamerasSettings;
+        
         public int currentCameraType; //= (int)cameraType.mainCamera;                            
 
 
@@ -201,7 +202,7 @@ namespace CameraCOT
             //progressRing.IsActive = false;
             videoEffectSettings.indexBadPixel = 4;
             videoEffectSettings.bHorizont = true;
-
+            
 
             var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
             storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
@@ -259,8 +260,6 @@ namespace CameraCOT
                 }
             }
 
-
-
             cameras = new Camera[3];
 
             //  RecordexUSA       //rmoncam 8M  //USB Camera //"USB Camera2
@@ -285,38 +284,22 @@ namespace CameraCOT
 
                 jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
                 jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-                jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+                jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";                
 
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.NullValueHandling = NullValueHandling.Include;
-                serializer.TypeNameHandling = TypeNameHandling.Auto;
-                serializer.Formatting = Formatting.Indented;
-
-                string temp = "{\n" +
-                          "\"MainCameraName\": \"USB Camera2\",\n" +
-                          "\"MainCameraPhoto\": \"3264x2448 [1,33] 15FPS NV12\",\n" +
-                          "\"MainCameraVideo\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
-                          "\"EndoCameraName\": \"HD WEBCAM\",\n" +
-                          "\"EndoCameraPhoto\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
-                          "\"EndoCameraVideo\": \"1600x1200 [1,33] 30FPS NV12\",\n" +
-                          "\"TermoCameraName\": \"PureThermal (fw:v1.0.0)\",\n" +
-                          "\"TermoCameraPhoto\": \"80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}\",\n" +
-                          "\"TermoCameraVideo\": \"80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}\"\n" +
-                            "}\n";
-
-
-                await FileIO.AppendTextAsync(configFile, temp);
-
-                /*using (StreamWriter sw = new StreamWriter(naparnikFolder.Path))
-                using (JsonWriter writer = new Newtonsoft.Json.JsonTextWriter(sw))
-                {
-                    serializer.Serialize(writer, jsonCamerasSettings, typeof(JsonCamerasSettings));
-                }*/
+                string jsonData = JsonConvert.SerializeObject(jsonCamerasSettings, Formatting.Indented);
+                
+                await FileIO.WriteTextAsync(configFile, jsonData); 
+                
 
             }
             else
             {
                 jsonCamerasSettings = await readFileSettings();
+
+                foreach (var item in jsonCamerasSettings.BadPixelList)
+                {
+                    BadPixelContainer.RecordBadPixel(item);
+                }
             }
 
 
@@ -2922,11 +2905,16 @@ namespace CameraCOT
 
         }
 
-        private void correctPixel_Click(object sender, RoutedEventArgs e)
+        private async void correctPixel_Click(object sender, RoutedEventArgs e)
         {
-            //videoEffectSettings.badPixel.Add(videoEffectSettings.indexBadPixel);
-            //useFullConnainer.badPixel.Add(videoEffectSettings.indexBadPixel);
+
             BadPixelContainer.RecordBadPixel(videoEffectSettings.indexBadPixel);
+            jsonCamerasSettings.BadPixelList.Add(videoEffectSettings.indexBadPixel);
+
+            string jsonData = JsonConvert.SerializeObject(jsonCamerasSettings, Formatting.Indented);
+            await FileIO.WriteTextAsync(configFile, jsonData);
+
+
         }
 
         private void upPixel_Click(object sender, RoutedEventArgs e)

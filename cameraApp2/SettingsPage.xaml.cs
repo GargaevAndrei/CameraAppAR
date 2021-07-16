@@ -311,9 +311,11 @@ namespace CameraCOT
         public string TermoCameraPhoto   { get; set; }
         public string TermoCameraVideo   { get; set; }
 
-        public JsonCamerasSettings()
-        {           
+        public List<int> BadPixelList    { get; set; }
 
+        public JsonCamerasSettings()
+        {
+            BadPixelList = new List<int>();
         }
 
         public static  async Task<JsonCamerasSettings> readFileSettings() 
