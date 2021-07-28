@@ -237,13 +237,8 @@ namespace VideoEffectComponent
                             buf[bP + 1] = (byte)((buf[bP - 4 + 1] + buf[bP + 4 + 1]) / 2);
                             buf[bP + 2] = (byte)((buf[bP - 4 + 2] + buf[bP + 4 + 2]) / 2);
                         }
-
-                        //buf[indexBadPixel + 0] = (byte)((buf[indexBadPixel - 4 + 0] + buf[indexBadPixel + 4 + 0]) / 2);
-                        //buf[indexBadPixel + 1] = (byte)((buf[indexBadPixel - 4 + 1] + buf[indexBadPixel + 4 + 1]) / 2);
-                        //buf[indexBadPixel + 2] = (byte)((buf[indexBadPixel - 4 + 2] + buf[indexBadPixel + 4 + 2]) / 2);
                     }
                     
-
                     // Линейная интерполяция пикселей--------------
 
                     //---------------------------------------------
@@ -271,14 +266,13 @@ namespace VideoEffectComponent
 
                     videoEffectSettings.temperature = (videoEffectSettings.Tmax - videoEffectSettings.Tmin) / 255 * indexMin + videoEffectSettings.Tmin;
 
-
                 }
 
                 if (videoEffectSettings.getLenghtFlag && videoEffectSettings.lenght != null)
                 {
-                    ds.DrawText(videoEffectSettings.lenght, videoEffectSettings.X, videoEffectSettings.Y, Colors.PaleTurquoise, new CanvasTextFormat
+                    ds.DrawText(videoEffectSettings.lenght, 1000, 900, Colors.PaleTurquoise, new CanvasTextFormat
                     {
-                        FontSize = videoEffectSettings.FontSize,
+                        FontSize = 70,
                         FontWeight = Windows.UI.Text.FontWeights.Bold
                     });
                 }
@@ -401,11 +395,11 @@ namespace VideoEffectComponent
                                         ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
                                         Colors.Yellow, 4);
 
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 + x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 + y1 + x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
                                         Colors.Yellow, 4);
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 + x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
+                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                                        ImageForVector.x + ImageForVector.widtch / 2 + y1 + x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
                                         Colors.Yellow, 4);
                         }
                     }

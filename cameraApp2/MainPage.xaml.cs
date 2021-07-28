@@ -115,6 +115,7 @@ namespace CameraCOT
         bool _isNotFirstStart;
         bool _isHelpCommands;
         bool bCalibration;
+        bool _isHidExist;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -902,11 +903,17 @@ namespace CameraCOT
             videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
         }
 
+        static int xx = 0;
         private void LenghtMeterTimer_Tick(object sender, object e)
         {
-            getDistance();
-            //serialPortEndo.Write("BAAZ");
-            getAccel();
+            if (xx == 1)
+                getDistance();
+            else
+            {
+                getAccel();
+                xx = 0;
+            }
+            xx++;
         }
 
         HidDevice device;
@@ -933,6 +940,7 @@ namespace CameraCOT
                 // query it for control descriptions.
 
                 textBoxInfo.Text += "\nHID devices found: " + devices.Count + Environment.NewLine;
+                _isHidExist = true;
 
                 // Open the target HID device.
                 device = await HidDevice.FromIdAsync(devices.ElementAt(0).Id, FileAccessMode.ReadWrite);
@@ -955,6 +963,7 @@ namespace CameraCOT
             // Send the output report asynchronously
             device.SendOutputReportAsync(outReport);
 
+            //refreshCameraTimer.Tick += refreshCameraTimer_Tick;
             device.InputReportReceived += async (sender, args) =>
             {
                 HidInputReport inputReport = args.Report;
@@ -989,8 +998,9 @@ namespace CameraCOT
                         }
                         lenght = value - initialLenght;
 
-                        videoEffectSettings.lenght = "L = " + lenght.ToString("0.0") + " м";
-                        videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                        videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
+                        //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                        videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
 
 
                     }
@@ -1051,12 +1061,15 @@ namespace CameraCOT
                         textInfo.Visibility = Visibility.Visible;
                         textBoxInfo.Text = "Данные акселерометра\n";
                         textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
+                        videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
                     }
 
                 }));
             };
         }
 
+
+            
         private void readHid()
         {
             if (device != null)
@@ -2503,7 +2516,8 @@ namespace CameraCOT
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
-
+            //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
+            runMeasure.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             if(_isEndoCameraFlag)
@@ -2589,6 +2603,7 @@ namespace CameraCOT
             {
                 progressRing.Visibility = Visibility.Collapsed;
                 progressRing.IsActive = false;
+                textInfo.Text = "";
                 textInfo.Visibility = Visibility.Collapsed;
             }
 

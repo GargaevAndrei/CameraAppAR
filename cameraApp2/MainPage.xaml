@@ -247,13 +247,13 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button x:Name="runTransparentButton" Click="runTransparentButton_Click" Visibility="Visible">
+            <Button x:Name="runTransparentButton" Click="runTransparentButton_Click" Visibility="Collapsed">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Attach"/>
                 </Viewbox>
             </Button>
 
-            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Collapsed">
+            <Button x:Name="runMeasure" Click="runMeasure_Click" Visibility="Visible">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Play"/>
                 </Viewbox>
@@ -410,7 +410,7 @@
         <Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="80" Height="80" VerticalAlignment="Bottom"/>
         <!--<Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="583" Height="240" VerticalAlignment="Bottom"/>-->
 
-        <Grid x:Name="gridBadPixel" Visibility="Visible">
+        <Grid x:Name="gridBadPixel" Visibility="Collapsed">
             <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Visible" Margin="0,520,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Back"/>
