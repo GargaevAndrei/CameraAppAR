@@ -399,7 +399,9 @@ namespace CameraCOT
             {
                 try
                 {
-                    serialPortEndo.Open();                   
+                    serialPortEndo.Open();
+
+                    serialPortEndo.Write("GAAZ");
                 }
                 catch (Exception e)
                 {
@@ -882,8 +884,8 @@ namespace CameraCOT
             if (bCalibration)   // true
             {
                 bCalibration = false;
-                videoEffectSettings.coordinate_zero = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
-                //TimerEndo.Enabled := True;
+                videoEffectSettings.coordinate_zero = x.ToString() + ";" + y.ToString() + ";" + z.ToString();
+                //endoTimer.Start();
             }
 
             //Xf = Xf1 * k - (1 - k) * Xf;
@@ -901,6 +903,8 @@ namespace CameraCOT
             //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => textBoxInfo.Text = String.Format("x = {0} y = {1} z = {2}", Xf, Yf, Zf) );
             //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
             videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+
+            serialPortEndo.DiscardInBuffer();
         }
 
         static int xx = 0;
@@ -955,13 +959,12 @@ namespace CameraCOT
             }
         }
 
-        private void sendOutReport(DataWriter dataWriter)
+        private async void sendOutReport(DataWriter dataWriter)
         {
             HidOutputReport outReport = device.CreateOutputReport(0x00);
             outReport.Data = dataWriter.DetachBuffer();
 
-            // Send the output report asynchronously
-            device.SendOutputReportAsync(outReport);
+            
 
             //refreshCameraTimer.Tick += refreshCameraTimer_Tick;
             device.InputReportReceived += async (sender, args) =>
@@ -1066,6 +1069,10 @@ namespace CameraCOT
 
                 }));
             };
+
+            // Send the output report asynchronously
+            await device.SendOutputReportAsync(outReport);
+
         }
 
 
@@ -2282,6 +2289,8 @@ namespace CameraCOT
 
             _isFlash = false;
             _isUIActive = false;
+
+            //EnumerateHidDevices();
 
             if (_isRecording)
             {

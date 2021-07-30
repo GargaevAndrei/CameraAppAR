@@ -196,7 +196,11 @@ namespace VideoEffectComponent
             }
         }
 
-
+        public void RotateVector(int x1, int y1, out int x2, out int y2)
+        {
+            x2 = (int)( x1 * Math.Cos(Math.PI / 4) + y1 * Math.Sin(Math.PI / 4));
+            y2 = (int)(-x1 * Math.Cos(Math.PI / 4) + y1 * Math.Sin(Math.PI / 4));
+        }
         public void ProcessFrame(ProcessVideoFrameContext context)
         {
 
@@ -290,7 +294,7 @@ namespace VideoEffectComponent
                     x_zero = Convert.ToDouble(coordinateXYZ_zero[0]);
                     y_zero = Convert.ToDouble(coordinateXYZ_zero[1]);
                     z_zero = Convert.ToDouble(coordinateXYZ_zero[2]);
-                    videoEffectSettings.coordinate_zero = null;
+                    //videoEffectSettings.coordinate_zero = null;
                 }
 
                 if (videoEffectSettings.coordinate != null && videoEffectSettings.getCoordinateFlag)
@@ -310,6 +314,12 @@ namespace VideoEffectComponent
                     xf = X;
                     yf = Y;
                     zf = Z;
+
+                    int x_offset = ImageForVector.x + ImageForVector.widtch / 2;
+                    int y_offset = ImageForVector.y + ImageForVector.height / 2;
+                    int x_mod, y_mod;
+                    int x1_s_mod, y1_s_mod;
+                    int x2_s_mod, y2_s_mod;
 
 
                     Rect rec = new Rect(ImageForVector.x, ImageForVector.y, ImageForVector.widtch, ImageForVector.height);
@@ -370,36 +380,43 @@ namespace VideoEffectComponent
 
                     if (!videoEffectSettings.bHorizont)    
                     {
-                        x1 = (int)Math.Round((X - x_zero) * 15);
-                        y1 = (int)Math.Round((Y) * 15);
-                        z1 = (int)Math.Round((Z) * 15);
+                        x1 = (int)Math.Round((X - x_zero) * 20);
+                        y1 = (int)Math.Round((Y) * 20);
+                        z1 = (int)Math.Round((Z) * 20);
                         R =  (int)Math.Round(Math.Sqrt(y1 * y1 + z1 * z1));
-
-                        if (x1 < 0)
+                       
+                        if (x1 > 0)
                         {
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2,
-                                        ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                            RotateVector(-y1, z1, out x_mod, out y_mod);
+                            RotateVector(x1_s, -y1_s, out x1_s_mod, out y1_s_mod);
+                            RotateVector(-x2_s, y2_s, out x2_s_mod, out y2_s_mod);
+
+                            ds.DrawLine(x_offset, y_offset, x_mod + x_offset, y_mod + y_offset, 
                                         Colors.Red, 4);
 
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 - x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
+                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
+                                        x_mod + x_offset + x1_s_mod, y_mod + y_offset - y1_s_mod,
                                         Colors.Red, 4);
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 - y1 - x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
+                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
+                                        x_mod + x_offset + x2_s_mod, y_mod + y_offset - y2_s_mod,
                                         Colors.Red, 4);
 
                         }
                         else
-                        {
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2,
-                                        ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
+                        {                            
+
+                            RotateVector(y1, -z1, out x_mod, out y_mod);
+                            RotateVector(-x1_s, y1_s, out x1_s_mod, out y1_s_mod);
+                            RotateVector(x2_s, -y2_s, out x2_s_mod, out y2_s_mod);
+
+                            ds.DrawLine(x_offset, y_offset, x_mod + x_offset, y_mod + y_offset,
                                         Colors.Yellow, 4);
 
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 + y1 + x1_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y1_s,
+                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
+                                        x_mod + x_offset + x1_s_mod, y_mod + y_offset - y1_s_mod,
                                         Colors.Yellow, 4);
-                            ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 + y1, ImageForVector.y + ImageForVector.height / 2 + z1,
-                                        ImageForVector.x + ImageForVector.widtch / 2 + y1 + x2_s, ImageForVector.y + ImageForVector.height / 2 + z1 - y2_s,
+                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
+                                        x_mod + x_offset + x2_s_mod, y_mod + y_offset - y2_s_mod,
                                         Colors.Yellow, 4);
                         }
                     }
@@ -417,52 +434,52 @@ namespace VideoEffectComponent
 
                             if (x1 < 0)
                             {
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + x1 + y1,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset - z1, y_offset + x1 + y1,
                                             Colors.Yellow, 4);
 
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 + x1 - y1,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset + z1, y_offset + x1 - y1,
                                             Colors.Yellow, 4);
 
 
                                 // перпендикуляр
 
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset - y_k, y_offset + x1 + z_k,
                                             Colors.Yellow, 4);
                                 // стрелка
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k + x1_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y1_s,
+                                ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
+                                            x_offset - y_k + x1_s, y_offset + x1 + z_k - y1_s,
                                             Colors.Yellow, 4);
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
-                                           ImageForVector.x + ImageForVector.widtch / 2 - y_k + x2_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y2_s,
+                                ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
+                                           x_offset - y_k + x2_s, y_offset + x1 + z_k - y2_s,
                                            Colors.Yellow, 4);
 
                             }
                             else
                             {
 
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - z1, ImageForVector.y + ImageForVector.height / 2 + x1 + y1,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset - z1, y_offset + x1 + y1,
                                             Colors.Cyan, 4);
 
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 + z1, ImageForVector.y + ImageForVector.height / 2 + x1 - y1,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset + z1, y_offset + x1 - y1,
                                             Colors.Cyan, 4);
 
 
                                 // перпендикуляр
 
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height / 2 + x1,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
+                                ds.DrawLine(x_offset, y_offset + x1,
+                                            x_offset - y_k, y_offset + x1 + z_k,
                                             Colors.Cyan, 4);
                                 // стрелка
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
-                                            ImageForVector.x + ImageForVector.widtch / 2 - y_k + x1_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y1_s,
+                                ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
+                                            x_offset - y_k + x1_s, y_offset + x1 + z_k - y1_s,
                                             Colors.Cyan, 4);
-                                ds.DrawLine(ImageForVector.x + ImageForVector.widtch / 2 - y_k, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k,
-                                           ImageForVector.x + ImageForVector.widtch / 2 - y_k + x2_s, ImageForVector.y + ImageForVector.height / 2 + x1 + z_k - y2_s,
+                                ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
+                                           x_offset - y_k + x2_s, y_offset + x1 + z_k - y2_s,
                                            Colors.Cyan, 4);
 
                             }
