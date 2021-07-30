@@ -411,27 +411,27 @@
         <!--<Image x:Name="imageControlPreview" Margin="10,0,0,10" Stretch="Fill" Tapped="imageControlPreview_Tapped" HorizontalAlignment="Left" Width="583" Height="240" VerticalAlignment="Bottom"/>-->
 
         <Grid x:Name="gridBadPixel" Visibility="Collapsed">
-            <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Visible" Margin="0,520,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Button x:Name="leftPixel" Click="leftPixel_Click" Visibility="Visible" Margin="0,420,230,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Back"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="correctPixel" Click="correctPixel_Click" Visibility="Visible" Margin="0,520,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Button x:Name="correctPixel" Click="correctPixel_Click" Visibility="Visible" Margin="0,420,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Accept"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="rightPixel" Click="rightPixel_Click" Visibility="Visible" Margin="0,520,150,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Button x:Name="rightPixel" Click="rightPixel_Click" Visibility="Visible" Margin="0,420,150,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Forward"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="upPixel" Click="upPixel_Click" Visibility="Visible" Margin="0,480,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Button x:Name="upPixel" Click="upPixel_Click" Visibility="Visible" Margin="0,380,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Up"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="downPixel" Click="downPixel_Click" Visibility="Visible" Margin="0,560,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
+            <Button x:Name="downPixel" Click="downPixel_Click" Visibility="Visible" Margin="0,460,190,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Download"/>
                 </Viewbox>
