@@ -781,7 +781,10 @@ namespace CameraCOT
             СheckCamera();
 
             if (_isEndoCameraFlag)
+            {
+                _isFlash = false;
                 currentCameraType = (int)cameraType.endoCamera;
+            }
             else if (_isMainCameraFlag)
                 currentCameraType = (int)cameraType.mainCamera;
             else
@@ -968,7 +971,7 @@ namespace CameraCOT
 
             //refreshCameraTimer.Tick += refreshCameraTimer_Tick;
             device.InputReportReceived += async (sender, args) =>
-            {
+            {               
                 HidInputReport inputReport = args.Report;
                 IBuffer buffer = inputReport.Data;
 
@@ -1024,6 +1027,7 @@ namespace CameraCOT
                         textInfo.Visibility = Visibility.Collapsed;
 
                     }
+                    
                     if (ByteArray[5] == 35)  // AMP_FIND_NOT_SUCCESS
                     {
                         stopMeasure();

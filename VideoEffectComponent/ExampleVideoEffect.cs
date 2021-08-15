@@ -96,8 +96,14 @@ namespace VideoEffectComponent
         double R1xy, R1yz, R1xz;
         double alpha, l_strelka, alpha_s;
         bool bOne;
+
+        int x_offset = ImageForVector.x + ImageForVector.widtch / 2;
+        int y_offset = ImageForVector.y + ImageForVector.height / 2;
+        int x_mod, y_mod;
+        int x1_s_mod, y1_s_mod;
+        int x2_s_mod, y2_s_mod;
         //bool bHorizont = false;
-  
+
 
 
 
@@ -196,10 +202,10 @@ namespace VideoEffectComponent
             }
         }
 
-        public void RotateVector(int x1, int y1, out int x2, out int y2)
+        public void RotateVector(int x1, int y1, out int x2, out int y2, double Angle)
         {
-            x2 = (int)( x1 * Math.Cos(Math.PI / 4) + y1 * Math.Sin(Math.PI / 4));
-            y2 = (int)(-x1 * Math.Cos(Math.PI / 4) + y1 * Math.Sin(Math.PI / 4));
+            x2 = (int)Math.Round( x1 * Math.Cos(Angle) + y1 * Math.Sin(Angle));          //Math.PI / 4
+            y2 = (int)Math.Round(-x1 * Math.Sin(Angle) + y1 * Math.Cos(Angle));
         }
         public void ProcessFrame(ProcessVideoFrameContext context)
         {
@@ -294,6 +300,25 @@ namespace VideoEffectComponent
                     x_zero = Convert.ToDouble(coordinateXYZ_zero[0]);
                     y_zero = Convert.ToDouble(coordinateXYZ_zero[1]);
                     z_zero = Convert.ToDouble(coordinateXYZ_zero[2]);
+
+                    //x_zero = 0;
+                    //y_zero = 0;
+                    //z_zero = 0;
+
+                    if (y_zero != 0)
+                    {
+
+                        if (y_zero < 0)
+                            alpha_zero = Math.Atan(z_zero / (-y_zero)) + Math.PI / 2;
+
+                        if (y_zero > 0)
+                            alpha_zero = Math.Atan(z_zero / (-y_zero)) - Math.PI / 2;
+                        /*if (y_zero != 0)
+                            alpha_zero = Math.Atan(z_zero / (-y_zero));*/
+
+                    }
+
+                    
                     //videoEffectSettings.coordinate_zero = null;
                 }
 
@@ -315,12 +340,6 @@ namespace VideoEffectComponent
                     yf = Y;
                     zf = Z;
 
-                    int x_offset = ImageForVector.x + ImageForVector.widtch / 2;
-                    int y_offset = ImageForVector.y + ImageForVector.height / 2;
-                    int x_mod, y_mod;
-                    int x1_s_mod, y1_s_mod;
-                    int x2_s_mod, y2_s_mod;
-
 
                     Rect rec = new Rect(ImageForVector.x, ImageForVector.y, ImageForVector.widtch, ImageForVector.height);
                     ds.DrawRectangle(rec, Colors.Beige);
@@ -330,94 +349,76 @@ namespace VideoEffectComponent
                                 ImageForVector.x + ImageForVector.widtch / 2, ImageForVector.y + ImageForVector.height, Colors.Beige);
 
 
-
-
-
                     R = 60;
                     alpha_s = Math.PI / 4;
                     l_strelka = 15;
-                    //alpha_zero := -2.0196094001943;
 
-                    if (y_zero != 0)
-                    {
-
-                        if (y_zero < 0)
-                            alpha_zero = Math.PI / 2 + Math.Atan(z_zero / (-y_zero));
-
-                        if (y_zero > 0)
-                            alpha_zero = -Math.PI / 2 + Math.Atan(z_zero / (-y_zero));
-                        
-                    }
-
-
+                    
                     if (yf != 0) 
                     {
                         if (yf < 0) 
                             alpha = Math.Atan(zf / (-yf)) - alpha_zero;
                         if (yf > 0)
-                            alpha = Math.Atan(zf / (-yf)) + Math.PI - alpha_zero;
+                            alpha = Math.Atan(zf / (-yf)) - alpha_zero + Math.PI;
 
                         y_k = (int)Math.Round(R * 0.7 * Math.Cos(alpha));
                         z_k = (int)Math.Round(R * 0.7 * Math.Sin(alpha));
 
                         if (videoEffectSettings.bHorizont)
                         {
-                            x1_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s));
-                            x2_s = (int)Math.Round(l_strelka *  Math.Cos(alpha + alpha_s - Math.PI / 2));
-                            y1_s = (int)Math.Round(l_strelka *  Math.Sin(alpha + alpha_s));
-                            y2_s = (int)Math.Round(l_strelka *  Math.Sin(alpha + alpha_s - Math.PI / 2));
+                            x1_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s));
+                            x2_s = (int)Math.Round(l_strelka * Math.Cos(alpha - alpha_s));
+                            y1_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s));
+                            y2_s = (int)Math.Round(l_strelka * Math.Sin(alpha - alpha_s));
                         }
                         else
                         {
-                            x1_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s + alpha_zero));
-                            x2_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s + alpha_zero - Math.PI / 2));
-                            y1_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s + alpha_zero));
-                            y2_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s + alpha_zero - Math.PI / 2));
-                        }
+                            x1_s = (int)Math.Round(l_strelka * Math.Cos(alpha + alpha_s ));
+                            y1_s = (int)Math.Round(l_strelka * Math.Sin(alpha + alpha_s ));
+                            x2_s = (int)Math.Round(l_strelka * Math.Cos(alpha - alpha_s ));
+                            y2_s = (int)Math.Round(l_strelka * Math.Sin(alpha - alpha_s ));
 
+                        }
                     }
 
 
                     if (!videoEffectSettings.bHorizont)    
                     {
                         x1 = (int)Math.Round((X - x_zero) * 20);
-                        y1 = (int)Math.Round((Y) * 20);
-                        z1 = (int)Math.Round((Z) * 20);
-                        R =  (int)Math.Round(Math.Sqrt(y1 * y1 + z1 * z1));
-                       
+                        y1 = (int)Math.Round((yf) * 20);
+                        z1 = (int)Math.Round((zf) * 20);                   
+
                         if (x1 > 0)
                         {
-                            RotateVector(-y1, z1, out x_mod, out y_mod);
-                            RotateVector(x1_s, -y1_s, out x1_s_mod, out y1_s_mod);
-                            RotateVector(-x2_s, y2_s, out x2_s_mod, out y2_s_mod);
+                            RotateVector(-y1, z1, out x_mod, out y_mod, alpha_zero);             
 
-                            ds.DrawLine(x_offset, y_offset, x_mod + x_offset, y_mod + y_offset, 
-                                        Colors.Red, 4);
+                            x1_s_mod = -x1_s;
+                            y1_s_mod = -y1_s;
+                            x2_s_mod = -x2_s;
+                            y2_s_mod = -y2_s;
 
-                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
-                                        x_mod + x_offset + x1_s_mod, y_mod + y_offset - y1_s_mod,
-                                        Colors.Red, 4);
-                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
-                                        x_mod + x_offset + x2_s_mod, y_mod + y_offset - y2_s_mod,
-                                        Colors.Red, 4);
+                            DrawVerticalLine(ds, Colors.Red);                            
 
                         }
                         else
-                        {                            
+                        {
+                            double alpha_temp = 0;
 
-                            RotateVector(y1, -z1, out x_mod, out y_mod);
-                            RotateVector(-x1_s, y1_s, out x1_s_mod, out y1_s_mod);
-                            RotateVector(x2_s, -y2_s, out x2_s_mod, out y2_s_mod);
+                            RotateVector(y1, -z1, out x_mod, out y_mod, alpha_zero);
 
-                            ds.DrawLine(x_offset, y_offset, x_mod + x_offset, y_mod + y_offset,
-                                        Colors.Yellow, 4);
+                            /*if(x_mod != 0)
+                                alpha_temp = 360 * Math.Atan((double)(-y_mod) / (x_mod) ) / (2*Math.PI);                          
 
-                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
-                                        x_mod + x_offset + x1_s_mod, y_mod + y_offset - y1_s_mod,
-                                        Colors.Yellow, 4);
-                            ds.DrawLine(x_mod + x_offset, y_mod + y_offset,
-                                        x_mod + x_offset + x2_s_mod, y_mod + y_offset - y2_s_mod,
-                                        Colors.Yellow, 4);
+                            ds.DrawText(alpha_temp.ToString(), 200, 200, Colors.Cyan, new CanvasTextFormat
+                            {   FontSize = videoEffectSettings.FontSize, });  */
+
+
+                            x1_s_mod = x1_s;
+                            y1_s_mod = y1_s;
+                            x2_s_mod = x2_s;
+                            y2_s_mod = y2_s;
+
+                            DrawVerticalLine(ds, Colors.Yellow);
                         }
                     }
                     else
@@ -434,19 +435,16 @@ namespace VideoEffectComponent
 
                             if (x1 < 0)
                             {
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset - z1, y_offset + x1 + y1,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset - z1, y_offset + x1 + y1,
                                             Colors.Yellow, 4);
 
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset + z1, y_offset + x1 - y1,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset + z1, y_offset + x1 - y1,
                                             Colors.Yellow, 4);
 
 
                                 // перпендикуляр
 
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset - y_k, y_offset + x1 + z_k,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset - y_k, y_offset + x1 + z_k,
                                             Colors.Yellow, 4);
                                 // стрелка
                                 ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
@@ -460,19 +458,16 @@ namespace VideoEffectComponent
                             else
                             {
 
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset - z1, y_offset + x1 + y1,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset - z1, y_offset + x1 + y1,
                                             Colors.Cyan, 4);
 
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset + z1, y_offset + x1 - y1,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset + z1, y_offset + x1 - y1,
                                             Colors.Cyan, 4);
 
 
                                 // перпендикуляр
 
-                                ds.DrawLine(x_offset, y_offset + x1,
-                                            x_offset - y_k, y_offset + x1 + z_k,
+                                ds.DrawLine(x_offset, y_offset + x1, x_offset - y_k, y_offset + x1 + z_k,
                                             Colors.Cyan, 4);
                                 // стрелка
                                 ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
@@ -504,7 +499,17 @@ namespace VideoEffectComponent
             }
         }
 
-        
+        private void DrawVerticalLine(CanvasDrawingSession ds, Color color)
+        {
+            ds.DrawLine(x_offset, y_offset, x_offset + x_mod, y_offset + y_mod,
+                        color, 4);
+
+            ds.DrawLine(x_offset + x_mod, y_offset + y_mod, x_offset + x_mod + x1_s_mod, y_offset + y_mod + y1_s_mod,
+                        color, 4);
+            ds.DrawLine(x_offset + x_mod, y_offset + y_mod, x_offset + x_mod + x2_s_mod, y_offset + y_mod + y2_s_mod,
+                        color, 4);
+        }
+
 
 
     }
