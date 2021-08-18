@@ -313,8 +313,7 @@ namespace VideoEffectComponent
 
                         if (y_zero > 0)
                             alpha_zero = Math.Atan(z_zero / (-y_zero)) - Math.PI / 2;
-                        /*if (y_zero != 0)
-                            alpha_zero = Math.Atan(z_zero / (-y_zero));*/
+
 
                     }
 
@@ -402,12 +401,11 @@ namespace VideoEffectComponent
                         }
                         else
                         {
-                            double alpha_temp = 0;
-
+                            
                             RotateVector(y1, -z1, out x_mod, out y_mod, alpha_zero);
-
-                            /*if(x_mod != 0)
-                                alpha_temp = 360 * Math.Atan((double)(-y_mod) / (x_mod) ) / (2*Math.PI);                          
+                            
+                            /*double alpha_temp = 0; if(x_mod != 0)
+                            alpha_temp = 360 * Math.Atan((double)(-y_mod) / (x_mod) ) / (2*Math.PI);                          
 
                             ds.DrawText(alpha_temp.ToString(), 200, 200, Colors.Cyan, new CanvasTextFormat
                             {   FontSize = videoEffectSettings.FontSize, });  */
@@ -428,6 +426,7 @@ namespace VideoEffectComponent
                         if (R1xz != 0)
                         {
                             x2 = (int)(R * ((xf - x_zero) / R1xz));
+                            double betta = Math.Asin((float)-x2 / R);
                             x1 = (int)Math.Round(x2 * 0.7);
                             z1 = (int)Math.Round(R * 0.7 * Math.Cos(alpha + Math.PI / 2));
                             y1 = (int)Math.Round(R * 0.7 * Math.Sin(alpha + Math.PI / 2));
@@ -452,7 +451,7 @@ namespace VideoEffectComponent
                                             Colors.Yellow, 4);
                                 ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
                                            x_offset - y_k + x2_s, y_offset + x1 + z_k - y2_s,
-                                           Colors.Yellow, 4);
+                                           Colors.Yellow, 4);                               
 
                             }
                             else
@@ -476,8 +475,16 @@ namespace VideoEffectComponent
                                 ds.DrawLine(x_offset - y_k, y_offset + x1 + z_k,
                                            x_offset - y_k + x2_s, y_offset + x1 + z_k - y2_s,
                                            Colors.Cyan, 4);
-
+                                
                             }
+
+                            ds.DrawText(String.Format("крен = {0:0.0}", 360 * (alpha - Math.PI) / (2 * Math.PI)),
+                                        10, 700, Colors.Cyan, new CanvasTextFormat { FontSize = videoEffectSettings.FontSize, });
+                            
+                            if(Math.Abs(betta) < 0.785)
+                            ds.DrawText(String.Format("тангаж = {0:0.0}", 360 * (betta) / (2 * Math.PI)),
+                                        10, 740, Colors.Cyan, new CanvasTextFormat { FontSize = videoEffectSettings.FontSize, });
+                            
                         }
 
                     }
