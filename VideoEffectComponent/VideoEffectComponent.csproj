@@ -124,6 +124,7 @@
   <ItemGroup>
     <Compile Include="BadPixelContainer.cs" />
     <Compile Include="ExampleVideoEffect.cs" />
+    <Compile Include="ImageVector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
