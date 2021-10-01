@@ -18,7 +18,7 @@
         </StackPanel>
 
         <StackPanel  Orientation="Horizontal" Height="176" VerticalAlignment="Top" Margin="0,100,0,0"  >
-            <ComboBox Name="TermoCamera" PlaceholderText="Camera List"               SelectionChanged="TermoCameraList_Changed" Width="auto"/>
+            <ComboBox Name="TermoCamera" PlaceholderText="Camera List" SelectionChanged="TermoCameraList_Changed" Width="auto"/>
             <ComboBox Name="TermoPreviewSettings" PlaceholderText="Preview Settings" Width="auto"/>
             <ComboBox Name="TermoPhotoSettings" PlaceholderText="Photo Settings" Width="auto"/>
             <ComboBox Name="TermoVideoSettings" PlaceholderText="Video Settings" Width="auto"/>

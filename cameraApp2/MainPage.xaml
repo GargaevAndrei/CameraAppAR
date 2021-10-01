@@ -259,6 +259,12 @@
                 </Viewbox>
             </Button>
 
+            <Button x:Name="lightOn" Click="lightOn_Click" Visibility="Visible">
+                <Viewbox MaxHeight="35" MaxWidth="35">
+                    <SymbolIcon Symbol="Directions"/>
+                </Viewbox>
+            </Button>
+
             <Button x:Name="readSettings" Click="ReadSettings_Click" Visibility="Collapsed">
                 <Viewbox MaxHeight="35" MaxWidth="35">
                     <SymbolIcon Symbol="Read"/>
@@ -438,7 +444,7 @@
             </Button>
         </Grid>
 
-        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,665,31,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
+        <Button x:Name="getScenarioSettings" Click="getScenarioSettings_Click" Margin="0,365,310,0" VerticalAlignment="Top" Width="30" Height="23" HorizontalAlignment="Right" BorderBrush="#FF0F0F0F" >
             <Viewbox MaxHeight="20" MaxWidth="20">
                 <SymbolIcon Symbol="Setting"/>
             </Viewbox>

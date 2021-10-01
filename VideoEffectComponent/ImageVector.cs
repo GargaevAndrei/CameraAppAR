@@ -215,9 +215,7 @@ namespace VideoEffectComponent
                                Colors.Cyan, 4);
 
                 }
-
-                ds.DrawText(String.Format("крен = {0:0.0}", 360 * (alpha - Math.PI) / (2 * Math.PI)),
-                            10, 650, Colors.Cyan, new CanvasTextFormat { FontSize = videoEffectSettings.FontSize, });
+                
 
                 ds.DrawText(String.Format("крен = {0:0.0}", 360 * (alpha - Math.PI) / (2 * Math.PI)),
                             10, 700, Colors.Cyan, new CanvasTextFormat { FontSize = videoEffectSettings.FontSize, });
@@ -228,5 +226,6 @@ namespace VideoEffectComponent
 
             }
         }
+   
     }
 }

@@ -56,7 +56,7 @@ namespace CameraCOT
     {
 
         public static MainPage Current;
-        SettingsPage SettingsPage = SettingsPage.CurrentSettings;
+        //SettingsPage SettingsPage = SettingsPage.CurrentSettings;
         // Object to manage access to camera devices
         //private MediaCapturePreviewer _previewer = null;
 
@@ -349,6 +349,7 @@ namespace CameraCOT
             Current = this;
 
             EnumerateHidDevices();
+            //HidEndo.EnumerateHidDevices();
 
             bCalibration = true;
             
@@ -891,9 +892,6 @@ namespace CameraCOT
                 //endoTimer.Start();
             }
 
-            //Xf = Xf1 * k - (1 - k) * Xf;
-            //Yf = Yf1 * k - (1 - k) * Yf;
-            //Zf = Zf1 * k - (1 - k) * Zf;
 
             Xf = k * x + (1 - k) * Xf;
             Yf = k * y + (1 - k) * Yf;
@@ -910,6 +908,9 @@ namespace CameraCOT
             serialPortEndo.DiscardInBuffer();
         }
 
+
+        #region Hid
+
         static int xx = 0;
         private void LenghtMeterTimer_Tick(object sender, object e)
         {
@@ -923,9 +924,9 @@ namespace CameraCOT
             xx++;
         }
 
+
         HidDevice device;
         int count = 0;
-
         private async void EnumerateHidDevices()
         {
             // Microsoft Input Configuration Device.
@@ -1078,8 +1079,6 @@ namespace CameraCOT
             await device.SendOutputReportAsync(outReport);
 
         }
-
-
             
         private void readHid()
         {
@@ -1128,6 +1127,28 @@ namespace CameraCOT
                 sendOutReport(dataWriter);
 
             }
+        }
+
+        static bool light1;
+        private void lightOn_Click(object sender, RoutedEventArgs e)
+        {
+            HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+            /// Initialize the data buffer and fill it in
+            byte[] bufferTx = new byte[65];
+            bufferTx[0] = 0x00;
+            bufferTx[1] = 0xaa;
+            bufferTx[2] = 0xbb;
+            bufferTx[3] = 0x00;
+            bufferTx[4] = 0x07;
+            bufferTx[5] = 56;       // start measure
+            bufferTx[6] = (byte)(light1 ? 1 : 0);
+            light1 = !light1;
+
+            DataWriter dataWriter = new DataWriter();
+            dataWriter.WriteBytes(bufferTx);
+
+            sendOutReport(dataWriter);
         }
 
         private void stopMeasure()
@@ -1204,6 +1225,8 @@ namespace CameraCOT
 
             }
         }
+
+        #endregion
 
         int light = 250;
         private void setFlashingLight(int light)
@@ -1401,6 +1424,13 @@ namespace CameraCOT
         {
             Debug.WriteLine("CameraResolutionAsync");
             IEnumerable<StreamResolution> allStreamProperties;
+
+            if (_mediaCapture != null)
+            {
+                _mediaCapture.Failed -= MediaCaptureFiled;
+                _mediaCapture.Dispose();
+                _mediaCapture = null;
+            }
 
             if (_mediaCapture == null)
             {
@@ -2672,19 +2702,17 @@ namespace CameraCOT
 
             Rec.Text = _isPause ? "Pause" : "Rec";
 
-            //videoEffectSettings.X = cameras[_cntCamera].X;
-            //videoEffectSettings.Y = cameras[_cntCamera].Y;
-            //videoEffectSettings.FontSize = cameras[_cntCamera].FontSize;
-
-            //videoEffectSettings.X = 750;
-            //videoEffectSettings.Y = 600;
-            //videoEffectSettings.FontSize = 90;
 
         }
 
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
         {
             await CleanupCameraAsync();
+
+            //SettingsPage settingsPage = new SettingsPage();
+            //settingsPage.Show();
+            //this.Close();
+            
 
             this.Frame.Navigate(typeof(SettingsPage));
         }
@@ -2943,7 +2971,7 @@ namespace CameraCOT
             await FileIO.WriteTextAsync(configFile, jsonData);
 
 
-        }
+        }       
 
         private void upPixel_Click(object sender, RoutedEventArgs e)
         {

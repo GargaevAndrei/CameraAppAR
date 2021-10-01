@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Windows.Data.Json;
 using Windows.Media.Capture;
-using Windows.Media.MediaProperties;
 using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
@@ -16,7 +14,7 @@ using Windows.UI.Xaml.Controls;
 // Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace CameraCOT
-{    
+{
 
     /// <summary>
     /// Пустая страница, которую можно использовать саму по себе или для перехода внутри фрейма.
@@ -284,171 +282,6 @@ namespace CameraCOT
             //comboBoxItem.Tag = jsonCamerasSettings.MainCameraName;
             //EndoCameraName.Tag = jsonCamerasSettings.MainCameraName;
 
-        }
-    }
-
-
-    [Serializable]
-    class JsonCamerasSettings
-    {
-
-        //private VideoEncodingProperties _properties;
-
-        //private StreamResolution streamResolution;// = new StreamResolution();
-        //public VideoEncodingProperties MainEncodingProperties { get { return _properties; } set { _properties = value; } }
-
-        //public StreamResolution MainStreamResolution { get { return streamResolution; } set { streamResolution = value; } }
-
-        public string MainCameraName     { get; set; }        
-        public string MainCameraPhoto    { get; set; }
-        public string MainCameraVideo    { get; set; }
-       
-        public string EndoCameraName     { get; set; }
-        public string EndoCameraPhoto    { get; set; }
-        public string EndoCameraVideo    { get; set; }
-
-        public string TermoCameraName    { get; set; }
-        public string TermoCameraPhoto   { get; set; }
-        public string TermoCameraVideo   { get; set; }
-
-        public List<int> BadPixelList    { get; set; }
-
-        public JsonCamerasSettings()
-        {
-            BadPixelList = new List<int>();
-        }
-
-        public static  async Task<JsonCamerasSettings> readFileSettings() 
-        {
-            var ImagesLib = await StorageLibrary.GetLibraryAsync(KnownLibraryId.Pictures);
-            //var localFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
-            //StorageFile configFile = await localFolder.GetFileAsync(SettingsPage.fileJsonName);
-
-
-            var storageFolder = ImagesLib.SaveFolder ?? ApplicationData.Current.LocalFolder;
-            var naparnikFolder = (StorageFolder)await storageFolder.TryGetItemAsync("Напарник");
-            var configFile = (StorageFile)await naparnikFolder.TryGetItemAsync("cameraConfig.json");
-
-
-            string text = await FileIO.ReadTextAsync(configFile);
-
-            return JsonConvert.DeserializeObject<JsonCamerasSettings>(text, new Newtonsoft.Json.JsonSerializerSettings
-            {
-                Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Include,
-                TypeNameHandling = TypeNameHandling.Auto
-            });
-
-        }
-
-    }
-
-
-    public class StreamResolution
-    {
-        private IMediaEncodingProperties _properties;
-
-        public StreamResolution()
-        {
-        }
-
-        public StreamResolution(IMediaEncodingProperties properties)
-        {
-            if (properties == null)
-            {
-                throw new ArgumentNullException(nameof(properties));
-            }
-
-            // Only handle ImageEncodingProperties and VideoEncodingProperties, which are the two types that GetAvailableMediaStreamProperties can return
-            if (!(properties is ImageEncodingProperties) && !(properties is VideoEncodingProperties))
-            {
-                throw new ArgumentException("Argument is of the wrong type. Required: " + typeof(ImageEncodingProperties).Name
-                    + " or " + typeof(VideoEncodingProperties).Name + ".", nameof(properties));
-            }
-
-            // Store the actual instance of the IMediaEncodingProperties for setting them later
-            _properties = properties;
-        }
-
-        public uint Width
-        {
-            get
-            {
-                if (_properties is ImageEncodingProperties)
-                {
-                    return (_properties as ImageEncodingProperties).Width;
-                }
-                else if (_properties is VideoEncodingProperties)
-                {
-                    return (_properties as VideoEncodingProperties).Width;
-                }
-
-                return 0;
-            }
-        }
-
-        public uint Height
-        {
-            get
-            {
-                if (_properties is ImageEncodingProperties)
-                {
-                    return (_properties as ImageEncodingProperties).Height;
-                }
-                else if (_properties is VideoEncodingProperties)
-                {
-                    return (_properties as VideoEncodingProperties).Height;
-                }
-
-                return 0;
-            }
-        }
-
-        public uint FrameRate
-        {
-            get
-            {
-                if (_properties is VideoEncodingProperties)
-                {
-                    if ((_properties as VideoEncodingProperties).FrameRate.Denominator != 0)
-                    {
-                        return (_properties as VideoEncodingProperties).FrameRate.Numerator / (_properties as VideoEncodingProperties).FrameRate.Denominator;
-                    }
-                }
-
-                return 0;
-            }
-        }
-
-        public double AspectRatio
-        {
-            get { return Math.Round((Height != 0) ? (Width / (double)Height) : double.NaN, 2); }
-        }
-
-        public IMediaEncodingProperties EncodingProperties
-        {
-            get { return _properties; }
-            //get; set;
-        }
-
-        /// <summary>
-        /// Output properties to a readable format for UI purposes
-        /// eg. 1920x1080 [1.78] 30fps MPEG
-        /// </summary>
-        /// <returns>Readable string</returns>
-        public string GetFriendlyName(bool showFrameRate = true)
-        {
-            if (_properties is ImageEncodingProperties ||
-                !showFrameRate)
-            {
-                return Width + "x" + Height + " [" + AspectRatio + "] " + _properties.Subtype;
-            }
-            else if (_properties is VideoEncodingProperties)
-            {
-                return Width + "x" + Height + " [" + AspectRatio + "] " + FrameRate + "FPS " + _properties.Subtype;
-            }
-
-            return String.Empty;
         }
     }
 
