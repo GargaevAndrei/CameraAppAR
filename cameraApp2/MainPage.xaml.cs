@@ -60,7 +60,8 @@ namespace CameraCOT
         // Object to manage access to camera devices
         //private MediaCapturePreviewer _previewer = null;
 
-       
+
+        HidEndo hidEndo = new HidEndo();
 
         MediaFrameReader mediaFrameReader;
 
@@ -348,8 +349,10 @@ namespace CameraCOT
             this.InitializeComponent();
             Current = this;
 
+            //hidEndo.EnumerateHidDevices();           
             EnumerateHidDevices();
-            //HidEndo.EnumerateHidDevices();
+            
+
 
             bCalibration = true;
             
@@ -725,8 +728,10 @@ namespace CameraCOT
             else
             {
                 await MakePhotoAsync();
-                await SwitchLowResolution();
+                if(!_isRecording)  await SwitchLowResolution();
             }
+
+            VideoButton.IsEnabled = true;
         }
 
         private async void refreshCameraTimer_Tick(object sender, object e)
@@ -911,22 +916,21 @@ namespace CameraCOT
 
         #region Hid
 
+        HidDevice device;
         static int xx = 0;
-        private void LenghtMeterTimer_Tick(object sender, object e)
+        int count = 0;
+        private async void LenghtMeterTimer_Tick(object sender, object e)
         {
             if (xx == 1)
-                getDistance();
+                 getDistance();
             else
             {
-                getAccel();
+                 getAccel();
                 xx = 0;
             }
             xx++;
-        }
-
-
-        HidDevice device;
-        int count = 0;
+        }  
+        
         private async void EnumerateHidDevices()
         {
             // Microsoft Input Configuration Device.
@@ -953,6 +957,8 @@ namespace CameraCOT
                 // Open the target HID device.
                 device = await HidDevice.FromIdAsync(devices.ElementAt(0).Id, FileAccessMode.ReadWrite);
 
+                device.InputReportReceived += InputReportReceived;
+
                 readHid();
 
             }
@@ -963,120 +969,236 @@ namespace CameraCOT
             }
         }
 
-        private async void sendOutReport(DataWriter dataWriter)
+        private async void InputReportReceived(HidDevice sender, HidInputReportReceivedEventArgs args)
+        {
+            HidInputReport inputReport = args.Report;
+            IBuffer buffer = inputReport.Data;
+            DataReader dr = DataReader.FromBuffer(buffer);
+            byte[] ByteArray = new byte[inputReport.Data.Length];
+            dr.ReadBytes(ByteArray);
+            count++;
+            //method
+            
+            await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+
+                count++;
+                if (ByteArray[5] == 56)    // GET_DISTANCE
+                {
+                    count++;
+                }
+
+                if (ByteArray[5] == 28)    // GET_DISTANCE
+                {
+                    byte[] bytes = new byte[4];
+
+                    bytes[0] = (byte)(ByteArray[6]);
+                    bytes[1] = (byte)(ByteArray[7]);
+                    bytes[2] = (byte)(ByteArray[8]);
+                    bytes[3] = (byte)(ByteArray[9]);
+
+                    double value = BitConverter.ToSingle(bytes, 0);
+
+                    if (firstDistanceFlag)
+                    {
+                        firstDistanceFlag = false;
+                        initialLenght = value;
+                    }
+                    lenght = value - initialLenght;
+
+                    videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
+                    //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                    videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+
+
+                }
+
+                if (ByteArray[5] == 25)     // AMP_FIND_SUCCESS
+                {
+                    lenghtMeterTimer.Start();
+
+                    videoEffectSettings.getLenghtFlag = true;
+
+                    _findLenghtZero = false;
+
+
+                    UpdateUIControls();
+                    runMeasure.Visibility = Visibility.Collapsed;
+                    progressRing.Visibility = Visibility.Collapsed;
+                    progressRing.IsActive = false;
+                    textInfo.Visibility = Visibility.Collapsed;
+
+                }
+
+                if (ByteArray[5] == 35)  // AMP_FIND_NOT_SUCCESS
+                {
+                    stopMeasure();
+                    lenghtMeterTimer.Stop();
+
+                    firstDistanceFlag = false;
+                    _findLenghtZero = false;
+
+                    UpdateUIControls();
+
+                    textInfo.Visibility = Visibility.Visible;
+                    textInfo.Text = "Калибровка не выполнена";
+                }
+
+                if (ByteArray[5] == 32)     // MSG_GET_ACCEL_DATA
+                {
+                    //byte[] data = new byte[8];
+
+
+                    short Xaccel = (short)((((short)(ByteArray[7]) << 2 | (short)(ByteArray[6]) >> 6)) << 6);
+                    short Yaccel = (short)((((short)(ByteArray[9]) << 2 | (short)(ByteArray[8]) >> 6)) << 6);
+                    short Zaccel = (short)((((short)(ByteArray[11]) << 2 | (short)(ByteArray[10]) >> 6)) << 6);
+
+                    double Xf1 = (double)Xaccel / 4096;
+                    double Yf1 = (double)Yaccel / 4096;
+                    double Zf1 = (double)Zaccel / 4096;
+
+                    double k = 0.2;
+
+                    //Xf = Xf1 * k - (1 - k) * Xf;
+                    //Yf = Yf1 * k - (1 - k) * Yf;
+                    //Zf = Zf1 * k - (1 - k) * Zf;
+
+                    Xf = Xf1;
+                    Yf = Yf1;
+                    Zf = Zf1;
+
+                    textInfo.Visibility = Visibility.Visible;
+                    textBoxInfo.Text = "Данные акселерометра\n";
+                    textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
+                    videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+                }
+
+            }));
+             
+        }
+        
+        private async Task sendOutReport(DataWriter dataWriter)
         {
             HidOutputReport outReport = device.CreateOutputReport(0x00);
             outReport.Data = dataWriter.DetachBuffer();
 
-            
+            //device.InputReportReceived += InputReportReceived;
 
-            //refreshCameraTimer.Tick += refreshCameraTimer_Tick;
-            device.InputReportReceived += async (sender, args) =>
-            {               
-                HidInputReport inputReport = args.Report;
-                IBuffer buffer = inputReport.Data;
+            #region комментарий старой логики
+            /* device.InputReportReceived += async (sender, args) =>
+             {               
+                 HidInputReport inputReport = args.Report;
+                 IBuffer buffer = inputReport.Data;
 
-                byte[] ByteArray;
-                CryptographicBuffer.CopyToByteArray(buffer, out ByteArray);
+                 byte[] ByteArray;
+                 CryptographicBuffer.CopyToByteArray(buffer, out ByteArray);
 
-                await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
-                {
-                    //textBoxInfo.Text += "\nCount = " + count.ToString() + "\nHID Input Report: " + inputReport.ToString() +
-                    //"\nTotal number of bytes received: " + buffer.Length.ToString() +
-                    //"\n Data = " + CryptographicBuffer.EncodeToHexString(buffer);
+                 await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                 {
+                     //textBoxInfo.Text += "\nCount = " + count.ToString() + "\nHID Input Report: " + inputReport.ToString() +
+                     //"\nTotal number of bytes received: " + buffer.Length.ToString() +
+                     //"\n Data = " + CryptographicBuffer.EncodeToHexString(buffer);
 
-                    count++;
+                     count++;
 
-                    if (ByteArray[5] == 28)    // GET_DISTANCE
-                    {
-                        byte[] bytes = new byte[4];
+                     if (ByteArray[5] == 28)    // GET_DISTANCE
+                     {
+                         byte[] bytes = new byte[4];
 
-                        bytes[0] = (byte)(ByteArray[6]);
-                        bytes[1] = (byte)(ByteArray[7]);
-                        bytes[2] = (byte)(ByteArray[8]);
-                        bytes[3] = (byte)(ByteArray[9]);
+                         bytes[0] = (byte)(ByteArray[6]);
+                         bytes[1] = (byte)(ByteArray[7]);
+                         bytes[2] = (byte)(ByteArray[8]);
+                         bytes[3] = (byte)(ByteArray[9]);
 
-                        double value = BitConverter.ToSingle(bytes, 0);
+                         double value = BitConverter.ToSingle(bytes, 0);
 
-                        if (firstDistanceFlag)
-                        {
-                            firstDistanceFlag = false;
-                            initialLenght = value;
-                        }
-                        lenght = value - initialLenght;
+                         if (firstDistanceFlag)
+                         {
+                             firstDistanceFlag = false;
+                             initialLenght = value;
+                         }
+                         lenght = value - initialLenght;
 
-                        videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
-                        //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
-                        videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
-
-
-                    }
-
-                    if (ByteArray[5] == 25)     // AMP_FIND_SUCCESS
-                    {
-                        lenghtMeterTimer.Start();
-
-                        videoEffectSettings.getLenghtFlag = true;
-
-                        _findLenghtZero = false;
+                         videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
+                         //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
+                         videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
 
 
-                        UpdateUIControls();
-                        runMeasure.Visibility = Visibility.Collapsed;
-                        progressRing.Visibility = Visibility.Collapsed;
-                        progressRing.IsActive = false;
-                        textInfo.Visibility = Visibility.Collapsed;
+                     }
 
-                    }
-                    
-                    if (ByteArray[5] == 35)  // AMP_FIND_NOT_SUCCESS
-                    {
-                        stopMeasure();
-                        lenghtMeterTimer.Stop();
+                     if (ByteArray[5] == 25)     // AMP_FIND_SUCCESS
+                     {
+                         lenghtMeterTimer.Start();
 
-                        firstDistanceFlag = false;
-                        _findLenghtZero = false;
+                         videoEffectSettings.getLenghtFlag = true;
 
-                        UpdateUIControls();
-
-                        textInfo.Visibility = Visibility.Visible;
-                        textInfo.Text = "Калибровка не выполнена";
-                    }
-
-                    if (ByteArray[5] == 32)     // MSG_GET_ACCEL_DATA
-                    {
-                        //byte[] data = new byte[8];
+                         _findLenghtZero = false;
 
 
-                        short Xaccel = (short)((((short)(ByteArray[7]) << 2 | (short)(ByteArray[6]) >> 6)) << 6);
-                        short Yaccel = (short)((((short)(ByteArray[9]) << 2 | (short)(ByteArray[8]) >> 6)) << 6);
-                        short Zaccel = (short)((((short)(ByteArray[11]) << 2 | (short)(ByteArray[10]) >> 6)) << 6);
+                         UpdateUIControls();
+                         runMeasure.Visibility = Visibility.Collapsed;
+                         progressRing.Visibility = Visibility.Collapsed;
+                         progressRing.IsActive = false;
+                         textInfo.Visibility = Visibility.Collapsed;
 
-                        double Xf1 = (double)Xaccel / 4096;
-                        double Yf1 = (double)Yaccel / 4096;
-                        double Zf1 = (double)Zaccel / 4096;
+                     }
 
-                        double k = 0.2;
+                     if (ByteArray[5] == 35)  // AMP_FIND_NOT_SUCCESS
+                     {
+                         stopMeasure();
+                         lenghtMeterTimer.Stop();
 
-                        //Xf = Xf1 * k - (1 - k) * Xf;
-                        //Yf = Yf1 * k - (1 - k) * Yf;
-                        //Zf = Zf1 * k - (1 - k) * Zf;
+                         firstDistanceFlag = false;
+                         _findLenghtZero = false;
 
-                        Xf = Xf1;
-                        Yf = Yf1;
-                        Zf = Zf1;
+                         UpdateUIControls();
 
-                        textInfo.Visibility = Visibility.Visible;
-                        textBoxInfo.Text = "Данные акселерометра\n";
-                        textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
-                        videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
-                    }
+                         textInfo.Visibility = Visibility.Visible;
+                         textInfo.Text = "Калибровка не выполнена";
+                     }
 
-                }));
-            };
+                     if (ByteArray[5] == 32)     // MSG_GET_ACCEL_DATA
+                     {
+                         //byte[] data = new byte[8];
+
+
+                         short Xaccel = (short)((((short)(ByteArray[7]) << 2 | (short)(ByteArray[6]) >> 6)) << 6);
+                         short Yaccel = (short)((((short)(ByteArray[9]) << 2 | (short)(ByteArray[8]) >> 6)) << 6);
+                         short Zaccel = (short)((((short)(ByteArray[11]) << 2 | (short)(ByteArray[10]) >> 6)) << 6);
+
+                         double Xf1 = (double)Xaccel / 4096;
+                         double Yf1 = (double)Yaccel / 4096;
+                         double Zf1 = (double)Zaccel / 4096;
+
+                         double k = 0.2;
+
+                         //Xf = Xf1 * k - (1 - k) * Xf;
+                         //Yf = Yf1 * k - (1 - k) * Yf;
+                         //Zf = Zf1 * k - (1 - k) * Zf;
+
+                         Xf = Xf1;
+                         Yf = Yf1;
+                         Zf = Zf1;
+
+                         textInfo.Visibility = Visibility.Visible;
+                         textBoxInfo.Text = "Данные акселерометра\n";
+                         textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
+                         videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+                     }
+
+                 }));
+             };*/
+            #endregion
 
             // Send the output report asynchronously
-            await device.SendOutputReportAsync(outReport);
+            try
+            {
+                await device.SendOutputReportAsync(outReport);
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }                        
 
         }
             
@@ -1104,7 +1226,7 @@ namespace CameraCOT
             }
         }
 
-        private void startMeasure()
+        private async void startMeasure()
         {
             if (device != null)
             {
@@ -1124,15 +1246,23 @@ namespace CameraCOT
                 DataWriter dataWriter = new DataWriter();
                 dataWriter.WriteBytes(bufferTx);
 
-                sendOutReport(dataWriter);
+                await sendOutReport(dataWriter);
 
             }
         }
 
         static bool light1;
-        private void lightOn_Click(object sender, RoutedEventArgs e)
+        private async void lightOn_Click(object sender, RoutedEventArgs e)
         {
-            HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+            bool flag = false;
+            if (lenghtMeterTimer.IsEnabled)
+            {
+                lenghtMeterTimer.Stop();
+                //stopMeasure();
+                flag = true;
+            }
+            await Task.Delay(100);
 
             /// Initialize the data buffer and fill it in
             byte[] bufferTx = new byte[65];
@@ -1142,17 +1272,32 @@ namespace CameraCOT
             bufferTx[3] = 0x00;
             bufferTx[4] = 0x07;
             bufferTx[5] = 56;       // start measure
-            bufferTx[6] = (byte)(light1 ? 1 : 0);
+            bufferTx[6] = (byte)(light1 ? 0 : 1);
             light1 = !light1;
 
             DataWriter dataWriter = new DataWriter();
             dataWriter.WriteBytes(bufferTx);
-
+            
             sendOutReport(dataWriter);
+            await Task.Delay(2);
+            sendOutReport(dataWriter);
+            await Task.Delay(2);
+            sendOutReport(dataWriter);
+            await Task.Delay(2);
+
+            await Task.Delay(100);
+            if (flag)
+            {
+                //startMeasure();
+                lenghtMeterTimer.Start();
+            }
+
+            //hidEndo.LizerOn();
         }
 
-        private void stopMeasure()
+        private async void stopMeasure()
         {
+            lenghtMeterTimer.Stop();
             if (device != null)
             {
 
@@ -1171,12 +1316,12 @@ namespace CameraCOT
                 DataWriter dataWriter = new DataWriter();
                 dataWriter.WriteBytes(bufferTx);
 
-                sendOutReport(dataWriter);
+                await sendOutReport(dataWriter);
 
             }
         }
 
-        private void getDistance()
+        private async Task getDistance()
         {
             if (device != null)
             {
@@ -1196,12 +1341,12 @@ namespace CameraCOT
                 DataWriter dataWriter = new DataWriter();
                 dataWriter.WriteBytes(bufferTx);
 
-                sendOutReport(dataWriter);
+                await sendOutReport(dataWriter);
 
             }
         }
 
-        private void getAccel()
+        private async Task getAccel()
         {
             if (device != null)
             {
@@ -1221,7 +1366,7 @@ namespace CameraCOT
                 DataWriter dataWriter = new DataWriter();
                 dataWriter.WriteBytes(bufferTx);
 
-                sendOutReport(dataWriter);
+                await sendOutReport(dataWriter);
 
             }
         }
@@ -1987,8 +2132,9 @@ namespace CameraCOT
             }
 
             // switch camera resolution
-            if (currentCameraType == (int)cameraType.mainCamera)
+            if (currentCameraType == (int)cameraType.mainCamera && !_isRecording)
             {
+                VideoButton.IsEnabled = false;
                 await SwitchHightResolution();
                 await Task.Delay(200);
             }
@@ -1998,7 +2144,8 @@ namespace CameraCOT
             {
                 flashDelayTimer.Start();
                 durationFlashDivider = 1;
-                if (currentCameraType != (int)cameraType.termoCamera)
+                //if (currentCameraType != (int)cameraType.termoCamera)
+                if (currentCameraType == (int)cameraType.mainCamera)
                     FlashCMD();
             }
             else
@@ -2059,11 +2206,11 @@ namespace CameraCOT
 
             try
             {
-                var temp = " Tcenter=" + strPointT + " ";
+                //var temp = " Tcenter=" + strPointT + " ";
 
                 if ((currentCameraType == (int)cameraType.termoCamera))
                 {
-                    savedFile = await photoFolder.CreateFileAsync("Camera " + temp + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                    savedFile = await photoFolder.CreateFileAsync(DateTime.Now.ToString("yyyy-MM-dd") + " photo" + ".jpg", CreationCollisionOption.GenerateUniqueName);
 
 
                     using (InMemoryRandomAccessStream photoStream2 = stream,
@@ -2117,7 +2264,7 @@ namespace CameraCOT
                 }
                 else
                 {
-                    savedFile = await photoFolder.CreateFileAsync("Camera " + DateTime.Now.ToString("d") + ".jpg", CreationCollisionOption.GenerateUniqueName);
+                    savedFile = await photoFolder.CreateFileAsync(DateTime.Now.ToString("yyyy-MM-dd") + " photo" + ".jpg", CreationCollisionOption.GenerateUniqueName);
                     await SavePhotoAsync(stream, savedFile);
                 }
 
@@ -2513,7 +2660,7 @@ namespace CameraCOT
         {
             Debug.WriteLine("StartRecord");
 
-            savedFile = await videoFolder.CreateFileAsync("video.mp4", CreationCollisionOption.GenerateUniqueName);
+            savedFile = await videoFolder.CreateFileAsync(DateTime.Now.ToString("yyyy-MM-dd") + " video.mp4", CreationCollisionOption.GenerateUniqueName);
             try
             {
                 if (currentCameraType == (int)cameraType.termoCamera)
@@ -2560,6 +2707,7 @@ namespace CameraCOT
             textBoxInfo.Visibility = Visibility.Collapsed;
 
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
+            lightOn.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             runMeasure.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
@@ -2762,7 +2910,8 @@ namespace CameraCOT
             textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;
 
      
-            litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
+            //litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
+            litgh = (int)pbFlashPowerEndo.Value;
 
             try
             {
@@ -2778,7 +2927,7 @@ namespace CameraCOT
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 40;
-        short StepFlashPowerEndo = 2;
+        short StepFlashPowerEndo = 20;
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)

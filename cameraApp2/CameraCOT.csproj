@@ -131,6 +131,8 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ComEndo.cs" />
+    <Compile Include="HidEndo.cs" />
     <Compile Include="JsonCamerasSettings.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
