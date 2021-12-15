@@ -41,10 +41,6 @@ using Microsoft.Graphics.Canvas.Text;
 using Windows.UI;
 
 
-
-
-// Документацию по шаблону элемента "Пустая страница" см. по адресу https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x419
-
 namespace CameraCOT
 {
 
@@ -56,10 +52,6 @@ namespace CameraCOT
     {
 
         public static MainPage Current;
-        //SettingsPage SettingsPage = SettingsPage.CurrentSettings;
-        // Object to manage access to camera devices
-        //private MediaCapturePreviewer _previewer = null;
-
 
         HidEndo hidEndo = new HidEndo();
 
@@ -88,6 +80,7 @@ namespace CameraCOT
 
 
         DispatcherTimer lenghtMeterTimer;
+        DispatcherTimer lenghtRunMeterTimer;
         DispatcherTimer flashDelayTimer;
         DispatcherTimer serialCommandDelayTimer;
         DispatcherTimer refreshCameraTimer;
@@ -276,17 +269,21 @@ namespace CameraCOT
 
                 jsonCamerasSettings = new JsonCamerasSettings();
 
-                jsonCamerasSettings.MainCameraName = "USB Camera2";
+                jsonCamerasSettings.MainCameraName  = "USB Camera2";
                 jsonCamerasSettings.MainCameraPhoto = "3264x2448 [1,33] 15FPS NV12";
                 jsonCamerasSettings.MainCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
-                jsonCamerasSettings.EndoCameraName = "HD WEBCAM";
+                jsonCamerasSettings.EndoCameraName  = "HD WEBCAM";
                 jsonCamerasSettings.EndoCameraPhoto = "1600x1200 [1,33] 30FPS NV12";
                 jsonCamerasSettings.EndoCameraVideo = "1600x1200 [1,33] 30FPS NV12";
 
-                jsonCamerasSettings.TermoCameraName = "PureThermal (fw:v1.0.0)";
+                jsonCamerasSettings.TermoCameraName  = "PureThermal (fw:v1.0.0)";
                 jsonCamerasSettings.TermoCameraPhoto = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
-                jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";                
+                jsonCamerasSettings.TermoCameraVideo = "80x60 [1,33] 9FPS {59565955-0000-0010-8000-00AA00389B71}";
+
+                jsonCamerasSettings.SerialPortEndo   = "COM4";
+                jsonCamerasSettings.SerialPortFlash  = "COM3";
+                jsonCamerasSettings.SerialPortLepton = "COM7";
 
                 string jsonData = JsonConvert.SerializeObject(jsonCamerasSettings, Formatting.Indented);
                 
@@ -330,6 +327,66 @@ namespace CameraCOT
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
+
+            serialPortEndo = new SerialPort(jsonCamerasSettings.SerialPortEndo, 9600, Parity.None, 8, StopBits.One);
+            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+
+            if (serialPortEndo != null)
+            {
+                try
+                {
+                    serialPortEndo.Open();
+
+                    serialPortEndo.Write("GAAZ");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+
+            serialPortFlash = new SerialPort(jsonCamerasSettings.SerialPortFlash, 9600, Parity.None, 8, StopBits.One);
+
+            if (serialPortFlash != null)
+            {
+                try
+                {
+                    serialPortFlash.Open();
+                    serialPortFlash.ReadTimeout = 3000;
+                    serialPortFlash.WriteTimeout = 3000;
+                    serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
+                    textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    //textBoxInfo.Text = e.Message;
+                }
+            }
+
+            serialPortLepton = new SerialPort(jsonCamerasSettings.SerialPortLepton, 115200, Parity.None, 8, StopBits.One);    //COM2  // COM7
+
+            if (serialPortLepton != null)
+            {
+                try
+                {
+                    serialPortLepton.Open();
+                    serialPortLepton.ReadTimeout = 2000;
+                    serialPortLepton.WriteTimeout = 2000;
+
+                    if (serialPortLepton.IsOpen)
+                        serialPortLepton.DataReceived += SerialPortLepton_DataReceived;
+
+                    textBoxInfo.Text += "serialPortLepton open" + Environment.NewLine;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    textBoxInfo.Text += ex.Message;
+                }
+            }
+
+
             progressRingStart.Visibility = Visibility.Collapsed;
             progressRingStart.IsActive = false;
         }
@@ -348,18 +405,18 @@ namespace CameraCOT
             
             this.InitializeComponent();
             Current = this;
+           
+            EnumerateHidDevices();        
 
-            //hidEndo.EnumerateHidDevices();           
-            EnumerateHidDevices();
-            
-
-
-            bCalibration = true;
-            
+            bCalibration = true;            
 
             lenghtMeterTimer = new DispatcherTimer();
             lenghtMeterTimer.Tick += LenghtMeterTimer_Tick;
             lenghtMeterTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+
+            lenghtRunMeterTimer = new DispatcherTimer();
+            lenghtRunMeterTimer.Tick += LenghtRunMeterTimer_Tick;
+            lenghtRunMeterTimer.Interval = new TimeSpan(0, 0, 0, 10, 0);
 
             flashDelayTimer = new DispatcherTimer();
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
@@ -377,7 +434,6 @@ namespace CameraCOT
             histogramStatisticTimer = new DispatcherTimer();
             histogramStatisticTimer.Tick += histogramStatisticTimer_Tick;
             histogramStatisticTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-            //histogramStatisticTimer.Start();
 
             opacityTimer = new DispatcherTimer();
             opacityTimer.Tick += opacityTimer_Tick;
@@ -393,72 +449,24 @@ namespace CameraCOT
 
             endoTimer = new DispatcherTimer();
             endoTimer.Tick += endoTimer_Tick;
-            endoTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-
-
-            serialPortEndo = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
-            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
-
-            if (serialPortEndo != null)
-            {
-                try
-                {
-                    serialPortEndo.Open();
-
-                    serialPortEndo.Write("GAAZ");
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            }
-
-            serialPortFlash = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
-
-            if (serialPortFlash != null)
-            {
-                try
-                {
-                    serialPortFlash.Open();
-                    serialPortFlash.ReadTimeout = 3000;
-                    serialPortFlash.WriteTimeout = 3000;
-                    serialPortFlash.DataReceived += SerialPortFlash_DataReceived;
-                    textBoxInfo.Text += "serialPortFlash open" + Environment.NewLine;
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                    //textBoxInfo.Text = e.Message;
-                }
-            }
-
-            serialPortLepton = new SerialPort("COM7", 115200, Parity.None, 8, StopBits.One);    //COM2  // COM7
-
-            if (serialPortLepton != null)
-            {
-                try
-                {
-                    serialPortLepton.Open();
-                    serialPortLepton.ReadTimeout = 2000;
-                    serialPortLepton.WriteTimeout = 2000;
-
-                    if (serialPortLepton.IsOpen)
-                        serialPortLepton.DataReceived += SerialPortLepton_DataReceived;
-
-                    textBoxInfo.Text += "serialPortLepton open" + Environment.NewLine;
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                    textBoxInfo.Text += e.Message;
-                }
-            }
+            endoTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);            
 
 
         }
 
         private void endoTimer_Tick(object sender, object e)
         {
+            try
+            {
+                getAccel();
+            }
+            catch (Exception ex)
+            {
+
+                Debug.WriteLine(ex);
+            }
+
+
             if (serialPortEndo != null)
             {
                 try
@@ -919,42 +927,49 @@ namespace CameraCOT
         HidDevice device;
         static int xx = 0;
         int count = 0;
-        private async void LenghtMeterTimer_Tick(object sender, object e)
+        private void LenghtMeterTimer_Tick(object sender, object e)
         {
-            if (xx == 1)
-                 getDistance();
-            else
-            {
-                 getAccel();
-                xx = 0;
-            }
-            xx++;
-        }  
-        
+            getDistance();
+            //if (xx == 1)
+            //     getDistance();
+            //else
+            //{
+            //     getAccel();
+            //    xx = 0;
+            //}
+            //xx++;
+        }
+
+        private void LenghtRunMeterTimer_Tick(object sender, object e)
+        {
+            progressRing.Visibility = Visibility.Collapsed;
+            progressRing.IsActive = false;
+            stopMeasure();
+            lenghtRunMeterTimer.Stop();
+
+            firstDistanceFlag = false;
+            _findLenghtZero = false;
+            //videoEffectSettings.getLenghtFlag = false;
+
+            endoTimer.Start();
+        }
+
         private async void EnumerateHidDevices()
         {
-            // Microsoft Input Configuration Device.
-            ushort vendorId = 0x0483;      // 0x045E;
+            ushort vendorId = 0x0483;       // 0x045E;
             ushort productId = 0x5750;      // 0x07CD;
             ushort usagePage = 0xff00;      // 0x000D;
             ushort usageId = 0x0001;
 
-            // Create the selector.
             string selector = HidDevice.GetDeviceSelector(usagePage, usageId, vendorId, productId);
 
-            // Enumerate devices using the selector.
             var devices = await DeviceInformation.FindAllAsync(selector);
 
             if (devices.Any())
             {
-                // At this point the device is available to communicate with
-                // So we can send/receive HID reports from it or 
-                // query it for control descriptions.
-
                 textBoxInfo.Text += "\nHID devices found: " + devices.Count + Environment.NewLine;
                 _isHidExist = true;
 
-                // Open the target HID device.
                 device = await HidDevice.FromIdAsync(devices.ElementAt(0).Id, FileAccessMode.ReadWrite);
 
                 device.InputReportReceived += InputReportReceived;
@@ -964,7 +979,6 @@ namespace CameraCOT
             }
             else
             {
-                // There were no HID devices that met the selector criteria.
                 textBoxInfo.Text += "\nHID device not found" + Environment.NewLine;
             }
         }
@@ -1008,7 +1022,7 @@ namespace CameraCOT
 
                     videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
                     //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
-                    videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
+                    //videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
 
 
                 }
@@ -1016,6 +1030,8 @@ namespace CameraCOT
                 if (ByteArray[5] == 25)     // AMP_FIND_SUCCESS
                 {
                     lenghtMeterTimer.Start();
+                    lenghtRunMeterTimer.Start();
+                    endoTimer.Stop();
 
                     videoEffectSettings.getLenghtFlag = true;
 
@@ -1023,9 +1039,10 @@ namespace CameraCOT
 
 
                     UpdateUIControls();
-                    runMeasure.Visibility = Visibility.Collapsed;
-                    progressRing.Visibility = Visibility.Collapsed;
-                    progressRing.IsActive = false;
+                    //runMeasure.Visibility = Visibility.Collapsed;
+
+                    //progressRing.Visibility = Visibility.Collapsed;
+                    //progressRing.IsActive = false;
                     textInfo.Visibility = Visibility.Collapsed;
 
                 }
@@ -1280,10 +1297,7 @@ namespace CameraCOT
             
             sendOutReport(dataWriter);
             await Task.Delay(2);
-            sendOutReport(dataWriter);
-            await Task.Delay(2);
-            sendOutReport(dataWriter);
-            await Task.Delay(2);
+            
 
             await Task.Delay(100);
             if (flag)
@@ -1433,6 +1447,7 @@ namespace CameraCOT
 
         private void runMeasure_Click(object sender, RoutedEventArgs e)
         {
+            endoTimer.Stop();
             firstDistanceFlag = true;
 
             _findLenghtZero = true;
@@ -1505,7 +1520,7 @@ namespace CameraCOT
 
             _isActivePage = true;
 
-            await SetUpBasedOnStateAsync();
+            //await SetUpBasedOnStateAsync();
         }
 
         private void Application_Resuming(object sender, object e)
@@ -2496,7 +2511,7 @@ namespace CameraCOT
             {
                 Debug.WriteLine("error endo camera button" + ex.Message);
             }
-            videoEffectSettings.getLenghtFlag = true;
+            //videoEffectSettings.getLenghtFlag = true;
             videoEffectSettings.termo = false;
 
             SetCoordinateNotes(50, 1000, 40, 1550);
@@ -2759,9 +2774,7 @@ namespace CameraCOT
             Rec.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;    //&& !_isPause
             recordTimeTextBox.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
 
-            // Update microphone button 
-            MicOff.Visibility = _isMicrophone ? Visibility.Collapsed : Visibility.Visible;
-            MicOn.Visibility = _isMicrophone ? Visibility.Visible : Visibility.Collapsed;
+            
 
             // Update flash button
             NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -2792,8 +2805,8 @@ namespace CameraCOT
             }
             else
             {
-                progressRing.Visibility = Visibility.Collapsed;
-                progressRing.IsActive = false;
+                //progressRing.Visibility = Visibility.Collapsed;
+                //progressRing.IsActive = false;
                 textInfo.Text = "";
                 textInfo.Visibility = Visibility.Collapsed;
             }
@@ -2855,12 +2868,8 @@ namespace CameraCOT
 
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
         {
+            //device.InputReportReceived -= InputReportReceived;
             await CleanupCameraAsync();
-
-            //SettingsPage settingsPage = new SettingsPage();
-            //settingsPage.Show();
-            //this.Close();
-            
 
             this.Frame.Navigate(typeof(SettingsPage));
         }

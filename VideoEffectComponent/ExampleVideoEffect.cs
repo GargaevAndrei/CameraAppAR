@@ -78,14 +78,8 @@ namespace VideoEffectComponent
 
         int indexBadPixel;
         
-        
-
-        
-        
+                 
         //bool bHorizont = false;
-
-
-
 
 
         public void Close(MediaEffectClosedReason reason)
@@ -167,8 +161,6 @@ namespace VideoEffectComponent
 
         //}
 
-
-
         public double BlurAmount
         {
             get
@@ -194,7 +186,7 @@ namespace VideoEffectComponent
             using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))
             using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
             {
-                ds.DrawImage(inputBitmap);          
+                ds.DrawImage(inputBitmap);       
 
                 if (videoEffectSettings.termo)  //
                 {

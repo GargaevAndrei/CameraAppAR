@@ -13,10 +13,20 @@ namespace VideoEffectComponent
         {
             badPixelList = new List<int>();
         }
+
+        /// <summary>
+        /// Записывает битые пиксели в динамический лист
+        /// </summary>
+        /// <param name="a">Номер битого пикселя</param>
         public static void RecordBadPixel(int a)
         {
             badPixelList.Add(a);
         }
+
+        /// <summary>
+        /// Возвращает количество битых пикселей
+        /// </summary>
+        /// <returns>количество битых пикселей</returns>
         public static int CountBadPixel()
         {
             return badPixelList.Count;
