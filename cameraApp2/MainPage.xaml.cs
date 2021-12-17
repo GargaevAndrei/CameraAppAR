@@ -94,6 +94,7 @@ namespace CameraCOT
         SerialPort serialPortLepton;
         SerialPort serialPortEndo;
 
+        bool _isLightVideo = false;
         bool _isMicrophone = false;
         bool _isVoice = false;
         bool _isFlash = true;
@@ -2752,15 +2753,8 @@ namespace CameraCOT
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
 
-            //termoPanel.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             termoPanel1.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera || currentCameraType == (int)cameraType.doubleCamera)) ? Visibility.Visible : Visibility.Collapsed;
             termoPanelDot.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera || currentCameraType == (int)cameraType.doubleCamera)) ? Visibility.Visible : Visibility.Collapsed;
-
-            //CenterIcon.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            //doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;            
-
-            //_getDistanse.Visibility = Visibility.Collapsed;
-            //_stopMeasure.Visibility = Visibility.Collapsed;
 
 
             // The buttons should only be enabled if the preview started sucessfully
@@ -2774,7 +2768,10 @@ namespace CameraCOT
             Rec.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;    //&& !_isPause
             recordTimeTextBox.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
 
-            
+
+            buttonLightVideo.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+            //LightVideoOnIcon.Visibility = _isLightVideo ? Visibility.Collapsed : Visibility.Visible;
+            LightVideoOffIcon.Visibility = _isLightVideo ? Visibility.Collapsed : Visibility.Visible;
 
             // Update flash button
             NotFlashIcon.Visibility = _isFlash ? Visibility.Collapsed : Visibility.Visible;
@@ -3092,7 +3089,8 @@ namespace CameraCOT
 
         }
 
-        static int temp1 = 0;
+        static int temp1 = 0;        
+
         private void EndoOrientationButton_Click(object sender, RoutedEventArgs e)
         {
             videoEffectSettings.bHorizont = !videoEffectSettings.bHorizont;
@@ -3129,7 +3127,26 @@ namespace CameraCOT
             await FileIO.WriteTextAsync(configFile, jsonData);
 
 
-        }       
+        }
+
+        private void buttonLightVideo_Click(object sender, RoutedEventArgs e)
+        {
+            _isLightVideo = !_isLightVideo;
+
+            UpdateUIControls();
+
+            string sendMessage;
+            sendMessage = _isLightVideo ? "LON" : "LOFF";
+            
+            try
+            {
+                serialPortFlash.Write(sendMessage);
+            }
+            catch (Exception ex)
+            {
+                textBoxInfo.Text += "er1 " + ex.Message.ToString() + Environment.NewLine;
+            }
+        }
 
         private void upPixel_Click(object sender, RoutedEventArgs e)
         {
