@@ -47,36 +47,52 @@
             <TextBox x:Name="serialPortFlash" Width="100" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,250,0,0">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,250,0,0" ToolTipService.ToolTip="На главное окно">
             <Button x:Name="getScenario" Click="getMainPage_Click" Margin="20">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Home"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="20" >
+            <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="20" ToolTipService.ToolTip="Сохранить настройки" >
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="Save" RenderTransformOrigin="1,1"/>
                 </Viewbox>
             </Button>
-            <Button x:Name="readSettings" Click="readSettings_Click" Margin="20">
+            <Button x:Name="readSettings" Click="readSettings_Click" Margin="20" ToolTipService.ToolTip="Загрузить настройки">
                 <Viewbox MaxHeight="40" MaxWidth="40">
                     <SymbolIcon Symbol="OpenLocal"/>
                 </Viewbox>
             </Button>
             <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="40" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Для получения списка голосовых команд скажите 'Помощь'">
                 <Grid>
-                    <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                    <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed"  Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
-                    <FontIcon x:Name="MicOff" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed" Height="20" Glyph="&#xF781;" RenderTransformOrigin="0.5,0.5">
+                    <FontIcon x:Name="MicOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xF781;" RenderTransformOrigin="0.5,0.5">
                         <FontIcon.RenderTransform>
                             <CompositeTransform ScaleX="2" ScaleY="2"/>
                         </FontIcon.RenderTransform>
                     </FontIcon>
                 </Grid>
             </Button>
+
+            <Button x:Name="BadPixelPanel" Click="BadPixelPanel_Click" Width="40" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Интерполяция пикселей">
+                <Grid>
+                    <FontIcon x:Name="BadPixelPanelOn"  FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="MediumSlateBlue" Visibility="Collapsed"  Width="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                    <FontIcon x:Name="BadPixelPanelOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <CompositeTransform ScaleX="2" ScaleY="2"/>
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Grid>
+            </Button>
+
         </StackPanel>
 
        

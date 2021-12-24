@@ -34,6 +34,8 @@ namespace CameraCOT
             this.InitializeComponent();
             CurrentSettings = this;
 
+            updateUI();
+
 
             foreach (var camera in MainPage.cameraDeviceList)
             {
@@ -254,12 +256,28 @@ namespace CameraCOT
 
         }
 
-        bool _isMicrophone;
+        //bool _isMicrophone = false;
+        //bool _isBadPixel = false;
         private void MicrophoneButton_Click(object sender, RoutedEventArgs e)
         {
-            // Update microphone button 
-            MicOff.Visibility = _isMicrophone ? Visibility.Collapsed : Visibility.Visible;
-            MicOn.Visibility = _isMicrophone ? Visibility.Visible : Visibility.Collapsed;
+            MainPage._isMicrophone = !MainPage._isMicrophone;
+            updateUI();            
+        }
+
+        private void BadPixelPanel_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage._isBadPixel = !MainPage._isBadPixel;
+
+            updateUI();            
+        }
+
+        void updateUI()
+        {
+            BadPixelPanelOff.Visibility = MainPage._isBadPixel ? Visibility.Collapsed : Visibility.Visible;
+            BadPixelPanelOn.Visibility = MainPage._isBadPixel ? Visibility.Visible : Visibility.Collapsed;
+
+            MicOff.Visibility = MainPage._isMicrophone ? Visibility.Collapsed : Visibility.Visible;
+            MicOn.Visibility = MainPage._isMicrophone ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 

@@ -52,8 +52,11 @@ namespace CameraCOT
     {
 
         public static MainPage Current;
+        public static bool _isBadPixel = false;
+        public static bool _isMicrophone = false;
 
         HidEndo hidEndo = new HidEndo();
+        Notes notes = new Notes();
 
         MediaFrameReader mediaFrameReader;
 
@@ -95,7 +98,7 @@ namespace CameraCOT
         SerialPort serialPortEndo;
 
         bool _isLightVideo = false;
-        bool _isMicrophone = false;
+        //bool _isMicrophone = false;
         bool _isVoice = false;
         bool _isFlash = true;
         bool _isPause = false;
@@ -253,6 +256,7 @@ namespace CameraCOT
                 {
                     IList<string> data = await FileIO.ReadLinesAsync(notesFile);
                     stringNote = data.ToList();
+                    notes.InitListNote(data.ToList());
                 }
             }
 
@@ -1086,8 +1090,8 @@ namespace CameraCOT
                     Zf = Zf1;
 
                     textInfo.Visibility = Visibility.Visible;
-                    textBoxInfo.Text = "Данные акселерометра\n";
-                    textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
+                    //textBoxInfo.Text = "Данные акселерометра\n";
+                    //textBoxInfo.Text = Xf.ToString() + "  " + Yf.ToString() + "  " + Zf.ToString() + "\n";
                     videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
                 }
 
@@ -1718,7 +1722,6 @@ namespace CameraCOT
             }
         }
 
-
         private async Task InitializeCameraAsync()
         {
             Debug.WriteLine("InitializeCameraAsync");
@@ -2093,7 +2096,6 @@ namespace CameraCOT
             }
         }
 
-
         private async Task SetUpBasedOnStateAsync()
         {
 
@@ -2130,7 +2132,6 @@ namespace CameraCOT
 
             await _setupTask;
         }
-
 
         private async Task SetupUiAsync()
         {
@@ -2739,6 +2740,8 @@ namespace CameraCOT
             termoPanelDot.Margin = _isDouble ? new Thickness(0, 232, 245, 0) : new Thickness(0, 232, 490, 0);
             termoPanel1.Margin = _isDouble ? new Thickness(0, 0, 235, 0) : new Thickness(0, 0, 470, 0);
 
+            gridBadPixel.Visibility = _isBadPixel && (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
+
             buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
 
@@ -2752,6 +2755,7 @@ namespace CameraCOT
             mainCameraButton.Visibility = (_isMainCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             endoCameraButton.Visibility = (_isEndoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
             termoCameraButton.Visibility = (_isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
+            doubleCameraButton.Visibility = (_isMainCameraFlag && _isTermoCameraFlag) ? Visibility.Visible : Visibility.Collapsed;
 
             termoPanel1.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera || currentCameraType == (int)cameraType.doubleCamera)) ? Visibility.Visible : Visibility.Collapsed;
             termoPanelDot.Visibility = (_isTermoCameraFlag && (currentCameraType == (int)cameraType.termoCamera || currentCameraType == (int)cameraType.doubleCamera)) ? Visibility.Visible : Visibility.Collapsed;
@@ -2998,6 +3002,18 @@ namespace CameraCOT
         }
 
 
+        #region Notes
+        private void NotesButton_Click(object sender, RoutedEventArgs e)
+        {
+            indexNoteShow = stringNote.Count - 1;
+
+            //notes.indexNoteShow = stringNote.Count - 1;
+
+            _isNotes = !_isNotes;
+            UpdateUIControls();
+
+        }
+
         private void ButtonUpNotes_Click(object sender, RoutedEventArgs e)
         {
             if ((stringNote.Count > 0) && (stringNote.Count - (indexNoteShow + 1) > 0))
@@ -3006,6 +3022,8 @@ namespace CameraCOT
                 videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
                 textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
             }
+
+
 
         }
 
@@ -3037,13 +3055,15 @@ namespace CameraCOT
 
                 await FileIO.AppendTextAsync(notesFile, "\n" + textBlockNotes.Text);
 
-                //videoEffectSettings.commet = textBlockNotes.Text;
+
 
             }
             videoEffectSettings.commet = textBlockNotes.Text;
-            //videoEffectSettings.commet = stringNote[indexNoteShow];
-
+            
         }
+
+        #endregion
+
 
         private async void imageControlPreview_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
@@ -3159,19 +3179,7 @@ namespace CameraCOT
         {
             if (videoEffectSettings.indexBadPixel < 18880)
                 videoEffectSettings.indexBadPixel += 320;
-        }
-
-        private void NotesButton_Click(object sender, RoutedEventArgs e)
-        {
-            // StartUdpClient();
-
-            indexNoteShow = stringNote.Count - 1;
-            _isNotes = !_isNotes;
-            UpdateUIControls();
-
-
-            //videoEffectSettings.commet = "Заметка" + ++temp1;
-        }
+        }       
 
         private void OutputHelpCommand()
         {
