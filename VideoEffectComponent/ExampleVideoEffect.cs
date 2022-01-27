@@ -206,9 +206,9 @@ namespace VideoEffectComponent
                     //UseFullConnainer useFullConnainer = videoEffectSettings.useFullConnainer1;
 
 
-                    //buf[indexBadPixel + 0] = 255;
-                    //buf[indexBadPixel + 1] = 255;
-                    //buf[indexBadPixel + 2] = 255;
+                    buf[indexBadPixel + 0] = 255;
+                    buf[indexBadPixel + 1] = 255;
+                    buf[indexBadPixel + 2] = 255;
 
                     if (BadPixelContainer.CountBadPixel() > 0)
                     {

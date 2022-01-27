@@ -1434,15 +1434,22 @@ namespace CameraCOT
 
                 byte[] s = new byte[4];
                 s[0] = 65; //'A';     //65
-                s[1] = (byte)((light >> 8) & 0xff);                
+                s[1] = (byte)((light >> 8) & 0xff);
                 s[2] = (byte)((light) & 0xff);
                 s[3] = 90; // 'Z';     //90
-                serialPortEndo.Write(s, 0, 4);
 
+                if (!serialPortEndo.IsOpen)                
+                    serialPortEndo.Open();
+
+
+                 serialPortEndo.Write(s, 0, 4);
+               
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                //textBlockNotes.Visibility = Visibility.Visible;
+                //textBlockNotes.Text = ex.Message;
             }
         }
         //private void inReportRead_Click(object sender, RoutedEventArgs e)
@@ -2726,8 +2733,8 @@ namespace CameraCOT
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
             lightOn.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             runMeasure.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            //EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            //EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             if(_isEndoCameraFlag)
                 SetCoordinateNotes(50, 1000, 40, 1550);
 
@@ -2869,7 +2876,10 @@ namespace CameraCOT
 
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
         {
-            //device.InputReportReceived -= InputReportReceived;
+            serialPortFlash.Close();
+            serialPortLepton.Close();
+            serialPortEndo.Close();
+
             await CleanupCameraAsync();
 
             this.Frame.Navigate(typeof(SettingsPage));
@@ -2920,8 +2930,8 @@ namespace CameraCOT
             textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;
 
      
-            //litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
-            litgh = (int)pbFlashPowerEndo.Value;
+            litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
+            //litgh = (int)pbFlashPowerEndo.Value;
 
             try
             {
@@ -2937,7 +2947,7 @@ namespace CameraCOT
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 40;
-        short StepFlashPowerEndo = 20;
+        short StepFlashPowerEndo = 40;
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
@@ -3022,9 +3032,6 @@ namespace CameraCOT
                 videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
                 textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
             }
-
-
-
         }
 
         private void buttonDownNotes_Click(object sender, RoutedEventArgs e)
@@ -3035,7 +3042,6 @@ namespace CameraCOT
                 videoEffectSettings.commet = stringNote[stringNote.Count - 1 - indexNoteShow];
                 textBlockNotes.Text = stringNote[stringNote.Count - 1 - indexNoteShow];
             }
-
         }
 
         private void ButtonClearNotes_Click(object sender, RoutedEventArgs e)

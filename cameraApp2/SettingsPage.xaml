@@ -9,94 +9,116 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
 
     <Grid x:Name="grid">
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="53*"/>
+            <RowDefinition Height="667*"/>
+        </Grid.RowDefinitions>
+
         <TextBox x:Name="myTextBox" HorizontalAlignment="Left" Margin="10,2,0,0" Text="Main Camera" TextWrapping="Wrap" VerticalAlignment="Top" Height="28" FontSize="12" BorderThickness="0,0,0,0"/>
 
-        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" Margin="0,30,0,0" HorizontalAlignment="Left" Width="480" >
+        <StackPanel Orientation="Horizontal"  VerticalAlignment="Top" Margin="0,30,0,0" HorizontalAlignment="Left" Width="550" Grid.RowSpan="2" >
             <ComboBox x:Name="MainCamera" PlaceholderText="Camera List"               SelectionChanged="MainCameraList_Changed" Width="auto"/>
             <ComboBox Name="MainPhotoSettings" PlaceholderText="Photo Settings" Width="auto"/>
             <ComboBox Name="MainVideoSettings" PlaceholderText="Video Settings" Width="auto"/>
         </StackPanel>
 
-        <TextBox HorizontalAlignment="Left" Margin="10,72,0,0" Text="Termo Camera" TextWrapping="Wrap" VerticalAlignment="Top" Height="28" FontSize="12" BorderThickness="0,0,0,0"/>
-        <StackPanel  Orientation="Horizontal" Height="50" VerticalAlignment="Top" Margin="0,100,0,0" HorizontalAlignment="Left" Width="480"  >
+        <TextBox HorizontalAlignment="Left" Margin="10,19,0,0" Text="Termo Camera" TextWrapping="Wrap" VerticalAlignment="Top" Height="28" FontSize="12" BorderThickness="0,0,0,0" Grid.Row="1"/>
+        <StackPanel  Orientation="Horizontal" Height="50" VerticalAlignment="Top" Margin="0,47,0,0" HorizontalAlignment="Left" Width="550" Grid.Row="1"  >
             <ComboBox Name="TermoCamera" PlaceholderText="Camera List" SelectionChanged="TermoCameraList_Changed" Width="auto"/>
             <ComboBox Name="TermoPhotoSettings" PlaceholderText="Photo Settings" Width="auto"/>
             <ComboBox Name="TermoVideoSettings" PlaceholderText="Video Settings" Width="auto"/>
         </StackPanel>
 
-        <TextBox HorizontalAlignment="Left" Margin="13,142,0,0" Text="Endo Camera" TextWrapping="Wrap" VerticalAlignment="Top" Height="28" FontSize="12" BorderThickness="0,0,0,0"/>
-        <StackPanel  Orientation="Horizontal"  VerticalAlignment="Top"  Margin="0,170,0,0" HorizontalAlignment="Left" Width="480" >
+        <TextBox HorizontalAlignment="Left" Margin="13,89,0,0" Text="Endo Camera" TextWrapping="Wrap" VerticalAlignment="Top" Height="28" FontSize="12" BorderThickness="0,0,0,0" Grid.Row="1"/>
+        <StackPanel  Orientation="Horizontal"  VerticalAlignment="Top"  Margin="0,117,0,0" HorizontalAlignment="Left" Width="550" Grid.Row="1" >
             <ComboBox Name="EndoCamera"  PlaceholderText="Camera List" SelectionChanged="EndoCameraList_Changed" Width="auto"/>
             <ComboBox Name="EndoPhotoSettings" PlaceholderText="Photo Settings" Width="auto"/>
             <ComboBox Name="EndoVideoSettings" PlaceholderText="Video Settings" Width="auto"/>
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,30,100,0" Width="300" >
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,30,100,0" Width="300" Grid.RowSpan="2" >
             <TextBlock Text=" Serial Port Endo" Width="130"/>
             <TextBox x:Name="serialPortEndo" Width="100" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,100,100,0" Width="300" >
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,50,100,0" Width="300" Grid.Row="1" >
             <TextBlock Text=" Serial Port Lepton" Width="130"/>
             <TextBox x:Name="serialPortLepton" Width="100" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,170,100,0" Width="300" >
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,100,100,0" Width="300" Grid.Row="1" >
             <TextBlock Text=" Serial Port Flash" Width="130"/>
             <TextBox x:Name="serialPortFlash" Width="100" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,250,0,0" ToolTipService.ToolTip="На главное окно">
-            <Button x:Name="getScenario" Click="getMainPage_Click" Margin="20">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Home"/>
-                </Viewbox>
-            </Button>
-            <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="20" ToolTipService.ToolTip="Сохранить настройки" >
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="Save" RenderTransformOrigin="1,1"/>
-                </Viewbox>
-            </Button>
-            <Button x:Name="readSettings" Click="readSettings_Click" Margin="20" ToolTipService.ToolTip="Загрузить настройки">
-                <Viewbox MaxHeight="40" MaxWidth="40">
-                    <SymbolIcon Symbol="OpenLocal"/>
-                </Viewbox>
-            </Button>
-            <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="40" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Для получения списка голосовых команд скажите 'Помощь'">
-                <Grid>
-                    <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed"  Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
-                        <FontIcon.RenderTransform>
-                            <CompositeTransform ScaleX="2" ScaleY="2"/>
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
-                    <FontIcon x:Name="MicOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xF781;" RenderTransformOrigin="0.5,0.5">
-                        <FontIcon.RenderTransform>
-                            <CompositeTransform ScaleX="2" ScaleY="2"/>
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
-                </Grid>
-            </Button>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,197,0,0" ToolTipService.ToolTip="На главное окно" Grid.Row="1">
 
-            <Button x:Name="BadPixelPanel" Click="BadPixelPanel_Click" Width="40" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Интерполяция пикселей">
-                <Grid>
-                    <FontIcon x:Name="BadPixelPanelOn"  FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="MediumSlateBlue" Visibility="Collapsed"  Width="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
-                        <FontIcon.RenderTransform>
-                            <CompositeTransform ScaleX="2" ScaleY="2"/>
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
-                    <FontIcon x:Name="BadPixelPanelOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5">
-                        <FontIcon.RenderTransform>
-                            <CompositeTransform ScaleX="2" ScaleY="2"/>
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
-                </Grid>
-            </Button>
+            <StackPanel>
+                <Button x:Name="getScenario" Click="getMainPage_Click" Margin="20">
+                    <Viewbox MaxHeight="40" MaxWidth="40">
+                        <SymbolIcon Symbol="Home"/>
+                    </Viewbox>
+                </Button>
+                <TextBlock TextWrapping="Wrap" Width="80" TextAlignment="Center">В главное окно</TextBlock>
+            </StackPanel>
+
+            <StackPanel>
+                <Button x:Name="saveSettings" Click="saveSettings_Click" Margin="20" ToolTipService.ToolTip="Сохранить настройки" >
+                    <Viewbox MaxHeight="40" MaxWidth="45">
+                        <SymbolIcon Symbol="Save" RenderTransformOrigin="1,1"/>
+                    </Viewbox>
+                </Button>
+                <TextBlock TextWrapping="Wrap" Width="90" TextAlignment="Center">Сохранить настройки</TextBlock>
+            </StackPanel>
+
+            <StackPanel Visibility="Collapsed">
+                <Button x:Name="readSettings" Click="readSettings_Click" Margin="20" ToolTipService.ToolTip="Загрузить настройки">
+                    <Viewbox MaxHeight="40" MaxWidth="45">
+                        <SymbolIcon Symbol="OpenLocal"/>
+                    </Viewbox>
+                </Button>
+                <TextBlock TextWrapping="Wrap" Width="80" TextAlignment="Center">Загрузить настройки</TextBlock>
+            </StackPanel>
+
+            <StackPanel Visibility="Collapsed">
+                <Button x:Name="MicrophoneButton" Click="MicrophoneButton_Click" Width="50" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Для получения списка голосовых команд скажите 'Помощь'">
+                    <Grid>
+                        <FontIcon x:Name="MicOn" FontFamily="{StaticResource SymbolThemeFontFamily}" Visibility="Collapsed"  Width="20" Glyph="&#xEC71;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                            <FontIcon.RenderTransform>
+                                <CompositeTransform ScaleX="2" ScaleY="2"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                        <FontIcon x:Name="MicOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xF781;" RenderTransformOrigin="0.5,0.5">
+                            <FontIcon.RenderTransform>
+                                <CompositeTransform ScaleX="2" ScaleY="2"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                    </Grid>
+                </Button>
+                <TextBlock TextWrapping="Wrap" Width="80" TextAlignment="Center">Голосовое уравление</TextBlock>
+            </StackPanel>
+
+            <StackPanel>
+                <Button x:Name="BadPixelPanel" Click="BadPixelPanel_Click" Width="50" Height="50" Visibility="Visible" Margin="20" ToolTipService.ToolTip="Интерполяция пикселей">
+                    <Grid>
+                        <FontIcon x:Name="BadPixelPanelOn"  FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="MediumSlateBlue" Visibility="Collapsed"  Width="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5" Height="20" VerticalAlignment="Top" >
+                            <FontIcon.RenderTransform>
+                                <CompositeTransform ScaleX="2" ScaleY="2"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                        <FontIcon x:Name="BadPixelPanelOff" FontFamily="{StaticResource SymbolThemeFontFamily}"  Height="20" Glyph="&#xE74C;" RenderTransformOrigin="0.5,0.5">
+                            <FontIcon.RenderTransform>
+                                <CompositeTransform ScaleX="2" ScaleY="2"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                    </Grid>
+                </Button>
+                <TextBlock TextWrapping="Wrap" Width="90" TextAlignment="Center">Коррекция пикселей</TextBlock>
+            </StackPanel>
+
 
         </StackPanel>
 
-       
-        
 
     </Grid>
 </Page>
