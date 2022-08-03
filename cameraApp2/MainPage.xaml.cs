@@ -114,6 +114,7 @@ namespace CameraCOT
         bool _isHelpCommands;
         bool bCalibration;
         bool _isHidExist;
+        bool _isEndoDiameterSet;
 
         private bool _isInitialized;
         private bool _isPreviewing;
@@ -2730,6 +2731,8 @@ namespace CameraCOT
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
+            textBoxEndoDiameterSet.Visibility = _isEndoDiameterSet ? Visibility.Visible : Visibility.Collapsed;
+
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
             lightOn.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             runMeasure.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
@@ -3115,7 +3118,54 @@ namespace CameraCOT
 
         }
 
-        static int temp1 = 0;        
+        static int temp1 = 0;
+
+        private async void EndoDiameterSetButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            _isEndoDiameterSet = !_isEndoDiameterSet;
+            UpdateUIControls();
+            float EndoDiameter;
+            try
+            {
+                Single.TryParse(textBoxEndoDiameterSet.Text, out EndoDiameter);
+                //if(EndoDiameter != 0)
+                textBoxEndoDiameter.Text = textBoxEndoDiameterSet.Text + " mm";
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            if (!_isEndoDiameterSet && device != null && EndoDiameter != 0)
+            {
+
+                byte[] vOut = BitConverter.GetBytes(EndoDiameter);
+
+                // construct a HID output report to send to the device
+                HidOutputReport outReport = device.CreateOutputReport(0x00);
+
+                /// Initialize the data buffer and fill it in
+                byte[] bufferTx = new byte[65];
+                bufferTx[0] = 0x00;
+                bufferTx[1] = 0xaa;
+                bufferTx[2] = 0xbb;
+                bufferTx[3] = 0x00;
+                bufferTx[4] = 0x60;
+                bufferTx[5] = vOut[0];
+                bufferTx[6] = vOut[1];
+                bufferTx[7] = vOut[2];
+                bufferTx[8] = vOut[3];
+
+                DataWriter dataWriter = new DataWriter();
+                dataWriter.WriteBytes(bufferTx);
+
+                await sendOutReport(dataWriter);
+
+            }
+            //textBoxEndoDiameterSet.Text = "";
+        }
 
         private void EndoOrientationButton_Click(object sender, RoutedEventArgs e)
         {

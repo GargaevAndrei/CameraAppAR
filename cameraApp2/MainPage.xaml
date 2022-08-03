@@ -326,6 +326,22 @@
 
             <!--<ComboBox Name="PreviewSettings" PlaceholderText="Preview Settings" SelectionChanged="PreviewSettings_Changed"/>-->
 
+            <Button x:Name="EndoDiameterSetButton" Click="EndoDiameterSetButton_Click" Width="169" Height="40" Visibility="Visible">
+               
+                <StackPanel x:Name="endoDiameterStackPanel" Orientation="Horizontal" HorizontalAlignment="Center" Height="37" VerticalAlignment="Center" Width="148">
+                    <TextBlock x:Name="endoinfo" Text="D скв = "  TextWrapping="Wrap" Width="70" FontSize="20" TextAlignment="Left" Height="31" Visibility="Visible" RenderTransformOrigin="0.5,0.5"/>
+                    <TextBlock x:Name="textBoxEndoDiameter" TextAlignment="Left" TextWrapping="Wrap"  Height="30" Width="76" FontSize="20" Visibility="Visible" RenderTransformOrigin="0.5,0.5" UseLayoutRounding="False" d:LayoutRounding="Auto" >
+                        <TextBlock.RenderTransform>
+                            <CompositeTransform SkewX="0.448" TranslateX="0.117"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+
+                </StackPanel>
+            </Button>
+
+            <TextBox x:Name="textBoxEndoDiameterSet" TextWrapping="Wrap" MaxLength="220"  Height="60" Width="100" FontSize="28" Visibility="Collapsed" />
+
+
             <ProgressRing x:Name="progressRing" Width="80" Height="80" RequestedTheme="Dark"/>
             <TextBlock x:Name="textInfo" Text="Подождите, идет калибровка" TextWrapping="Wrap" Width="200" FontSize="22" TextAlignment="Center" Foreground="PaleTurquoise" Height="71" Visibility="Collapsed"/>
 
