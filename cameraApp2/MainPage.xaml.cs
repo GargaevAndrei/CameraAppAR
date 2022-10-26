@@ -82,20 +82,22 @@ namespace CameraCOT
         int litgh;
 
 
-        DispatcherTimer lenghtMeterTimer;
-        DispatcherTimer lenghtRunMeterTimer;
+        static public DispatcherTimer lenghtMeterTimer;
+        static public DispatcherTimer lenghtRunMeterTimer;
         DispatcherTimer flashDelayTimer;
+        static public DispatcherTimer watchDogEndoTimer;
         DispatcherTimer serialCommandDelayTimer;
         DispatcherTimer refreshCameraTimer;
         DispatcherTimer histogramStatisticTimer;
         DispatcherTimer opacityTimer;
         DispatcherTimer recordTimer;
         DispatcherTimer recordTimerPause;
-        DispatcherTimer endoTimer;
+        static public DispatcherTimer endoTimer;
 
         SerialPort serialPortFlash;
         SerialPort serialPortLepton;
-        SerialPort serialPortEndo;
+        //SerialPort serialPortEndo;
+        public ComEndo comEndo;
 
         bool _isLightVideo = false;
         //bool _isMicrophone = false;
@@ -115,13 +117,14 @@ namespace CameraCOT
         bool bCalibration;
         bool _isHidExist;
         bool _isEndoDiameterSet;
+        public static bool _isLenght;
 
         private bool _isInitialized;
         private bool _isPreviewing;
         private bool _isActivePage;
         private bool _isSuspending;
         private bool _isRecording;
-        private bool _findLenghtZero = false;
+        static public bool _findLenghtZero = false;
         private bool _isDouble;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private Task _setupTask = Task.CompletedTask;
@@ -321,6 +324,8 @@ namespace CameraCOT
                 return;
             }
 
+            comEndo = new ComEndo(jsonCamerasSettings.SerialPortEndo, this);
+
             CameraDefineLogic();
 
 
@@ -333,24 +338,7 @@ namespace CameraCOT
 
             SetCoordinateNotes(150, (int)cameras[(int)cameraType.mainCamera].VideoResolution.Height - 200, 34, 1250);
 
-
-            serialPortEndo = new SerialPort(jsonCamerasSettings.SerialPortEndo, 9600, Parity.None, 8, StopBits.One);
-            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
-
-            if (serialPortEndo != null)
-            {
-                try
-                {
-                    serialPortEndo.Open();
-
-                    serialPortEndo.Write("GAAZ");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            }
-
+                     
             serialPortFlash = new SerialPort(jsonCamerasSettings.SerialPortFlash, 9600, Parity.None, 8, StopBits.One);
 
             if (serialPortFlash != null)
@@ -395,6 +383,8 @@ namespace CameraCOT
 
             progressRingStart.Visibility = Visibility.Collapsed;
             progressRingStart.IsActive = false;
+
+
         }
 
         public void SetCoordinateNotes(int _x, int _y, int _fontSize, int _widthRect)
@@ -412,7 +402,7 @@ namespace CameraCOT
             this.InitializeComponent();
             Current = this;
            
-            EnumerateHidDevices();        
+            //EnumerateHidDevices();        
 
             bCalibration = true;            
 
@@ -427,6 +417,10 @@ namespace CameraCOT
             flashDelayTimer = new DispatcherTimer();
             flashDelayTimer.Tick += FlashDelayTimer_Tick;
             flashDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 2000);
+
+            watchDogEndoTimer = new DispatcherTimer();
+            watchDogEndoTimer.Tick += watchDogEndoTimer_Tick;
+            watchDogEndoTimer.Interval = new TimeSpan(0, 0, 0, 0, 45000);
 
             serialCommandDelayTimer = new DispatcherTimer();
             serialCommandDelayTimer.Tick += serialCommandDelayTimer_Tick;
@@ -455,40 +449,48 @@ namespace CameraCOT
 
             endoTimer = new DispatcherTimer();
             endoTimer.Tick += endoTimer_Tick;
-            endoTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);            
+            endoTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+
+            pbFlashPower.Value = flashPower;
+            pbFlashPowerEndo.Value = flashPowerEndo;
 
 
         }
 
+        private void watchDogEndoTimer_Tick(object sender, object e)
+        {
+            watchDogEndoTimer.Stop();
+            _findLenghtZero = false;
+            stopMeasure();
+            firstDistanceFlag = false;
+            videoEffectSettings.getLenghtFlag = false;
+            UpdateUIControls();
+            textInfo.Visibility = Visibility.Visible;
+            textInfo.Text = "Калибровка не выполнена";
+        }
+
+        static int countEndoRequest = 0;
         private void endoTimer_Tick(object sender, object e)
         {
+            
             try
             {
-                getAccel();
+                //getAccel();
+
+                //if (countEndoRequest % 2 == 0)
+                //    comEndo.getAccel();
+                //else if (countEndoRequest % 2 != 0 && _isLenght)
+                //    comEndo.GetDistance();
+                //countEndoRequest++;
+
+                if (_isLenght)
+                    comEndo.GetDistance();
+
             }
             catch (Exception ex)
             {
-
                 Debug.WriteLine(ex);
-            }
-
-
-            if (serialPortEndo != null)
-            {
-                try
-                {                                    
-                    if (!serialPortEndo.IsOpen)
-                        serialPortEndo.Open();
-                    else
-                        serialPortEndo.Write("BAAZ");
-                                        
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    textBoxInfo.Text += ex.Message;
-                }
-            }
+            }         
         }
 
         public void OutputsData()
@@ -672,6 +674,8 @@ namespace CameraCOT
         }
 
 
+
+        int serialCommand = 0;
         private async void serialCommandDelayTimer_Tick(object sender, object e)
         {
             serialCommandDelayTimer.Stop();
@@ -695,7 +699,7 @@ namespace CameraCOT
             }
         }
 
-        int serialCommand = 0;
+        
         private void SerialPortFlash_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             //if(serialCommandDelayTimer.IsEnabled)
@@ -779,7 +783,8 @@ namespace CameraCOT
                 _isFail = false;
                 _isUIActive = false;
 
-                currentCameraType = (++currentCameraType) % 3;
+                CameraDefineLogic();
+               // currentCameraType = (++currentCameraType) % 3;
 
                 _isDouble = false;
 
@@ -793,7 +798,7 @@ namespace CameraCOT
 
                 UpdateUIControls();
             }
-
+            
         }
 
         private void CameraDefineLogic()
@@ -806,49 +811,28 @@ namespace CameraCOT
                 currentCameraType = (int)cameraType.endoCamera;
             }
             else if (_isMainCameraFlag)
+            {
+                _isFlash = true;
                 currentCameraType = (int)cameraType.mainCamera;
+            }
             else
                 currentCameraType = (int)cameraType.termoCamera;
 
             if (_isEndoCameraFlag)
             {
-                if (serialPortEndo != null)
-                {
-                    
-                    serialPortEndo.Close();
-                    
-                   if (!serialPortEndo.IsOpen)
-                   {
-                        try
-                        {
-                            serialPortEndo.Open();
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
-                   }
-                    endoTimer.Start();
-                    videoEffectSettings.getCoordinateFlag = true;
-                }
+                comEndo.SerialPortOpen();
+                endoTimer.Start();
+                videoEffectSettings.getCoordinateFlag = true;
+          
+                comEndo.LaserToggle();
+               
             }
             else
             {
-                if (serialPortEndo != null)
-                {                    
-                    try
-                    {
-                        serialPortEndo.Close();
-                        serialPortEndo.DiscardInBuffer();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex.Message);
-                    }
-                    
-                    endoTimer.Stop();
-                    videoEffectSettings.getCoordinateFlag = false;
-                }
+                comEndo.SerialPortClose();                 
+                //endoTimer.Stop();
+                videoEffectSettings.getCoordinateFlag = false;
+                
             }
             //UpdateUIControls();
         }
@@ -875,60 +859,8 @@ namespace CameraCOT
             }
         }
 
-        private void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            var serialPort = (SerialPort)sender;
-            byte[] data = new byte[8];
-            try
-            {
-                serialPort.Read(data, 0, 8);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message); 
-            }
-            
-            double x, y, z;
 
-            short Xaccel = (short)((((short)(data[1]) << 2 | (short)(data[0]) >> 6)) << 6);
-            short Yaccel = (short)((((short)(data[3]) << 2 | (short)(data[2]) >> 6)) << 6);
-            short Zaccel = (short)((((short)(data[5]) << 2 | (short)(data[4]) >> 6)) << 6);
-
-            double Xf1 = (double)Xaccel / 4096;
-            double Yf1 = (double)Yaccel / 4096;
-            double Zf1 = (double)Zaccel / 4096;
-
-            x = Xf1;
-            y = Yf1;
-            z = Zf1;
-
-            double k = 0.2;
-
-            if (bCalibration)   // true
-            {
-                bCalibration = false;
-                videoEffectSettings.coordinate_zero = x.ToString() + ";" + y.ToString() + ";" + z.ToString();
-                //endoTimer.Start();
-            }
-
-
-            Xf = k * x + (1 - k) * Xf;
-            Yf = k * y + (1 - k) * Yf;
-            Zf = k * z + (1 - k) * Zf;
-
-            //Xf = Xf1;
-            //Yf = Yf1;
-            //Zf = Zf1;
-
-            //await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => textBoxInfo.Text = String.Format("x = {0} y = {1} z = {2}", Xf, Yf, Zf) );
-            //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
-            videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
-
-            serialPortEndo.DiscardInBuffer();
-        }
-
-
-        #region Hid
+        #region --------------------- HID ----------------------
 
         HidDevice device;
         static int xx = 0;
@@ -999,7 +931,7 @@ namespace CameraCOT
             count++;
             //method
             
-            await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
             {
 
                 count++;
@@ -1249,35 +1181,23 @@ namespace CameraCOT
             }
         }
 
-        private async void startMeasure()
+        #endregion
+
+        private void startMeasure()
         {
-            if (device != null)
-            {
-
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
-
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x06;
-                bufferTx[5] = 23;       // start measure
-
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
-
-                await sendOutReport(dataWriter);
-
-            }
+            comEndo.StartMeasure();
         }
 
         static bool light1;
         private async void lightOn_Click(object sender, RoutedEventArgs e)
         {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+                comEndo.LaserToggle();
+            }));
 
+            UpdateUI();
+            /*
             bool flag = false;
             if (lenghtMeterTimer.IsEnabled)
             {
@@ -1313,116 +1233,44 @@ namespace CameraCOT
             }
 
             //hidEndo.LizerOn();
+            */
+
         }
+
 
         private async void stopMeasure()
         {
-            lenghtMeterTimer.Stop();
-            if (device != null)
+            //lenghtMeterTimer.Stop();
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
             {
-
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
-
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x06;
-                bufferTx[5] = 33;    // stop measure
-
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
-
-                await sendOutReport(dataWriter);
-
-            }
+                comEndo.StopMeasure();
+            }));
         }
 
         private async Task getDistance()
         {
-            if (device != null)
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
             {
-
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
-
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x06;
-                bufferTx[5] = 28;       // get distance
-
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
-
-                await sendOutReport(dataWriter);
-
-            }
+                comEndo.GetDistance();
+            }));
         }
 
         private async Task getAccel()
         {
-            if (device != null)
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
             {
-
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
-
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x06;
-                bufferTx[5] = 32;       // get accel data
-
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
-
-                await sendOutReport(dataWriter);
-
-            }
+                comEndo.getAccel();
+            }));
         }
-
-        #endregion
+        
 
         int light = 250;
         private void setFlashingLight(int light)
         {
-            if (device != null)
-            {
+            comEndo.BrightnessSet(light);
 
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
-
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x08;
-                bufferTx[5] = 31;       // set flash light
-
-                bufferTx[6] = (byte)(light >> 8);
-                bufferTx[7] = (byte)(light & 0xff);
-
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
-
-                sendOutReport(dataWriter);
-
-            }
-
-            try
-            {
+            //try
+            //{
                 //byte[] s = new byte[1];
                 //s[0] = 0x41;
                 //serialPortEndo.Write(s, 0, 1);
@@ -1433,48 +1281,46 @@ namespace CameraCOT
                 //s[0] = 0x5A;
                 //serialPortEndo.Write(s, 0, 1);
 
-                byte[] s = new byte[4];
-                s[0] = 65; //'A';     //65
-                s[1] = (byte)((light >> 8) & 0xff);
-                s[2] = (byte)((light) & 0xff);
-                s[3] = 90; // 'Z';     //90
+            //    byte[] s = new byte[4];
+            //    s[0] = 65; //'A';     //65
+            //    s[1] = (byte)((light >> 8) & 0xff);
+            //    s[2] = (byte)((light) & 0xff);
+            //    s[3] = 90; // 'Z';     //90
 
-                if (!serialPortEndo.IsOpen)                
-                    serialPortEndo.Open();
+            //    if (!serialPortEndo.IsOpen)                
+            //        serialPortEndo.Open();
 
 
-                 serialPortEndo.Write(s, 0, 4);
+            //     serialPortEndo.Write(s, 0, 4);
                
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                //textBlockNotes.Visibility = Visibility.Visible;
-                //textBlockNotes.Text = ex.Message;
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Debug.WriteLine(ex.Message);
+            //}
         }
-        //private void inReportRead_Click(object sender, RoutedEventArgs e)
-        //{
-        //    readHid();
-        //}
 
         private void runMeasure_Click(object sender, RoutedEventArgs e)
         {
-            endoTimer.Stop();
+            watchDogEndoTimer.Start();
+            //endoTimer.Stop();
             firstDistanceFlag = true;
 
             _findLenghtZero = true;
-            UpdateUIControls();
+            
 
             startMeasure();
+            UpdateUIControls();
         }
 
-        private void stopMeasure_Click(object sender, RoutedEventArgs e)
+        private void StopMeasure_Click(object sender, RoutedEventArgs e)
         {
+            _findLenghtZero = false;
             stopMeasure();
             firstDistanceFlag = false;
             //if (cameraType == (int)camera.endoCamera)
             videoEffectSettings.getLenghtFlag = false;
+            UpdateUIControls();
         }
 
         private void getDistanse_Click(object sender, RoutedEventArgs e)
@@ -2485,6 +2331,11 @@ namespace CameraCOT
             progressRingStart.Visibility = Visibility.Collapsed;
             progressRingStart.IsActive = false;
 
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+                comEndo.LaserOff();
+            }));
+
             UpdateUIControls();
         }
 
@@ -2533,26 +2384,18 @@ namespace CameraCOT
             progressRingStart.Visibility = Visibility.Collapsed;
             progressRingStart.IsActive = false;
 
+            
+            comEndo.SerialPortOpen();
+            endoTimer.Start();
+            videoEffectSettings.getCoordinateFlag = true;
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+                comEndo.LaserOn();
+            }));
+
             UpdateUIControls();
 
-
-            if (serialPortEndo != null)
-            {
-                if (!serialPortEndo.IsOpen)
-                {
-                    try
-                    {
-                        serialPortEndo.Open();
-                        //serialPortEndo.DataReceived += SerialPortEndo_DataReceived;                     
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex.Message);
-                    }
-                }
-                endoTimer.Start();
-                videoEffectSettings.getCoordinateFlag = true;
-            }
         }
 
         private async void termoCameraButton_Click(object sender, RoutedEventArgs e)
@@ -2596,7 +2439,12 @@ namespace CameraCOT
             _findLenghtZero = false;
             videoEffectSettings.getLenghtFlag = false;
             videoEffectSettings.termo = true;
-            
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+                comEndo.LaserOff();
+            }));
+
             UpdateUIControls();
 
             histogramStatisticTimer.Start();
@@ -2639,6 +2487,11 @@ namespace CameraCOT
 
             progressRingStart.Visibility = Visibility.Collapsed;
             progressRingStart.IsActive = false;
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+            {
+                comEndo.LaserOff();
+            }));
 
             UpdateUIControls();
 
@@ -2725,8 +2578,16 @@ namespace CameraCOT
             Debug.WriteLine("Stopped recording!");
         }
 
+        async public void watchDogEndoTimerStop()
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => watchDogEndoTimer.Stop());
+        }
 
-        private void UpdateUIControls()
+        async public void UpdateUI()
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => UpdateUIControls());
+        }
+        public void UpdateUIControls()
         {
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
@@ -2734,17 +2595,20 @@ namespace CameraCOT
             textBoxEndoDiameterSet.Visibility = _isEndoDiameterSet ? Visibility.Visible : Visibility.Collapsed;
 
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
-            lightOn.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            runMeasure.Visibility = _isHidExist && (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            lightOn.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
+            runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera && !_findLenghtZero) ? Visibility.Visible : Visibility.Collapsed;
+            stopMeasure1.Visibility = (currentCameraType == (int)cameraType.endoCamera && _findLenghtZero) ? Visibility.Visible : Visibility.Collapsed;
+            EndoDiameterSetButton.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
             //EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             //EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            if(_isEndoCameraFlag)
+            //EndoControlVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            if (_isEndoCameraFlag)
                 SetCoordinateNotes(50, 1000, 40, 1550);
 
-            HorizontIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Collapsed : Visibility.Visible;
-            VerticalIcon.Visibility = videoEffectSettings.bHorizont ? Visibility.Visible : Visibility.Collapsed;
-            EnableVectorIcon.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Collapsed : Visibility.Visible;
-            DisableVectorIcon.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Visible : Visibility.Collapsed;
+            HorizontIcon1.Visibility = endoOrientationAndVisibility == EndoOrientationAndVisibility.horizont ? Visibility.Visible : Visibility.Collapsed;
+            VerticalIcon1.Visibility = endoOrientationAndVisibility == EndoOrientationAndVisibility.vertical ? Visibility.Visible : Visibility.Collapsed;
+            EnableVectorIcon1.Visibility = endoOrientationAndVisibility == EndoOrientationAndVisibility.hide ? Visibility.Visible : Visibility.Collapsed;
+            //DisableVectorIcon1.Visibility = videoEffectSettings.getCoordinateFlag ? Visibility.Visible : Visibility.Collapsed;
 
 
             termoPanelDot.Margin = _isDouble ? new Thickness(0, 232, 245, 0) : new Thickness(0, 232, 490, 0);
@@ -2752,7 +2616,7 @@ namespace CameraCOT
 
             gridBadPixel.Visibility = _isBadPixel && (currentCameraType == (int)cameraType.termoCamera) ? Visibility.Visible : Visibility.Collapsed;
 
-            buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
+            //buttonFlash.Visibility = _isRecording ? Visibility.Collapsed : Visibility.Visible;
             notesButton.Visibility = (currentCameraType != (int)cameraType.termoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;
 
             panelNotes.Visibility = _isNotes && (currentCameraType != (int)cameraType.termoCamera) && !_isDouble ? Visibility.Visible : Visibility.Collapsed;  //
@@ -2783,7 +2647,7 @@ namespace CameraCOT
             recordTimeTextBox.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
 
 
-            buttonLightVideo.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
+            //buttonLightVideo.Visibility = _isRecording ? Visibility.Visible : Visibility.Collapsed;
             //LightVideoOnIcon.Visibility = _isLightVideo ? Visibility.Collapsed : Visibility.Visible;
             LightVideoOffIcon.Visibility = _isLightVideo ? Visibility.Collapsed : Visibility.Visible;
 
@@ -2807,17 +2671,17 @@ namespace CameraCOT
             // Update lenght meter controls            
             //runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
 
-            if (_findLenghtZero)
+            if (_findLenghtZero && !_isLenght)
             {
                 progressRing.Visibility = Visibility.Visible;
                 progressRing.IsActive = true;
-                textInfo.Text = "Подождите, идет калибровка";
+                textInfo.Text = "Подождите, калибровка";
                 textInfo.Visibility = Visibility.Visible;
             }
             else
             {
-                //progressRing.Visibility = Visibility.Collapsed;
-                //progressRing.IsActive = false;
+                progressRing.Visibility = Visibility.Collapsed;
+                progressRing.IsActive = false;
                 textInfo.Text = "";
                 textInfo.Visibility = Visibility.Collapsed;
             }
@@ -2859,6 +2723,8 @@ namespace CameraCOT
                     break;
             }
 
+            lightOn.Background = comEndo.isLaserSet() ? new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue) : new SolidColorBrush(color);
+
             notesButton.Background = !_isNotes ? new SolidColorBrush(color) : new SolidColorBrush(Windows.UI.Colors.MediumSlateBlue);
 
             buttonFlash.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
@@ -2867,9 +2733,15 @@ namespace CameraCOT
             pbFlashPower.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Collapsed : Visibility.Visible;
 
             //buttonFlashEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) ? Visibility.Collapsed : Visibility.Visible;
-            plusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
-            minusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
-            pbFlashPowerEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+            //plusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+            //minusFlashButtonEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+            //pbFlashPowerEndo.Visibility = _isRecording || (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+
+
+            plusFlashButtonEndo.Visibility = (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+            minusFlashButtonEndo.Visibility = (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+            pbFlashPowerEndo.Visibility = (currentCameraType == (int)cameraType.termoCamera) || (currentCameraType == (int)cameraType.mainCamera) || _isDouble ? Visibility.Collapsed : Visibility.Visible;
+
 
 
             Rec.Text = _isPause ? "Pause" : "Rec";
@@ -2877,13 +2749,21 @@ namespace CameraCOT
 
         }
 
+        static double flashPower = 600;
+        static double flashPowerEndo = 1000;
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
         {
+            
+            comEndo.LaserOn();
+        
             serialPortFlash.Close();
             serialPortLepton.Close();
-            serialPortEndo.Close();
-
+  
+            comEndo.SerialPortClose();
             await CleanupCameraAsync();
+
+            flashPower = pbFlashPower.Value;
+            flashPowerEndo = pbFlashPowerEndo.Value;
 
             this.Frame.Navigate(typeof(SettingsPage));
         }
@@ -2933,8 +2813,8 @@ namespace CameraCOT
             textBoxInfo.Text += "Send flash Endo" + Environment.NewLine;
 
      
-            litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
-            //litgh = (int)pbFlashPowerEndo.Value;
+            //litgh = (int)(pbFlashPowerEndo.Value * (60000 / pbFlashPowerEndo.Maximum));
+            litgh = (int)pbFlashPowerEndo.Value;
 
             try
             {
@@ -2950,7 +2830,7 @@ namespace CameraCOT
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 40;
-        short StepFlashPowerEndo = 40;
+        short StepFlashPowerEndo = 100;
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
@@ -3021,6 +2901,7 @@ namespace CameraCOT
             indexNoteShow = stringNote.Count - 1;
 
             //notes.indexNoteShow = stringNote.Count - 1;
+            watchDogEndoTimer.Stop();
 
             _isNotes = !_isNotes;
             UpdateUIControls();
@@ -3120,9 +3001,11 @@ namespace CameraCOT
 
         static int temp1 = 0;
 
-        private async void EndoDiameterSetButton_Click(object sender, RoutedEventArgs e)
-        {
 
+       
+        private  void EndoDiameterSetButton_Click(object sender, RoutedEventArgs e)
+        {
+            
             _isEndoDiameterSet = !_isEndoDiameterSet;
             UpdateUIControls();
             float EndoDiameter;
@@ -3131,39 +3014,45 @@ namespace CameraCOT
                 Single.TryParse(textBoxEndoDiameterSet.Text, out EndoDiameter);
                 //if(EndoDiameter != 0)
                 textBoxEndoDiameter.Text = textBoxEndoDiameterSet.Text + " mm";
+                
             }
             catch (Exception)
             {
 
                 throw;
             }
+            if (!_isEndoDiameterSet && EndoDiameter != 0)
+                comEndo.EndoDiameterSet(EndoDiameter);
 
-            if (!_isEndoDiameterSet && device != null && EndoDiameter != 0)
-            {
 
-                byte[] vOut = BitConverter.GetBytes(EndoDiameter);
 
-                // construct a HID output report to send to the device
-                HidOutputReport outReport = device.CreateOutputReport(0x00);
+            /*
+                        if (!_isEndoDiameterSet && device != null && EndoDiameter != 0)
+                        {
 
-                /// Initialize the data buffer and fill it in
-                byte[] bufferTx = new byte[65];
-                bufferTx[0] = 0x00;
-                bufferTx[1] = 0xaa;
-                bufferTx[2] = 0xbb;
-                bufferTx[3] = 0x00;
-                bufferTx[4] = 0x60;
-                bufferTx[5] = vOut[0];
-                bufferTx[6] = vOut[1];
-                bufferTx[7] = vOut[2];
-                bufferTx[8] = vOut[3];
+                            byte[] vOut = BitConverter.GetBytes(EndoDiameter);
 
-                DataWriter dataWriter = new DataWriter();
-                dataWriter.WriteBytes(bufferTx);
+                            // construct a HID output report to send to the device
+                            HidOutputReport outReport = device.CreateOutputReport(0x00);
 
-                await sendOutReport(dataWriter);
+                            /// Initialize the data buffer and fill it in
+                            byte[] bufferTx = new byte[65];
+                            bufferTx[0] = 0x00;
+                            bufferTx[1] = 0xaa;
+                            bufferTx[2] = 0xbb;
+                            bufferTx[3] = 0x00;
+                            bufferTx[4] = 0x60;
+                            bufferTx[5] = vOut[0];
+                            bufferTx[6] = vOut[1];
+                            bufferTx[7] = vOut[2];
+                            bufferTx[8] = vOut[3];
 
-            }
+                            DataWriter dataWriter = new DataWriter();
+                            dataWriter.WriteBytes(bufferTx);
+
+                            await sendOutReport(dataWriter);
+
+                        }*/
             //textBoxEndoDiameterSet.Text = "";
         }
 
@@ -3176,6 +3065,57 @@ namespace CameraCOT
         private void EndoEnableVectorButton_Click(object sender, RoutedEventArgs e)
         {
             videoEffectSettings.getCoordinateFlag = !videoEffectSettings.getCoordinateFlag;
+            UpdateUIControls();
+        }
+
+        enum EndoOrientationAndVisibility { horizont, vertical, hide};
+        EndoOrientationAndVisibility endoOrientationAndVisibility = EndoOrientationAndVisibility.horizont;
+        private void EndoOrientation_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            switch (endoOrientationAndVisibility)
+            {
+                case EndoOrientationAndVisibility.horizont:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.vertical;
+                    videoEffectSettings.bHorizont = true;
+                    videoEffectSettings.getCoordinateFlag = true;
+                    break;
+                case EndoOrientationAndVisibility.vertical:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.hide;
+                    videoEffectSettings.bHorizont = false;
+                    videoEffectSettings.getCoordinateFlag = true;                   
+                    break;
+                case EndoOrientationAndVisibility.hide:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.horizont;
+
+                    videoEffectSettings.getCoordinateFlag = false;
+                    break;
+                default:
+                    break;
+            }
+            UpdateUIControls();
+        }
+
+        private void EndoControlVectorButton_Click(object sender, RoutedEventArgs e)
+        {
+            switch (endoOrientationAndVisibility)
+            {
+                case EndoOrientationAndVisibility.horizont:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.vertical;
+                    videoEffectSettings.bHorizont = false;
+                    videoEffectSettings.getCoordinateFlag = true;
+                    break;
+                case EndoOrientationAndVisibility.vertical:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.hide;
+                    videoEffectSettings.bHorizont = true;
+                    videoEffectSettings.getCoordinateFlag = true;
+                    break;
+                case EndoOrientationAndVisibility.hide:
+                    endoOrientationAndVisibility = EndoOrientationAndVisibility.horizont;
+                    videoEffectSettings.getCoordinateFlag = false;
+                    break;
+                default:
+                    break;
+            }
             UpdateUIControls();
         }
 
@@ -3204,6 +3144,8 @@ namespace CameraCOT
 
 
         }
+
+        
 
         private void buttonLightVideo_Click(object sender, RoutedEventArgs e)
         {
