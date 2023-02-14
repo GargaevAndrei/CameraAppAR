@@ -369,9 +369,12 @@ namespace CameraCOT
             }
 
         }
+
         public void BrightnessSet(int light)
         {
-            bufferTx[3] = 0x07;
+            // new protocol!!
+
+           /* bufferTx[3] = 0x07;
             bufferTx[4] = 31;       // start measure            
             bufferTx[5] = (byte)(light >> 8);
             bufferTx[6] = (byte)(light & 0xff);
@@ -388,6 +391,28 @@ namespace CameraCOT
                 {
                     Debug.WriteLine(e.Message);
                 }
+            }*/
+
+            // old protocol!!!
+            try
+            {
+
+                byte[] s = new byte[4];
+                s[0] = 65; //'A';     //65
+                s[1] = (byte)((light >> 8));
+                s[2] = (byte)((light) & 0xff);
+                s[3] = 90; // 'Z';     //90
+
+                if (!serialPortEndo.IsOpen)
+                    serialPortEndo.Open();
+
+
+                serialPortEndo.Write(s, 0, 4);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
 
         }

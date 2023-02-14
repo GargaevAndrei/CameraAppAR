@@ -51,7 +51,7 @@
             <TextBox x:Name="serialPortFlash" Width="100" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,197,0,0" ToolTipService.ToolTip="На главное окно" Grid.Row="1">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,200,0,0" Width="340" ToolTipService.ToolTip="На главное окно" Grid.Row="1">
 
             <StackPanel>
                 <Button x:Name="getScenario" Click="getMainPage_Click" Margin="20">

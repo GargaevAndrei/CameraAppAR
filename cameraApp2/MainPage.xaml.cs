@@ -93,12 +93,14 @@ namespace CameraCOT
         DispatcherTimer recordTimer;
         DispatcherTimer recordTimerPause;
         static public DispatcherTimer endoTimer;
+        DispatcherTimer showPasswordTimer;
 
         SerialPort serialPortFlash;
         SerialPort serialPortLepton;
         //SerialPort serialPortEndo;
         public ComEndo comEndo;
 
+        bool _isPasswordSet = false;
         bool _isLightVideo = false;
         //bool _isMicrophone = false;
         bool _isVoice = false;
@@ -439,6 +441,10 @@ namespace CameraCOT
             opacityTimer.Tick += opacityTimer_Tick;
             opacityTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
 
+            showPasswordTimer = new DispatcherTimer();
+            showPasswordTimer.Tick += showPasswordTimer_Tick;
+            showPasswordTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
+
             recordTimer = new DispatcherTimer();
             recordTimer.Tick += recordTimer_Tick;
             recordTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
@@ -455,6 +461,13 @@ namespace CameraCOT
             pbFlashPowerEndo.Value = flashPowerEndo;
 
 
+        }
+
+        private void showPasswordTimer_Tick(object sender, object e)
+        {
+            //_isPasswordSet = !_isPasswordSet;
+            showPasswordTimer.Stop();
+            UpdateUI();
         }
 
         private void watchDogEndoTimer_Tick(object sender, object e)
@@ -1269,35 +1282,7 @@ namespace CameraCOT
         {
             comEndo.BrightnessSet(light);
 
-            //try
-            //{
-                //byte[] s = new byte[1];
-                //s[0] = 0x41;
-                //serialPortEndo.Write(s, 0, 1);
-                //s[0] = (byte)((light >> 8) & 0xff);
-                //serialPortEndo.Write(s, 0, 1);
-                //s[0] = (byte)((light) & 0xff);
-                //serialPortEndo.Write(s, 0, 1);
-                //s[0] = 0x5A;
-                //serialPortEndo.Write(s, 0, 1);
-
-            //    byte[] s = new byte[4];
-            //    s[0] = 65; //'A';     //65
-            //    s[1] = (byte)((light >> 8) & 0xff);
-            //    s[2] = (byte)((light) & 0xff);
-            //    s[3] = 90; // 'Z';     //90
-
-            //    if (!serialPortEndo.IsOpen)                
-            //        serialPortEndo.Open();
-
-
-            //     serialPortEndo.Write(s, 0, 4);
-               
-            //}
-            //catch (Exception ex)
-            //{
-            //    Debug.WriteLine(ex.Message);
-            //}
+            
         }
 
         private void runMeasure_Click(object sender, RoutedEventArgs e)
@@ -2592,6 +2577,8 @@ namespace CameraCOT
             // diagnostic information
             textBoxInfo.Visibility = Visibility.Collapsed;
 
+            stackPanelSettingsPage.Visibility = _isPasswordSet ? Visibility.Visible : Visibility.Collapsed;
+
             textBoxEndoDiameterSet.Visibility = _isEndoDiameterSet ? Visibility.Visible : Visibility.Collapsed;
 
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
@@ -2750,10 +2737,18 @@ namespace CameraCOT
         }
 
         static double flashPower = 600;
-        static double flashPowerEndo = 1000;
+        static double flashPowerEndo = 40000;
         private async void getScenarioSettings_Click(object sender, RoutedEventArgs e)
         {
-            
+            passwordInfo.Foreground = new SolidColorBrush(Colors.White);
+            passwordInfo.Text = "Введите пароль";
+            textBoxPasswordValue.Password = "";
+            //textBoxPasswordValue.Focus();
+            //textBoxPasswordValue.Focus(FocusState.Keyboard);
+            //Keyboard.Focus(textBoxPasswordValue);
+            _isPasswordSet = !_isPasswordSet;
+            UpdateUI();
+            /*
             comEndo.LaserOn();
         
             serialPortFlash.Close();
@@ -2765,7 +2760,7 @@ namespace CameraCOT
             flashPower = pbFlashPower.Value;
             flashPowerEndo = pbFlashPowerEndo.Value;
 
-            this.Frame.Navigate(typeof(SettingsPage));
+            this.Frame.Navigate(typeof(SettingsPage));*/
         }
 
         private void buttonFlash_Click(object sender, RoutedEventArgs e)
@@ -2830,7 +2825,7 @@ namespace CameraCOT
         short FlashDuration = 0x15;
         short durationFlashDivider = 1;
         short StepFlashPower = 40;
-        short StepFlashPowerEndo = 100;
+        short StepFlashPowerEndo = 5000; //1000
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)
@@ -3145,7 +3140,44 @@ namespace CameraCOT
 
         }
 
-        
+        int myPasswor = 1234;
+        private async void passwordSettingPageButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isPasswordSet = !_isPasswordSet;
+            //UpdateUIControls();
+            float password;
+            try
+            {
+                Single.TryParse(textBoxPasswordValue.Password, out password);
+                if (password == myPasswor)
+                {
+                    comEndo.LaserOn();
+
+                    serialPortFlash.Close();
+                    serialPortLepton.Close();
+
+                    comEndo.SerialPortClose();
+                    await CleanupCameraAsync();
+
+                    flashPower = pbFlashPower.Value;
+                    flashPowerEndo = pbFlashPowerEndo.Value;
+
+                    this.Frame.Navigate(typeof(SettingsPage));
+                }
+                else
+                {
+                    passwordInfo.Foreground = new SolidColorBrush(Colors.Red); 
+                    passwordInfo.Text = "Неправильный пароль";
+                    showPasswordTimer.Start();
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            
+        }
 
         private void buttonLightVideo_Click(object sender, RoutedEventArgs e)
         {

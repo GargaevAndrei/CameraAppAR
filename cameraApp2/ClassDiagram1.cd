@@ -29,9 +29,14 @@
           <NewMemberFileName>MainPage.xaml.cs</NewMemberFileName>
         </TypeIdentifier>
       </Struct>
+      <Enum Name="CameraCOT.MainPage.EndoOrientationAndVisibility" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>MainPage.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>UkZ8JZ+ek9G2YDJy3wTJfB/kz4biBEq0Bi1HHrargZM=</HashCode>
+      <HashCode>UsZ8Nb++k9O26DJy3wTJfF/kz8biBGq2By1HHravpZM=</HashCode>
       <FileName>MainPage.xaml.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.549" Collapsed="true" />
@@ -39,7 +44,7 @@
   <Class Name="CameraCOT.SettingsPage" BaseTypeListCollapsed="true">
     <Position X="0.5" Y="2.75" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAIAAAAAAAAAAIAAAIAAAAgQCAAAAAAAIAAAAAAg=</HashCode>
+      <HashCode>AAAAAIAAAAAAAAAAIAAQJACIAwQCAAAAAAAIAAAAAAg=</HashCode>
       <FileName>SettingsPage.xaml.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -47,7 +52,7 @@
   <Class Name="CameraCOT.JsonCamerasSettings">
     <Position X="2.75" Y="0.5" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAAAIAAAACAAEAAgAAAgAAAAEAAAAAAAEAAAAggQAAA=</HashCode>
+      <HashCode>AAAAIAAAACAAEAggAgAoAAAAEAAAAAAAEAAAAggQAAA=</HashCode>
       <FileName>JsonCamerasSettings.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -63,9 +68,9 @@
     <TypeIdentifier />
   </Class>
   <Class Name="CameraCOT.ComEndo">
-    <Position X="10.25" Y="4.25" Width="1.5" />
+    <Position X="10.25" Y="4.25" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>BAA8AgBIAAAAAAAAAAAAAAAEAgAAAAAABAABBAAAAAA=</HashCode>
+      <HashCode>BCA8AgBIAAAAEAAGEAQAAAAEAgAAAEAABCABBAAAgAA=</HashCode>
       <FileName>ComEndo.cs</FileName>
     </TypeIdentifier>
   </Class>

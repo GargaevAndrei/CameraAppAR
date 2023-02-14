@@ -112,7 +112,7 @@
                 </FontIcon>
             </Button>
             <!--<Slider x:Name="flashSlider" Background="#66FFFFFF"  ValueChanged="flashSlider_ValueChanged" Maximum="1199" StepFrequency="5" Value="600" Height="32" Width="80"  />-->
-            <ProgressBar x:Name="pbFlashPowerEndo" Value="1000" Maximum="1000" Minimum="0" Height="10" Width="93" Visibility="Collapsed"/>
+            <ProgressBar x:Name="pbFlashPowerEndo" Value="60000" Maximum="60000" Minimum="0" Height="10" Width="93" Visibility="Collapsed"/>
             <Button x:Name="minusFlashButtonEndo" Click="minusFlashButtonEndo_Click" Width="40" Visibility="Collapsed">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Width="20" Height="20" Glyph="&#xE949;" RenderTransformOrigin="0.5,0.5" >
                     <FontIcon.RenderTransform>
@@ -501,9 +501,28 @@
 
         <TextBlock x:Name="recordTimeTextBox" Text="" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Visibility="Visible" Margin="0,10,310,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150" Foreground="Red" Height="37"/>
         <TextBlock x:Name="Rec" Text="Rec" TextWrapping="Wrap" FontSize="28" TextAlignment="Center" Foreground="Red" Visibility="Collapsed" Margin="0,10,240,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="90" Height="37"/>
-        <!--<TextBlock x:Name="StartingTextBox" Text="Processing" TextWrapping="Wrap" FontSize="58" TextAlignment="Center" Visibility="Visible"  VerticalAlignment="Center" HorizontalAlignment="Center" Width="290" Height="90"/>-->
+        <!--<TextBlock x:Name="StartingTextBox" Text="Processing" TextWrappinfg="Wrap" FontSize="58" TextAlignment="Center" Visibility="Visible"  VerticalAlignment="Center" HorizontalAlignment="Center" Width="290" Height="90"/>-->
         <ProgressRing x:Name="progressRingStart" Width="200" Height="200" RequestedTheme="Dark" Visibility="Visible" IsActive="True"/>
         <Rectangle x:Name="EndoOrientation" Fill="White" Opacity="0.1" Tapped="EndoOrientation_Tapped" Width="100" Height="100" Visibility="Collapsed" Margin="100,0,0,100" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+
+        <StackPanel x:Name="stackPanelSettingsPage"  Margin="300,145,0,0" Orientation="Horizontal" Height="120" Width="420" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="Collapsed" >
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10,20"/>
+                    <Setter Property="MinWidth" Value="60"/>
+                    <Setter Property="MinHeight" Value="60"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="White"/>
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                </Style>
+            </StackPanel.Resources>
+
+            <Button x:Name="passwordSettingsPage" Click="passwordSettingPageButton_Click" Width="280" Height="44" Visibility="Visible">
+                <TextBlock x:Name="passwordInfo" Text="Введите пароль: "  TextWrapping="Wrap" FontSize="20" TextAlignment="Left" Height="40" Visibility="Visible" RenderTransformOrigin="0.5,0.5" Margin="-130,0,-131,0"/>
+            </Button>
+            <PasswordBox x:Name="textBoxPasswordValue" MaxLength="50"  Height="60" Width="100" FontSize="20" Visibility="Visible" />
+
+        </StackPanel>
 
     </Grid>
 </Page>
