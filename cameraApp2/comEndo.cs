@@ -10,31 +10,19 @@ using Windows.Storage.Streams;
 
 namespace CameraCOT
 {
-    public class ComEndo
+    abstract public class ComEndo
     {
-        MainPage page;
-        SerialPort serialPortEndo; //= new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
-        double Xf, Yf, Zf;
-        bool bCalibration;
-        byte[] bufferTx = new byte[65];
-        static bool laser;
-
-        public bool isLaserSet()
-        {
-            return laser ? true : false;
-        }
+        protected MainPage page;
+        protected SerialPort serialPortEndo; //= new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
+        protected double Xf, Yf, Zf;
+        protected bool bCalibration;
+        protected static bool laser;
 
         public ComEndo(string EndoComName, MainPage mainPage)
         {
             page = mainPage;
-
-            bufferTx[0] = 0xaa;
-            bufferTx[1] = 0xbb;
-            bufferTx[2] = 0x00;
-            bufferTx[3] = 0x06;
-
-            serialPortEndo = new SerialPort(EndoComName, 9600, Parity.None, 8, StopBits.One);
-            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+            
+            serialPortEndo = new SerialPort(EndoComName, 9600, Parity.None, 8, StopBits.One);           
 
             if (serialPortEndo != null)
             {
@@ -47,9 +35,59 @@ namespace CameraCOT
                     Debug.WriteLine(e.Message);
                 }
             }
+        }        
+
+        public void SerialPortClose()
+        {
+            
+                try
+                {
+                    serialPortEndo.Close();
+                    serialPortEndo.DiscardInBuffer();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            
+    }
+
+        public void SerialPortOpen()
+        {
+            if (serialPortEndo != null && !serialPortEndo.IsOpen)
+            {
+                try
+                {
+                    serialPortEndo.Open();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
         }
 
-        public void SerialPortEndo_DataReceived_Old(object sender, SerialDataReceivedEventArgs e)
+        public virtual void BrightnessSet(int light) { }
+        public virtual void StartMeasure() { }
+        public virtual void StopMeasure() { }
+        public virtual void GetDistance() { }
+        public virtual void getAccel() { }
+        public virtual void EndoDiameterSet(float diameter) { }
+        public virtual void LaserToggle() { }
+        public virtual void LaserOn() { }
+        public virtual void LaserOff() { }
+        public virtual bool isLaserSet() { return laser ? true : false; }
+
+    }
+
+    class ComEndoHead1 : ComEndo
+    {
+        public ComEndoHead1(string EndoComName, MainPage mainPage) : base(EndoComName, mainPage)
+        {
+            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
+        }
+
+        public void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var serialPort = (SerialPort)sender;
             byte[] ByteArray = new byte[8];
@@ -99,6 +137,46 @@ namespace CameraCOT
             videoEffectSettings.coordinate = Xf.ToString() + ";" + Yf.ToString() + ";" + Zf.ToString();
 
             serialPortEndo.DiscardInBuffer();
+        }
+
+        public override void BrightnessSet(int light)
+        {
+            try
+            {
+
+                byte[] s = new byte[4];
+                s[0] = 65; //'A';     //65
+                s[1] = (byte)((light >> 8));
+                s[2] = (byte)((light) & 0xff);
+                s[3] = 90; // 'Z';     //90
+
+                if (!serialPortEndo.IsOpen)
+                    serialPortEndo.Open();
+
+
+                serialPortEndo.Write(s, 0, 4);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+        }
+    }
+
+    class ComEndoHead2 : ComEndo
+    {
+        byte[] bufferTx = new byte[65];
+
+        public ComEndoHead2 (string EndoComName, MainPage mainPage) : base(EndoComName, mainPage)
+        {
+            bufferTx[0] = 0xaa;
+            bufferTx[1] = 0xbb;
+            bufferTx[2] = 0x00;
+            bufferTx[3] = 0x06;
+
+            serialPortEndo.DataReceived += SerialPortEndo_DataReceived;
         }
 
         public void SerialPortEndo_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -159,7 +237,7 @@ namespace CameraCOT
                 bytes[3] = (byte)(ByteArray[8]);
 
                 double value = BitConverter.ToSingle(bytes, 0);
-               
+
 
                 videoEffectSettings.lenght = "L = " + value.ToString("0.00") + " м";
                 //videoEffectSettings.coordinate = "\n x = " + Xf.ToString() + "\n y = " + Yf.ToString() + "\n z = " + Zf.ToString();
@@ -170,8 +248,8 @@ namespace CameraCOT
 
             if (ByteArray[4] == 32)     // MSG_GET_ACCEL_DATA
             {
-                short Xaccel =  (short)((((short)(ByteArray[6]) << 2 | (short)(ByteArray[5]) >> 6)) << 6);
-                short Yaccel =  (short)((((short)(ByteArray[8]) << 2 | (short)(ByteArray[7]) >> 6)) << 6);
+                short Xaccel = (short)((((short)(ByteArray[6]) << 2 | (short)(ByteArray[5]) >> 6)) << 6);
+                short Yaccel = (short)((((short)(ByteArray[8]) << 2 | (short)(ByteArray[7]) >> 6)) << 6);
                 short Zaccel = (short)((((short)(ByteArray[10]) << 2 | (short)(ByteArray[9]) >> 6)) << 6);
 
                 double Xf1 = (double)Xaccel / 4096;
@@ -207,10 +285,33 @@ namespace CameraCOT
                 serialPortEndo.DiscardInBuffer();
             }
         }
-        
-        public void StartMeasure()
+
+        public override void BrightnessSet(int light)
         {
-            
+             bufferTx[3] = 0x07;
+             bufferTx[4] = 31;       // start measure            
+             bufferTx[5] = (byte)(light >> 8);
+             bufferTx[6] = (byte)(light & 0xff);
+
+             if (serialPortEndo != null && serialPortEndo.IsOpen)
+             {
+                 try
+                 {
+                     //serialPortEndo.Open();
+
+                     serialPortEndo.Write(bufferTx, 0, 64);
+                 }
+                 catch (Exception e)
+                 {
+                     Debug.WriteLine(e.Message);
+                 }
+             }            
+        }
+
+
+        public override void StartMeasure()
+        {
+
             if (serialPortEndo != null && serialPortEndo.IsOpen)
             {
                 try
@@ -222,14 +323,14 @@ namespace CameraCOT
                     bufferTx[7] = 0;
                     serialPortEndo.Write(bufferTx, 0, 6);
                 }
-                    catch (Exception e)
+                catch (Exception e)
                 {
                     Debug.WriteLine(e.Message);
                 }
-        }
+            }
         }
 
-        public void StopMeasure()
+        public override void StopMeasure()
         {
             //lenghtMeterTimer.Stop();
             bufferTx[3] = 0x06;
@@ -252,7 +353,7 @@ namespace CameraCOT
             }
         }
 
-        public void GetDistance()
+        public override void GetDistance()
         {
             if (serialPortEndo != null && serialPortEndo.IsOpen)
             {
@@ -268,7 +369,7 @@ namespace CameraCOT
             }
         }
 
-        public void getAccel()
+        public override void getAccel()
         {
             if (serialPortEndo != null && serialPortEndo.IsOpen)
             {
@@ -282,10 +383,10 @@ namespace CameraCOT
                     Debug.WriteLine(e.Message);
                 }
             }
-        
+
         }
 
-        public void EndoDiameterSet(float diameter)
+        public override void EndoDiameterSet(float diameter)
         {
             if (serialPortEndo != null && serialPortEndo.IsOpen)
             {
@@ -305,13 +406,13 @@ namespace CameraCOT
             }
         }
 
-        public void LaserToggle()
+        public override void LaserToggle()
         {
 
             bufferTx[4] = 56;       // start measure
             bufferTx[5] = (byte)(laser ? 0 : 1);
-            
-            
+
+
             if (serialPortEndo != null && serialPortEndo.IsOpen)
             {
                 try
@@ -328,7 +429,7 @@ namespace CameraCOT
 
         }
 
-        public void LaserOn()
+        public override void LaserOn()
         {
 
             bufferTx[4] = 56;       // start measure
@@ -349,7 +450,7 @@ namespace CameraCOT
 
         }
 
-        public void LaserOff()
+        public override void LaserOff()
         {
 
             bufferTx[4] = 56;       // start measure
@@ -368,83 +469,6 @@ namespace CameraCOT
                 }
             }
 
-        }
-
-        public void BrightnessSet(int light)
-        {
-            // new protocol!!
-
-           /* bufferTx[3] = 0x07;
-            bufferTx[4] = 31;       // start measure            
-            bufferTx[5] = (byte)(light >> 8);
-            bufferTx[6] = (byte)(light & 0xff);
-
-            if (serialPortEndo != null && serialPortEndo.IsOpen)
-            {
-                try
-                {
-                    //serialPortEndo.Open();
-
-                    serialPortEndo.Write(bufferTx, 0, 64);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-            }*/
-
-            // old protocol!!!
-            try
-            {
-
-                byte[] s = new byte[4];
-                s[0] = 65; //'A';     //65
-                s[1] = (byte)((light >> 8));
-                s[2] = (byte)((light) & 0xff);
-                s[3] = 90; // 'Z';     //90
-
-                if (!serialPortEndo.IsOpen)
-                    serialPortEndo.Open();
-
-
-                serialPortEndo.Write(s, 0, 4);
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-        }
-
-        public void SerialPortClose()
-        {
-            
-                try
-                {
-                    serialPortEndo.Close();
-                    serialPortEndo.DiscardInBuffer();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            
-    }
-
-        public void SerialPortOpen()
-        {
-            if (serialPortEndo != null && !serialPortEndo.IsOpen)
-            {
-                try
-                {
-                    serialPortEndo.Open();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            }
         }
 
     }

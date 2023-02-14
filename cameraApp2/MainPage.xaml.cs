@@ -188,10 +188,16 @@ namespace CameraCOT
         }
 
         public static Camera[] cameras;
+        public enum EndoHeadType
+        { 
+            EndoHead1, 
+            EndoHead2
+        };
+
         JsonCamerasSettings jsonCamerasSettings;
         
         public int currentCameraType; //= (int)cameraType.mainCamera;                            
-
+        public int currentEndoHeadType; // = (int)EndoHeadType.EndoHead1;
 
 
         private async Task<JsonCamerasSettings> readFileSettings()
@@ -296,6 +302,8 @@ namespace CameraCOT
                 jsonCamerasSettings.SerialPortFlash  = "COM3";
                 jsonCamerasSettings.SerialPortLepton = "COM7";
 
+                jsonCamerasSettings.EndoHeadType = "EndoHead1";
+
                 string jsonData = JsonConvert.SerializeObject(jsonCamerasSettings, Formatting.Indented);
                 
                 await FileIO.WriteTextAsync(configFile, jsonData); 
@@ -326,7 +334,27 @@ namespace CameraCOT
                 return;
             }
 
-            comEndo = new ComEndo(jsonCamerasSettings.SerialPortEndo, this);
+            if (jsonCamerasSettings.EndoHeadType == "EndoHead1")
+                currentEndoHeadType = (int)EndoHeadType.EndoHead1;
+            else if (jsonCamerasSettings.EndoHeadType == "EndoHead2")
+                currentEndoHeadType = (int)EndoHeadType.EndoHead2;
+
+            switch (currentEndoHeadType)
+            {
+                case (int)EndoHeadType.EndoHead1: 
+                    comEndo = new ComEndoHead1(jsonCamerasSettings.SerialPortEndo, this);
+                    pbFlashPowerEndo.Value = 50000;
+                    pbFlashPowerEndo.Maximum = 60000;
+                    StepFlashPowerEndo = 5000;
+                    break;
+                case (int)EndoHeadType.EndoHead2: 
+                    comEndo = new ComEndoHead2(jsonCamerasSettings.SerialPortEndo, this);
+                    pbFlashPowerEndo.Value = 1000;
+                    pbFlashPowerEndo.Maximum = 1000;
+                    StepFlashPowerEndo = 100;
+                    break;
+            }
+            
 
             CameraDefineLogic();
 
@@ -880,15 +908,15 @@ namespace CameraCOT
         int count = 0;
         private void LenghtMeterTimer_Tick(object sender, object e)
         {
-            getDistance();
-            //if (xx == 1)
-            //     getDistance();
-            //else
-            //{
-            //     getAccel();
-            //    xx = 0;
-            //}
-            //xx++;
+            //getDistance();
+            if (xx == 1)
+                getDistance();
+            else
+            {
+                getAccel();
+                xx = 0;
+            }
+            xx++;
         }
 
         private void LenghtRunMeterTimer_Tick(object sender, object e)
@@ -2582,13 +2610,13 @@ namespace CameraCOT
             textBoxEndoDiameterSet.Visibility = _isEndoDiameterSet ? Visibility.Visible : Visibility.Collapsed;
 
             //gridBadPixel.Visibility = currentCameraType == (int)cameraType.termoCamera ? Visibility.Visible : Visibility.Collapsed;
-            lightOn.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera && !_findLenghtZero) ? Visibility.Visible : Visibility.Collapsed;
-            stopMeasure1.Visibility = (currentCameraType == (int)cameraType.endoCamera && _findLenghtZero) ? Visibility.Visible : Visibility.Collapsed;
-            EndoDiameterSetButton.Visibility = (currentCameraType == (int)cameraType.endoCamera) ? Visibility.Visible : Visibility.Collapsed;
-            //EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            //EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
-            //EndoControlVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
+            lightOn.Visibility = (currentCameraType == (int)cameraType.endoCamera && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            runMeasure.Visibility = (currentCameraType == (int)cameraType.endoCamera && !_findLenghtZero && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            stopMeasure1.Visibility = (currentCameraType == (int)cameraType.endoCamera && _findLenghtZero && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            EndoDiameterSetButton.Visibility = (currentCameraType == (int)cameraType.endoCamera && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            //EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            //EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            EndoControlVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
             if (_isEndoCameraFlag)
                 SetCoordinateNotes(50, 1000, 40, 1550);
 
@@ -2826,6 +2854,7 @@ namespace CameraCOT
         short durationFlashDivider = 1;
         short StepFlashPower = 40;
         short StepFlashPowerEndo = 5000; //1000
+       
 
 
         private void minusFlashButton_Click(object sender, RoutedEventArgs e)

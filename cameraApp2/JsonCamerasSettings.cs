@@ -28,6 +28,8 @@ namespace CameraCOT
 
         public List<int> BadPixelList    { get; set; }
 
+        public string EndoHeadType { get; set; }
+
         public JsonCamerasSettings()
         {
             BadPixelList = new List<int>();

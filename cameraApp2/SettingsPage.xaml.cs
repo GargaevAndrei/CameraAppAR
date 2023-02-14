@@ -36,7 +36,6 @@ namespace CameraCOT
 
             updateUI();
 
-
             foreach (var camera in MainPage.cameraDeviceList)
             {
                 ComboBoxItem comboBoxItem1 = new ComboBoxItem();
@@ -55,7 +54,6 @@ namespace CameraCOT
                 EndoCamera.Items.Add(comboBoxItem3);
 
             }
-
         }
 
         private async void MainCameraList_Changed(object sender, SelectionChangedEventArgs e)
@@ -159,7 +157,7 @@ namespace CameraCOT
             }
 
         }
-
+        
 
         private void getMainPage_Click(object sender, RoutedEventArgs e)
         {
@@ -202,6 +200,9 @@ namespace CameraCOT
 
             tempSelectedItem = (ComboBoxItem)TermoPhotoSettings.SelectedItem;
             if (tempSelectedItem != null) jsonCamerasSettings.TermoCameraPhoto = (string)tempSelectedItem.Content;
+
+            tempSelectedItem = (ComboBoxItem)endoHeadType.SelectedItem;
+            if (tempSelectedItem != null) jsonCamerasSettings.EndoHeadType = (string)tempSelectedItem.Content;
 
 
             JsonSerializer serializer = new JsonSerializer();

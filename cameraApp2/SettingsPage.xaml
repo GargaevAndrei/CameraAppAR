@@ -51,6 +51,15 @@
             <TextBox x:Name="serialPortFlash" Width="100" />
         </StackPanel>
 
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,150,100,0" Width="300" Grid.Row="1" >
+            <TextBlock Text=" Endo Head Type" Width="130"/>
+            <!--<TextBox x:Name="endoHeadType" Width="100" />-->
+            <ComboBox Name="endoHeadType" PlaceholderText="endoHeadType" Width="auto">
+                <ComboBoxItem>EndoHead1</ComboBoxItem>
+                <ComboBoxItem>EndoHead2</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,200,0,0" Width="340" ToolTipService.ToolTip="На главное окно" Grid.Row="1">
 
             <StackPanel>
