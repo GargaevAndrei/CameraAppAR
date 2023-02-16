@@ -518,14 +518,14 @@ namespace CameraCOT
             {
                 //getAccel();
 
-                //if (countEndoRequest % 2 == 0)
-                //    comEndo.getAccel();
-                //else if (countEndoRequest % 2 != 0 && _isLenght)
-                //    comEndo.GetDistance();
-                //countEndoRequest++;
-
-                if (_isLenght)
+                if (countEndoRequest % 2 == 0)
+                    comEndo.getAccel();
+                else if (countEndoRequest % 2 != 0 && _isLenght)
                     comEndo.GetDistance();
+                countEndoRequest++;
+
+                //if (_isLenght)
+                //    comEndo.GetDistance();
 
             }
             catch (Exception ex)
@@ -2616,7 +2616,7 @@ namespace CameraCOT
             EndoDiameterSetButton.Visibility = (currentCameraType == (int)cameraType.endoCamera && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
             //EndoOrientationButton.Visibility  = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
             //EndoEnableVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
-            EndoControlVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera) && currentEndoHeadType == (int)EndoHeadType.EndoHead2) ? Visibility.Visible : Visibility.Collapsed;
+            EndoControlVectorButton.Visibility = (_isEndoCameraFlag && (currentCameraType == (int)cameraType.endoCamera)) ? Visibility.Visible : Visibility.Collapsed;
             if (_isEndoCameraFlag)
                 SetCoordinateNotes(50, 1000, 40, 1550);
 
@@ -2913,8 +2913,6 @@ namespace CameraCOT
             //await SetMediaStreamPropertiesAsync(MediaStreamType.Photo, cameras[(int)cameraType.mainCamera].PhotoResolution.EncodingProperties);
             //await SetMediaStreamPropertiesAsync(MediaStreamType.VideoRecord, cameras[(int)cameraType.mainCamera].VideoResolution.EncodingProperties);
 
-            getAccel();
-
             setFlashingLight(light);
         }
 
@@ -3130,12 +3128,13 @@ namespace CameraCOT
                     break;
                 case EndoOrientationAndVisibility.vertical:
                     endoOrientationAndVisibility = EndoOrientationAndVisibility.hide;
-                    videoEffectSettings.bHorizont = true;
-                    videoEffectSettings.getCoordinateFlag = true;
+                    
+                    videoEffectSettings.getCoordinateFlag = false;
                     break;
                 case EndoOrientationAndVisibility.hide:
                     endoOrientationAndVisibility = EndoOrientationAndVisibility.horizont;
-                    videoEffectSettings.getCoordinateFlag = false;
+                    videoEffectSettings.getCoordinateFlag = true;
+                    videoEffectSettings.bHorizont = true;
                     break;
                 default:
                     break;

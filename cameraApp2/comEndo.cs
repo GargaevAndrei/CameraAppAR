@@ -163,6 +163,31 @@ namespace CameraCOT
             }
 
         }
+
+        public override void getAccel()
+        {
+            try
+            {
+
+                byte[] s = new byte[4];
+                s[0] = 66; //'B';     //66
+                s[1] = 0;
+                s[2] = 0;
+                s[3] = 90; // 'Z';     //90
+
+                if (!serialPortEndo.IsOpen)
+                    serialPortEndo.Open();
+
+
+                serialPortEndo.Write(s, 0, 4);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+        }
     }
 
     class ComEndoHead2 : ComEndo

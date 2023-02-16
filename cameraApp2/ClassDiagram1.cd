@@ -87,7 +87,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="CameraCOT.ComEndoHead2">
-    <Position X="11.5" Y="9.75" Width="2" />
+    <Position X="10.75" Y="9.5" Width="2" />
     <TypeIdentifier>
       <HashCode>BCAAAgBAAAAAAAAEAAAAAAAEAgAAAEAABCABAAAAAAA=</HashCode>
       <FileName>ComEndo.cs</FileName>
