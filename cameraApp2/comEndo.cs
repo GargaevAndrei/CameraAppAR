@@ -15,7 +15,7 @@ namespace CameraCOT
         protected MainPage page;
         protected SerialPort serialPortEndo; //= new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One);
         protected double Xf, Yf, Zf;
-        protected bool bCalibration;
+        protected bool bCalibration = false;
         protected static bool laser;
 
         public ComEndo(string EndoComName, MainPage mainPage)
@@ -29,6 +29,8 @@ namespace CameraCOT
                 try
                 {
                     serialPortEndo.Open();
+                    bCalibration = true;
+                    getAccelZero();
                 }
                 catch (Exception e)
                 {
@@ -58,7 +60,8 @@ namespace CameraCOT
             {
                 try
                 {
-                    serialPortEndo.Open();
+                    serialPortEndo.Open();                  
+
                 }
                 catch (Exception ex)
                 {
@@ -72,6 +75,7 @@ namespace CameraCOT
         public virtual void StopMeasure() { }
         public virtual void GetDistance() { }
         public virtual void getAccel() { }
+        public virtual void getAccelZero() { }
         public virtual void EndoDiameterSet(float diameter) { }
         public virtual void LaserToggle() { }
         public virtual void LaserOn() { }
@@ -171,6 +175,31 @@ namespace CameraCOT
 
                 byte[] s = new byte[4];
                 s[0] = 66; //'B';     //66
+                s[1] = 0;
+                s[2] = 0;
+                s[3] = 90; // 'Z';     //90
+
+                if (!serialPortEndo.IsOpen)
+                    serialPortEndo.Open();
+
+
+                serialPortEndo.Write(s, 0, 4);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+        }
+
+        public override void getAccelZero()
+        {
+            try
+            {
+
+                byte[] s = new byte[4];
+                s[0] = 71; //'G';     //66
                 s[1] = 0;
                 s[2] = 0;
                 s[3] = 90; // 'Z';     //90
